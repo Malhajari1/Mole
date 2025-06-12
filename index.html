@@ -429,102 +429,127 @@
         }
 
         async function startGame() {
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const players = gameDoc.data().players;
-            
-            if (players.length < 3) {
-                alert("You need at least 3 operatives to start.");
-                return;
-            }
-            
-            const totalRounds = players.length >= 6 ? players.length : 6;
-            const scores = players.reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
-            const wordMaster = players[Math.floor(Math.random() * players.length)];
+            try {
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const players = gameDoc.data().players;
+                
+                if (players.length < 3) {
+                    alert("You need at least 3 operatives to start.");
+                    return;
+                }
+                
+                const totalRounds = players.length >= 6 ? players.length : 6;
+                const scores = players.reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
+                const wordMaster = players[Math.floor(Math.random() * players.length)];
 
-            await updateDoc(gameRef, { 
-                status: 'round_start',
-                currentRound: 1,
-                totalRounds: totalRounds,
-                scores: scores,
-                wordMasterId: wordMaster.id,
-                secretWord: '',
-                moleId: '',
-                votes: {},
-                roleAcknowledgements: []
-             });
+                await updateDoc(gameRef, { 
+                    status: 'round_start',
+                    currentRound: 1,
+                    totalRounds: totalRounds,
+                    scores: scores,
+                    wordMasterId: wordMaster.id,
+                    secretWord: '',
+                    moleId: '',
+                    votes: {},
+                    roleAcknowledgements: []
+                });
+            } catch (error) {
+                console.error("Error starting game:", error);
+                alert("Could not start the game. Error: " + error.message);
+            }
         }
 
         async function startNewRound() {
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const gameData = gameDoc.data();
+            try {
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
 
-            if (gameData.currentRound >= gameData.totalRounds) {
-                await updateDoc(gameRef, { status: 'game_over' });
-                return;
+                if (gameData.currentRound >= gameData.totalRounds) {
+                    await updateDoc(gameRef, { status: 'game_over' });
+                    return;
+                }
+
+                const wordMaster = gameData.players[Math.floor(Math.random() * gameData.players.length)];
+                
+                await updateDoc(gameRef, {
+                    status: 'round_start',
+                    currentRound: gameData.currentRound + 1,
+                    wordMasterId: wordMaster.id,
+                    secretWord: '',
+                    moleId: '',
+                    votes: {},
+                    roleAcknowledgements: []
+                });
+            } catch(error) {
+                console.error("Error starting new round:", error);
+                alert("Could not start the next round. Error: " + error.message);
             }
-
-            const wordMaster = gameData.players[Math.floor(Math.random() * gameData.players.length)];
-            
-            await updateDoc(gameRef, {
-                status: 'round_start',
-                currentRound: gameData.currentRound + 1,
-                wordMasterId: wordMaster.id,
-                secretWord: '',
-                moleId: '',
-                votes: {},
-                roleAcknowledgements: []
-            });
         }
         
         async function setWordAndAssignRoles() {
-            const word = secretWordInput.value.trim();
-            if (!word) {
-                alert('Please enter a secret word.');
-                return;
+            try {
+                const word = secretWordInput.value.trim();
+                if (!word) {
+                    alert('Please enter a secret word.');
+                    return;
+                }
+
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+
+                const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
+                if (potentialMoles.length === 0) {
+                    alert("Not enough players to assign a mole.");
+                    return;
+                }
+                const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
+
+                await updateDoc(gameRef, {
+                    secretWord: word,
+                    moleId: mole.id,
+                    status: 'role_reveal'
+                });
+            } catch (error) {
+                console.error("Error setting word:", error);
+                alert("Could not set the word. Error: " + error.message);
             }
-
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const gameData = gameDoc.data();
-
-            const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
-            if (potentialMoles.length === 0) {
-                alert("Not enough players to assign a mole.");
-                return;
-            }
-            const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
-
-            await updateDoc(gameRef, {
-                secretWord: word,
-                moleId: mole.id,
-                status: 'role_reveal'
-            });
         }
         
         async function acknowledgeRole() {
-            const gameRef = doc(db, "games", gameId);
-            await updateDoc(gameRef, {
-                roleAcknowledgements: arrayUnion(userId)
-            });
+            try {
+                const gameRef = doc(db, "games", gameId);
+                await updateDoc(gameRef, {
+                    roleAcknowledgements: arrayUnion(userId)
+                });
+            } catch (error) {
+                console.error("Error acknowledging role:", error);
+                alert("Could not acknowledge role. Error: " + error.message);
+            }
         }
 
         async function castVote(votedForId) {
-            voteButtons.innerHTML = '';
-            voteWaitText.classList.remove('hidden');
+            try {
+                voteButtons.innerHTML = '';
+                voteWaitText.classList.remove('hidden');
 
-            const gameRef = doc(db, "games", gameId);
-            const newVotes = {};
-            newVotes[`votes.${userId}`] = votedForId;
-            await updateDoc(gameRef, newVotes);
+                const gameRef = doc(db, "games", gameId);
+                const newVotes = {};
+                newVotes[`votes.${userId}`] = votedForId;
+                await updateDoc(gameRef, newVotes);
+            } catch (error) {
+                console.error("Error casting vote:", error);
+                alert("Could not cast vote. Error: " + error.message);
+            }
         }
 
         // --- Rendering Functions ---
 
         function renderGame(gameData) {
             const status = gameData.status;
-            if (!status) return; // Don't render if status is missing
+            if (!status) return;
 
             let targetScreenId = status + '-screen';
             
@@ -534,8 +559,11 @@
                 }
             }
 
-            showScreen(targetScreenId);
-
+            const currentScreenId = document.querySelector('.screen.active')?.id;
+            if (currentScreenId !== targetScreenId) {
+                showScreen(targetScreenId);
+            }
+            
             switch (status) {
                 case 'lobby':
                     renderLobby(gameData);
@@ -585,7 +613,7 @@
             const total = gameData.totalRounds;
             roundTitle.textContent = `Round ${roundNum} of ${total}`;
             
-            if (gameData.players && gameData.wordMasterId) {
+            if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
                 const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
                 wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to type the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
@@ -596,7 +624,6 @@
         function renderRoleReveal(gameData) {
             const playerHasAckd = gameData.roleAcknowledgements.includes(userId);
 
-            // Reset view to blurred state initially
             roleBlurOverlay.classList.remove('opacity-0');
             roleTextContent.classList.add('invisible');
             acknowledgeRoleBtn.classList.add('hidden');
@@ -605,6 +632,7 @@
                 roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
                 roleBlurOverlay.classList.add('opacity-0');
                 roleTextContent.classList.remove('invisible');
+                acknowledgeRoleBtn.classList.add('hidden');
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
