@@ -194,15 +194,19 @@
     <!-- Screen for revealing roles to each player -->
     <div id="reveal-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-3xl font-bold mb-6">Receive Your Role</h1>
-            <div id="reveal-prompt">
-                <p class="text-gray-400 mb-6">Ensure your screen is not being observed.</p>
-                <button id="show-role-btn" class="btn">Reveal Role</button>
+            <h1 class="text-3xl font-bold mb-6">Your Role is Ready</h1>
+            <p class="text-gray-400 mb-6">Ensure your screen is not being observed, then click the eye to reveal your role.</p>
+            <div id="role-box" class="relative p-8 bg-gray-900 border-2 border-dashed border-gray-600 rounded-md">
+                <!-- Blurred overlay -->
+                <div id="role-blur-overlay" class="absolute inset-0 bg-gray-800/50 backdrop-blur-md flex items-center justify-center cursor-pointer transition-opacity duration-300">
+                    <svg id="reveal-eye-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 w-12 h-12"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </div>
+                <!-- Actual role text, hidden initially -->
+                <div id="role-text-content" class="invisible">
+                    <!-- Content will be injected by JS -->
+                </div>
             </div>
-            <div id="role-display" class="hidden">
-                <div id="role-text" class="my-8"></div>
-                <button id="hide-role-btn" class="btn btn-secondary">Understood</button>
-            </div>
+            <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
         </div>
     </div>
     
@@ -300,11 +304,12 @@
         const eyeOpenIcon = document.getElementById('eye-open-icon');
         const eyeClosedIcon = document.getElementById('eye-closed-icon');
         const setWordBtn = document.getElementById('set-word-btn');
-        const revealPrompt = document.getElementById('reveal-prompt');
-        const roleDisplay = document.getElementById('role-display');
-        const showRoleBtn = document.getElementById('show-role-btn');
-        const hideRoleBtn = document.getElementById('hide-role-btn');
-        const roleText = document.getElementById('role-text');
+        
+        // New role reveal elements
+        const roleBlurOverlay = document.getElementById('role-blur-overlay');
+        const roleTextContent = document.getElementById('role-text-content');
+        const acknowledgeRoleBtn = document.getElementById('acknowledge-role-btn');
+        
         const timerDisplay = document.getElementById('timer');
         const gamePlayerList = document.getElementById('game-player-list');
         const voterName = document.getElementById('voter-name');
@@ -337,14 +342,10 @@
         }
 
         gameIdDisplay.addEventListener('click', () => {
-            const tempInput = document.createElement('input');
-            tempInput.value = gameIdDisplay.textContent;
-            document.body.appendChild(tempInput);
-            tempInput.select();
-            document.execCommand('copy');
-            document.body.removeChild(tempInput);
-            copyConfirm.style.visibility = 'visible';
-            setTimeout(() => { copyConfirm.style.visibility = 'hidden' }, 2000);
+            navigator.clipboard.writeText(gameIdDisplay.textContent).then(() => {
+                copyConfirm.style.visibility = 'visible';
+                setTimeout(() => { copyConfirm.style.visibility = 'hidden' }, 2000);
+            });
         });
 
         // --- Game Logic Functions ---
@@ -542,8 +543,6 @@
                 case 'round_start':
                     renderRoundStart(gameData);
                     break;
-                case 'word-input': // This case will now be handled by the logic above
-                    break;
                 case 'role_reveal':
                     renderRoleReveal(gameData);
                     break;
@@ -592,15 +591,16 @@
         
         function renderRoleReveal(gameData) {
             const playerHasAckd = gameData.roleAcknowledgements.includes(userId);
-            revealPrompt.style.display = playerHasAckd ? 'none' : 'block';
-            roleDisplay.classList.add('hidden');
+
+            // Reset view to blurred state initially
+            roleBlurOverlay.classList.remove('opacity-0');
+            roleTextContent.classList.add('invisible');
+            acknowledgeRoleBtn.classList.add('hidden');
 
             if (playerHasAckd) {
-                roleText.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
-                roleDisplay.classList.remove('hidden');
-                hideRoleBtn.disabled = true;
-            } else {
-                 hideRoleBtn.disabled = false;
+                roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
+                roleBlurOverlay.classList.add('opacity-0');
+                roleTextContent.classList.remove('invisible');
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
@@ -784,21 +784,22 @@
             eyeClosedIcon.classList.toggle('hidden', !isPassword);
         });
         
-        showRoleBtn.addEventListener('click', async () => {
-            revealPrompt.style.display = 'none';
-            roleDisplay.classList.remove('hidden');
+        roleBlurOverlay.addEventListener('click', async () => {
+            roleBlurOverlay.classList.add('opacity-0');
+            roleTextContent.classList.remove('invisible');
+            acknowledgeRoleBtn.classList.remove('hidden');
             
             const gameDoc = await getDoc(doc(db, "games", gameId));
             const gameData = gameDoc.data();
             
             if (userId === gameData.moleId) {
-                roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
             } else {
-                roleText.innerHTML = `<p class="text-gray-300">The Secret Codename is:</p><h2 class="text-3xl font-bold text-red-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Identify the Mole.</p>`;
+                roleTextContent.innerHTML = `<p class="text-gray-300">The Secret Codename is:</p><h2 class="text-3xl font-bold text-red-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Identify the Mole.</p>`;
             }
         });
         
-        hideRoleBtn.addEventListener('click', acknowledgeRole);
+        acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
 
         nextRoundBtn.addEventListener('click', startNewRound);
         playAgainBtn.addEventListener('click', () => { /* Handled in renderGameOverScreen */ });
