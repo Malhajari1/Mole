@@ -407,7 +407,7 @@
                 renderGame(gameData);
             }, (error) => {
                 console.error("Snapshot listener error:", error);
-                alert("Lost connection to the game.");
+                alert("Lost connection to the game. It's possible your browser extensions (like ad-blockers) are blocking the connection.");
             });
         }
 
@@ -548,7 +548,7 @@
         // --- Rendering Functions ---
 
         function renderGame(gameData) {
-            const status = gameData.status;
+            const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
 
             let targetScreenId = status + '-screen';
@@ -558,7 +558,7 @@
                     targetScreenId = 'word-input-screen';
                 }
             }
-
+            
             const currentScreenId = document.querySelector('.screen.active')?.id;
             if (currentScreenId !== targetScreenId) {
                 showScreen(targetScreenId);
