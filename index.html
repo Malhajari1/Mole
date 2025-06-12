@@ -41,6 +41,10 @@
         .btn:hover {
             background-color: #4338ca; /* indigo-700 */
         }
+        .btn:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+        }
         .btn-secondary {
             background-color: #4b5563; /* gray-600 */
         }
@@ -65,46 +69,68 @@
             align-items: center;
             margin: 0.25rem;
         }
-        .player-tag button {
-            background: none;
-            border: none;
-            color: #d1d5db; /* gray-300 */
-            margin-left: 0.5rem;
+        #game-id-display {
+            background-color: #1f2937;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-family: monospace;
+            font-size: 1.25rem;
+            text-align: center;
             cursor: pointer;
-            font-weight: bold;
+            border: 2px dashed #4b5563;
         }
     </style>
 </head>
 <body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+    
+    <!-- Home screen to create or join a game -->
+    <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-3xl font-bold mb-4">The Mole Game</h1>
+            <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
+            <button id="create-game-btn" class="btn mb-4">Create New Game</button>
+            <div class="border-t border-gray-600 my-4"></div>
+            <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID...">
+            <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+        </div>
+    </div>
 
-    <!-- Screen for setting up players -->
-    <div id="setup-screen" class="screen active flex-col items-center justify-center w-full">
+    <!-- Lobby screen for waiting for players -->
+    <div id="lobby-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
-            <h1 class="text-3xl font-bold text-center mb-4">The Mole Game</h1>
-            <p class="text-gray-400 text-center mb-6">Add 3 to 10 players to begin.</p>
-            <div class="flex mb-4">
-                <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter player name...">
-                <button id="add-player-btn" class="btn ml-2 w-auto px-4">Add</button>
-            </div>
+            <h1 class="text-2xl font-bold text-center mb-2">Lobby</h1>
+            <p class="text-gray-400 text-center mb-4">Share the Game ID with your friends!</p>
+            <div id="game-id-display" class="mb-6" title="Click to copy"></div>
+            <p id="copy-confirm" class="text-green-400 text-center text-sm mb-4" style="visibility: hidden;">Copied!</p>
+            
+            <p class="text-gray-400 text-center mb-4">Players (<span id="player-count">0</span>/10):</p>
             <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div>
+            
+            <div class="flex mb-4">
+                <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your name...">
+                <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
+            </div>
+
             <button id="start-game-btn" class="btn">Start Game</button>
+            <p class="text-xs text-gray-500 text-center mt-2">Only the host can start the game.</p>
         </div>
     </div>
 
     <!-- Screen to announce the start of a new round -->
     <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 id="round-title" class="text-3xl font-bold mb-4">Round 1</h1>
+            <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
             <p class="text-gray-400 mb-2">The Word Master for this round is:</p>
             <p id="round-word-master" class="text-2xl font-bold text-indigo-400 mb-6"></p>
-            <button id="proceed-to-word-input-btn" class="btn">Continue</button>
+            <div id="word-master-wait-text">Waiting for the Word Master to enter a word...</div>
+            <button id="proceed-to-word-input-btn" class="btn hidden">Enter the Word</button>
         </div>
     </div>
 
     <!-- Screen for the Word Master to enter the word -->
     <div id="word-input-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
-            <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4">Word Master's Turn</h1>
+            <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4">Your Turn, Word Master!</h1>
             <p class="text-gray-400 text-center mb-6">Enter the secret word. No one else should see this!</p>
             <div class="relative w-full mb-4">
                 <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret word...">
@@ -120,14 +146,14 @@
     <!-- Screen for revealing roles to each player -->
     <div id="reveal-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 id="reveal-player-name" class="text-3xl font-bold mb-6"></h1>
+            <h1 class="text-3xl font-bold mb-6">Time to see your role!</h1>
             <div id="reveal-prompt">
-                <p class="text-gray-400 mb-6">Pass the device to the player above. Make sure no one else is looking.</p>
+                <p class="text-gray-400 mb-6">Make sure no one else is looking at your screen.</p>
                 <button id="show-role-btn" class="btn">Ready? Tap to See Role</button>
             </div>
             <div id="role-display" class="hidden">
                 <div id="role-text" class="my-8"></div>
-                <button id="hide-role-btn" class="btn btn-secondary">Done</button>
+                <button id="hide-role-btn" class="btn btn-secondary">I Understand</button>
             </div>
         </div>
     </div>
@@ -147,8 +173,9 @@
     <div id="voting-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Time to Vote!</h1>
-            <p id="voter-name" class="text-gray-400 mb-6"></p>
+            <p id="voter-name" class="text-gray-400 mb-6">Place your vote:</p>
             <div id="vote-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+            <p id="vote-wait-text" class="text-gray-400 mt-6 hidden">You have voted. Waiting for other players...</p>
         </div>
     </div>
 
@@ -156,7 +183,7 @@
     <div id="results-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-4">Round Results</h1>
-            <div id="vote-tally" class="mb-6"></div>
+            <div id="vote-tally" class="mb-6 text-left"></div>
             <p class="text-xl mb-4">The player with the most votes was...</p>
             <p id="voted-out-player" class="text-3xl font-bold text-red-500 mb-8"></p>
             <div id="mole-reveal" class="hidden">
@@ -179,358 +206,516 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // IMPORTANT: Replace with your actual Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        
+        let userId;
+        let gameId;
+        let gameUnsubscribe; // To stop listening to game updates
+
         // --- DOM Elements ---
         const screens = document.querySelectorAll('.screen');
-        const setupScreen = document.getElementById('setup-screen');
+        const createGameBtn = document.getElementById('create-game-btn');
+        const joinGameIdInput = document.getElementById('join-game-id-input');
+        const joinGameBtn = document.getElementById('join-game-btn');
+        const gameIdDisplay = document.getElementById('game-id-display');
+        const copyConfirm = document.getElementById('copy-confirm');
+        const playerCount = document.getElementById('player-count');
+        const playerList = document.getElementById('player-list');
         const playerNameInput = document.getElementById('player-name-input');
         const addPlayerBtn = document.getElementById('add-player-btn');
-        const playerList = document.getElementById('player-list');
         const startGameBtn = document.getElementById('start-game-btn');
-
-        const roundStartScreen = document.getElementById('round-start-screen');
+        // ... (get all other elements as before)
         const roundTitle = document.getElementById('round-title');
         const roundWordMaster = document.getElementById('round-word-master');
+        const wordMasterWaitText = document.getElementById('word-master-wait-text');
         const proceedToWordInputBtn = document.getElementById('proceed-to-word-input-btn');
-
-        const wordInputScreen = document.getElementById('word-input-screen');
-        const wordMasterTurnTitle = document.getElementById('word-master-turn-title');
         const secretWordInput = document.getElementById('secret-word-input');
-        const setWordBtn = document.getElementById('set-word-btn');
         const toggleWordVisibilityBtn = document.getElementById('toggle-word-visibility-btn');
         const eyeOpenIcon = document.getElementById('eye-open-icon');
         const eyeClosedIcon = document.getElementById('eye-closed-icon');
-
-        const revealScreen = document.getElementById('reveal-screen');
-        const revealPlayerName = document.getElementById('reveal-player-name');
+        const setWordBtn = document.getElementById('set-word-btn');
         const revealPrompt = document.getElementById('reveal-prompt');
         const roleDisplay = document.getElementById('role-display');
         const showRoleBtn = document.getElementById('show-role-btn');
-        const roleText = document.getElementById('role-text');
         const hideRoleBtn = document.getElementById('hide-role-btn');
-
-        const gameScreen = document.getElementById('game-screen');
+        const roleText = document.getElementById('role-text');
         const timerDisplay = document.getElementById('timer');
         const gamePlayerList = document.getElementById('game-player-list');
-        
-        const votingScreen = document.getElementById('voting-screen');
         const voterName = document.getElementById('voter-name');
         const voteButtons = document.getElementById('vote-buttons');
-
-        const resultsScreen = document.getElementById('results-screen');
+        const voteWaitText = document.getElementById('vote-wait-text');
         const voteTally = document.getElementById('vote-tally');
         const votedOutPlayer = document.getElementById('voted-out-player');
         const moleReveal = document.getElementById('mole-reveal');
         const actualMole = document.getElementById('actual-mole');
         const winnerAnnouncement = document.getElementById('winner-announcement');
         const nextRoundBtn = document.getElementById('next-round-btn');
-
-        const gameOverScreen = document.getElementById('game-over-screen');
         const finalScores = document.getElementById('final-scores');
         const finalWinner = document.getElementById('final-winner');
         const playAgainBtn = document.getElementById('play-again-btn');
 
-        // --- Game State Variables ---
-        let players = [];
-        let secretWord = '';
-        let mole = '';
-        let wordMaster = '';
-        let votes = {};
-        let scores = {};
-        let currentPlayerIndex = 0;
-        let timerInterval;
-        let currentRound = 0;
-        let totalRounds = 0;
+        // --- Core Functions ---
 
-        // --- Functions ---
-        
         function showScreen(screenId) {
-            screens.forEach(screen => screen.classList.remove('active'));
+            screens.forEach(s => s.classList.remove('active'));
             document.getElementById(screenId).classList.add('active');
         }
 
-        function updatePlayerList() {
-            playerList.innerHTML = '';
-            players.forEach((player, index) => {
-                const playerTag = document.createElement('div');
-                playerTag.className = 'player-tag';
-                playerTag.textContent = player;
-                const removeBtn = document.createElement('button');
-                removeBtn.innerHTML = '&times;';
-                removeBtn.onclick = () => removePlayer(index);
-                playerTag.appendChild(removeBtn);
-                playerList.appendChild(playerTag);
+        // Generate a simple 6-digit game ID
+        function generateGameId() {
+            return Math.random().toString().substr(2, 6);
+        }
+
+        // Copy Game ID to clipboard
+        gameIdDisplay.addEventListener('click', () => {
+            const tempInput = document.createElement('input');
+            tempInput.value = gameIdDisplay.textContent;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            copyConfirm.style.visibility = 'visible';
+            setTimeout(() => { copyConfirm.style.visibility = 'hidden' }, 2000);
+        });
+
+        // --- Game Logic Functions ---
+
+        async function createGame() {
+            gameId = generateGameId();
+            const gameRef = doc(db, "games", gameId);
+            const hostId = userId;
+            
+            await setDoc(gameRef, {
+                hostId: hostId,
+                status: 'lobby',
+                players: [],
+                scores: {},
+                currentRound: 0,
+                totalRounds: 0,
+                createdAt: serverTimestamp()
+            });
+            
+            await joinGame(gameId);
+        }
+
+        async function joinGame(id) {
+            const gameRef = doc(db, "games", id);
+            const gameDoc = await getDoc(gameRef);
+
+            if (!gameDoc.exists()) {
+                alert("Game not found!");
+                return;
+            }
+
+            gameId = id;
+            
+            if (gameUnsubscribe) gameUnsubscribe(); // Stop listening to old game if any
+
+            // Listen for real-time updates to the game state
+            gameUnsubscribe = onSnapshot(gameRef, (doc) => {
+                const gameData = doc.data();
+                if (!gameData) return; // Game was deleted
+                renderGame(gameData);
             });
         }
 
-        function removePlayer(index) {
-            players.splice(index, 1);
-            updatePlayerList();
+        async function addPlayer() {
+            const name = playerNameInput.value.trim();
+            if (!name) {
+                alert('Please enter a name.');
+                return;
+            }
+
+            const gameRef = doc(db, "games", gameId);
+            await updateDoc(gameRef, {
+                players: arrayUnion({ id: userId, name: name })
+            });
+            playerNameInput.disabled = true;
+            addPlayerBtn.disabled = true;
         }
-        
-        function startGame() {
+
+        async function startGame() {
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            const players = gameDoc.data().players;
+            
             if (players.length < 3) {
-                alert('You need at least 3 players to start the game.');
+                alert("You need at least 3 players to start.");
                 return;
             }
-            // Determine total rounds
-            totalRounds = players.length >= 6 ? players.length : 6;
             
-            // Reset scores and rounds
-            currentRound = 0;
-            scores = players.reduce((acc, player) => ({ ...acc, [player]: 0 }), {});
-            
-            startNewRound();
+            const totalRounds = players.length >= 6 ? players.length : 6;
+            const scores = players.reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
+
+            await updateDoc(gameRef, { 
+                status: 'round_start',
+                currentRound: 0, // Will be incremented by startNewRound
+                totalRounds: totalRounds,
+                scores: scores
+             });
+             await startNewRound(); // Host triggers the first round
         }
 
-        function startNewRound() {
-            currentRound++;
-            if (currentRound > totalRounds) {
-                endGame();
+        async function startNewRound() {
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            const gameData = gameDoc.data();
+
+            if (gameData.currentRound >= gameData.totalRounds) {
+                await updateDoc(gameRef, { status: 'game_over' });
                 return;
             }
 
-            // Randomly select a Word Master
-            wordMaster = players[Math.floor(Math.random() * players.length)];
-
-            // Setup and show the round start screen
-            roundTitle.textContent = `Round ${currentRound} of ${totalRounds}`;
-            roundWordMaster.textContent = wordMaster;
-            showScreen('round-start-screen');
+            const wordMaster = gameData.players[Math.floor(Math.random() * gameData.players.length)];
+            
+            await updateDoc(gameRef, {
+                status: 'round_start',
+                currentRound: gameData.currentRound + 1,
+                wordMasterId: wordMaster.id,
+                secretWord: '',
+                moleId: '',
+                votes: {},
+                roleAcknowledgements: []
+            });
         }
         
-        function setWordAndAssignRoles() {
-            secretWord = secretWordInput.value.trim();
-            if (!secretWord) {
+        async function setWordAndAssignRoles() {
+            const word = secretWordInput.value.trim();
+            if (!word) {
                 alert('Please enter a secret word.');
                 return;
             }
 
-            // Assign Mole from players who are NOT the word master
-            const potentialMoles = players.filter(p => p !== wordMaster);
-            mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
-            
-            currentPlayerIndex = 0;
-            startRoleReveal();
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            const gameData = gameDoc.data();
+
+            const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
+            const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
+
+            await updateDoc(gameRef, {
+                secretWord: word,
+                moleId: mole.id,
+                status: 'role_reveal'
+            });
+        }
+        
+        async function acknowledgeRole() {
+            const gameRef = doc(db, "games", gameId);
+            await updateDoc(gameRef, {
+                roleAcknowledgements: arrayUnion(userId)
+            });
         }
 
-        function startRoleReveal() {
-            if (currentPlayerIndex >= players.length) {
-                startDiscussionTimer();
-                return;
-            }
-            showScreen('reveal-screen');
-            revealPlayerName.textContent = `${players[currentPlayerIndex]}'s Turn`;
-            revealPrompt.style.display = 'block';
-            roleDisplay.classList.add('hidden');
+        async function castVote(votedForId) {
+            voteButtons.innerHTML = '';
+            voteWaitText.classList.remove('hidden');
+
+            const gameRef = doc(db, "games", gameId);
+            // This is a simplified way to handle votes. For a more robust system,
+            // you might use a subcollection.
+            const newVotes = {};
+            newVotes[`votes.${userId}`] = votedForId;
+            await updateDoc(gameRef, newVotes);
         }
 
-        function displayRole() {
-            revealPrompt.style.display = 'none';
-            roleDisplay.classList.remove('hidden');
-            const currentPlayer = players[currentPlayerIndex];
-            if (currentPlayer === mole) {
-                roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in and don't get caught!</p>`;
-            } else {
-                roleText.innerHTML = `<p class="text-gray-300">The secret word is:</p><h2 class="text-3xl font-bold text-indigo-400 mt-2">${secretWord.toUpperCase()}</h2><p class="text-gray-300 mt-4">Find the Mole!</p>`;
+        // --- Rendering Functions ---
+
+        function renderGame(gameData) {
+            // Update UI based on game status
+            showScreen(gameData.status + '-screen');
+
+            switch (gameData.status) {
+                case 'lobby':
+                    renderLobby(gameData);
+                    break;
+                case 'round_start':
+                    renderRoundStart(gameData);
+                    break;
+                case 'word_input':
+                     // This state is client-side for the word master only
+                    break;
+                case 'role_reveal':
+                    renderRoleReveal(gameData);
+                    break;
+                case 'game':
+                    renderGameScreen(gameData);
+                    break;
+                case 'voting':
+                    renderVotingScreen(gameData);
+                    break;
+                case 'results':
+                    renderResultsScreen(gameData);
+                    break;
+                case 'game_over':
+                    renderGameOverScreen(gameData);
+                    break;
             }
         }
         
-        function hideRoleAndContinue() {
-            currentPlayerIndex++;
-            startRoleReveal();
-        }
-        
-        function startDiscussionTimer() {
-            showScreen('game-screen');
-            gamePlayerList.innerHTML = '';
-            players.forEach(p => {
+        function renderLobby(gameData) {
+            gameIdDisplay.textContent = gameId;
+            playerCount.textContent = gameData.players.length;
+            playerList.innerHTML = '';
+            gameData.players.forEach(p => {
                 const tag = document.createElement('div');
                 tag.className = 'player-tag';
-                tag.textContent = p;
-                gamePlayerList.appendChild(tag);
+                tag.textContent = p.name + (p.id === gameData.hostId ? ' (Host)' : '');
+                playerList.appendChild(tag);
             });
             
-            let timeRemaining = 180;
-            timerDisplay.textContent = '3:00';
-            timerInterval = setInterval(() => {
-                timeRemaining--;
-                const minutes = Math.floor(timeRemaining / 60);
-                const seconds = timeRemaining % 60;
-                timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                if (timeRemaining <= 0) {
-                    clearInterval(timerInterval);
-                    startVoting();
-                }
-            }, 1000);
+            const playerIsHost = userId === gameData.hostId;
+            startGameBtn.disabled = !playerIsHost;
+            
+            const playerInGame = gameData.players.some(p => p.id === userId);
+            playerNameInput.disabled = playerInGame;
+            addPlayerBtn.disabled = playerInGame;
         }
 
-        function startVoting() {
-            currentPlayerIndex = 0;
-            votes = players.reduce((acc, player) => ({ ...acc, [player]: 0 }), {});
-            setupNextVote();
-        }
-
-        function setupNextVote() {
-            if (currentPlayerIndex >= players.length) {
-                showRoundResults();
-                return;
+        function renderRoundStart(gameData) {
+            roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
+            const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
+            roundWordMaster.textContent = wordMaster.name;
+            
+            if (userId === gameData.wordMasterId) {
+                wordMasterWaitText.classList.add('hidden');
+                proceedToWordInputBtn.classList.remove('hidden');
+            } else {
+                wordMasterWaitText.classList.remove('hidden');
+                proceedToWordInputBtn.classList.add('hidden');
             }
-            showScreen('voting-screen');
-            const currentVoter = players[currentPlayerIndex];
-            voterName.textContent = `${currentVoter}, place your vote:`;
-            voteButtons.innerHTML = '';
-            players.forEach(player => {
-                if (player !== currentVoter) {
-                    const voteBtn = document.createElement('button');
-                    voteBtn.className = 'btn btn-secondary';
-                    voteBtn.textContent = player;
-                    voteBtn.onclick = () => castVote(player);
-                    voteButtons.appendChild(voteBtn);
-                }
-            });
         }
         
-        function castVote(votedFor) {
-            votes[votedFor]++;
-            currentPlayerIndex++;
-            setupNextVote();
-        }
+        function renderRoleReveal(gameData) {
+            const playerHasAckd = gameData.roleAcknowledgements.includes(userId);
+            revealPrompt.style.display = playerHasAckd ? 'none' : 'block';
+            roleDisplay.classList.add('hidden');
 
-        function showRoundResults() {
-            showScreen('results-screen');
-            
-            voteTally.innerHTML = '<h3>Vote Counts:</h3>';
-            for (const player in votes) {
-                voteTally.innerHTML += `<p class="text-gray-400">${player}: ${votes[player]} vote(s)</p>`;
+            if (playerHasAckd) {
+                roleText.innerHTML = `<p class="text-gray-300">Waiting for other players to see their roles...</p>`;
+                roleDisplay.classList.remove('hidden');
             }
-
-            let maxVotes = -1;
-            let votedOut = [];
-            for(const player in votes) {
-                if (votes[player] > maxVotes) {
-                    maxVotes = votes[player];
-                    votedOut = [player];
-                } else if (votes[player] === maxVotes) {
-                    votedOut.push(player);
+            
+            // Check if all players have acknowledged
+            if (gameData.roleAcknowledgements.length === gameData.players.length) {
+                // Host triggers the timer start
+                if(userId === gameData.hostId) {
+                    const gameRef = doc(db, "games", gameId);
+                    updateDoc(gameRef, { status: 'game', timerStart: serverTimestamp() });
                 }
             }
-            
-            const votedOutName = votedOut.join(', ');
-            votedOutPlayer.textContent = votedOutName;
-            moleReveal.classList.add('hidden'); // Hide until timeout
-
-            setTimeout(() => {
-                moleReveal.classList.remove('hidden');
-                actualMole.textContent = mole;
-
-                if (votedOut.length === 1 && votedOut[0] === mole) {
-                    winnerAnnouncement.textContent = "The Players win the round!";
-                    winnerAnnouncement.className = "text-2xl font-bold text-green-400";
-                    // Award points to everyone except the mole
-                    players.forEach(p => {
-                        if (p !== mole) scores[p]++;
-                    });
-                } else {
-                    winnerAnnouncement.textContent = "The Mole wins the round!";
-                    winnerAnnouncement.className = "text-2xl font-bold text-red-500";
-                    // Award point to the mole
-                    scores[mole]++;
-                }
-            }, 2000);
-
-            if (currentRound >= totalRounds) {
-                nextRoundBtn.textContent = "Show Final Results";
-                nextRoundBtn.onclick = endGame;
-            } else {
-                nextRoundBtn.textContent = "Next Round";
-                nextRoundBtn.onclick = startNewRound;
-            }
         }
-
-        function endGame() {
-            showScreen('game-over-screen');
-            
-            // Sort players by score
-            const sortedPlayers = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-            
-            finalScores.innerHTML = '';
-            sortedPlayers.forEach(([name, score]) => {
-                finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${name}</span> <span>${score} pts</span></p>`;
+        
+        function renderGameScreen(gameData) {
+            // Timer logic would be more complex and needs server-side calculation or trusted client
+            // For simplicity, we'll just show the discussion screen
+            showScreen('game-screen');
+            gamePlayerList.innerHTML = '';
+            gameData.players.forEach(p => {
+                const tag = document.createElement('div');
+                tag.className = 'player-tag';
+                tag.textContent = p.name;
+                gamePlayerList.appendChild(tag);
             });
 
-            const highScore = sortedPlayers[0][1];
-            const winners = sortedPlayers.filter(([name, score]) => score === highScore).map(([name]) => name);
+            // A simple client-side timeout to move to voting
+            // In a real app, the host would control this transition
+            if (userId === gameData.hostId) {
+                setTimeout(async () => {
+                    const gameRef = doc(db, "games", gameId);
+                    const currentDoc = await getDoc(gameRef);
+                    // Only advance if we are still in the game state
+                    if (currentDoc.data().status === 'game') {
+                         updateDoc(gameRef, { status: 'voting' });
+                    }
+                }, 180000); // 3 minutes
+            }
+        }
+
+        function renderVotingScreen(gameData) {
+            const playerHasVoted = gameData.votes && gameData.votes[userId];
+            if (playerHasVoted) {
+                voteButtons.innerHTML = '';
+                voteWaitText.classList.remove('hidden');
+            } else {
+                voteButtons.innerHTML = '';
+                voteWaitText.classList.add('hidden');
+                gameData.players.forEach(player => {
+                    if (player.id !== userId) {
+                        const voteBtn = document.createElement('button');
+                        voteBtn.className = 'btn btn-secondary';
+                        voteBtn.textContent = player.name;
+                        voteBtn.onclick = () => castVote(player.id);
+                        voteButtons.appendChild(voteBtn);
+                    }
+                });
+            }
+
+            // Check if all players have voted
+            const voteCount = gameData.votes ? Object.keys(gameData.votes).length : 0;
+            if (voteCount === gameData.players.length) {
+                if (userId === gameData.hostId) {
+                    const gameRef = doc(db, "games", gameId);
+                    updateDoc(gameRef, { status: 'results' });
+                }
+            }
+        }
+        
+        async function renderResultsScreen(gameData) {
+            // Tally votes
+            const voteCounts = {};
+            for (const voterId in gameData.votes) {
+                const votedForId = gameData.votes[voterId];
+                voteCounts[votedForId] = (voteCounts[votedForId] || 0) + 1;
+            }
+            
+            voteTally.innerHTML = '<h3>Vote Counts:</h3>';
+            gameData.players.forEach(p => {
+                 const count = voteCounts[p.id] || 0;
+                 voteTally.innerHTML += `<p class="text-gray-400">${p.name}: ${count} vote(s)</p>`;
+            });
+
+            let maxVotes = -1;
+            let votedOutIds = [];
+            for (const playerId in voteCounts) {
+                if (voteCounts[playerId] > maxVotes) {
+                    maxVotes = voteCounts[playerId];
+                    votedOutIds = [playerId];
+                } else if (voteCounts[playerId] === maxVotes) {
+                    votedOutIds.push(playerId);
+                }
+            }
+
+            const votedOutNames = votedOutIds.map(id => gameData.players.find(p => p.id === id).name).join(', ');
+            votedOutPlayer.textContent = votedOutNames;
+
+            moleReveal.classList.remove('hidden');
+            const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
+            actualMole.textContent = actualMoleData.name;
+
+            const moleWasVotedOut = votedOutIds.length === 1 && votedOutIds[0] === gameData.moleId;
+            
+            if (moleWasVotedOut) {
+                winnerAnnouncement.textContent = "The Players win the round!";
+                winnerAnnouncement.className = "text-2xl font-bold text-green-400";
+            } else {
+                winnerAnnouncement.textContent = "The Mole wins the round!";
+                winnerAnnouncement.className = "text-2xl font-bold text-red-500";
+            }
+            
+            // Only host handles scoring and moving to next round
+            if (userId === gameData.hostId) {
+                const newScores = { ...gameData.scores };
+                if(moleWasVotedOut) {
+                    gameData.players.forEach(p => {
+                        if (p.id !== gameData.moleId) newScores[p.id]++;
+                    });
+                } else {
+                    newScores[gameData.moleId]++;
+                }
+                
+                await updateDoc(doc(db, "games", gameId), { scores: newScores });
+                nextRoundBtn.classList.remove('hidden');
+            } else {
+                nextRoundBtn.classList.add('hidden');
+                nextRoundBtn.textContent = 'Waiting for host...';
+            }
+        }
+        
+        function renderGameOverScreen(gameData) {
+             const sortedPlayers = gameData.players.sort((a, b) => (gameData.scores[b.id] || 0) - (gameData.scores[a.id] || 0));
+            
+            finalScores.innerHTML = '';
+            sortedPlayers.forEach(p => {
+                finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${p.name}</span> <span>${gameData.scores[p.id] || 0} pts</span></p>`;
+            });
+
+            const highScore = gameData.scores[sortedPlayers[0].id];
+            const winners = sortedPlayers.filter(p => gameData.scores[p.id] === highScore).map(p => p.name);
 
             if (winners.length > 1) {
                 finalWinner.textContent = `It's a tie between ${winners.join(', ')}!`;
             } else {
                 finalWinner.textContent = `${winners[0]} is the winner!`;
             }
+
+            if (userId === gameData.hostId) {
+                 playAgainBtn.onclick = async () => {
+                     // Reset the game to lobby state
+                     await updateDoc(doc(db, "games", gameId), { status: 'lobby', players: [], currentRound: 0 });
+                 };
+            } else {
+                playAgainBtn.textContent = 'Waiting for host to restart';
+                playAgainBtn.disabled = true;
+            }
         }
 
-        function playAgain() {
-            // Reset all state variables
-            players = [];
-            secretWord = '';
-            mole = '';
-            wordMaster = '';
-            votes = {};
-            scores = {};
-            currentPlayerIndex = 0;
-            clearInterval(timerInterval);
-            currentRound = 0;
-            totalRounds = 0;
-            
-            updatePlayerList();
-            secretWordInput.value = '';
-            playerNameInput.value = '';
-            moleReveal.classList.add('hidden');
-            
-            showScreen('setup-screen');
-        }
 
         // --- Event Listeners ---
-        addPlayerBtn.addEventListener('click', () => {
-            if (players.length >= 10) {
-                alert('The game is full! You cannot add more than 10 players.');
-                return;
-            }
-            const newName = playerNameInput.value.trim();
-            if (newName && !players.includes(newName)) {
-                players.push(newName);
-                updatePlayerList();
-                playerNameInput.value = '';
-            } else if (players.includes(newName)) {
-                alert("This name is already taken.");
-            }
+        createGameBtn.addEventListener('click', createGame);
+        joinGameBtn.addEventListener('click', () => {
+            const id = joinGameIdInput.value.trim();
+            if (id) joinGame(id);
         });
-
-        playerNameInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') addPlayerBtn.click();
-        });
-
+        addPlayerBtn.addEventListener('click', addPlayer);
         startGameBtn.addEventListener('click', startGame);
-
-        proceedToWordInputBtn.addEventListener('click', () => {
-            wordMasterTurnTitle.textContent = `${wordMaster}'s Turn`;
-            showScreen('word-input-screen');
-        });
-
+        proceedToWordInputBtn.addEventListener('click', () => showScreen('word-input-screen'));
         setWordBtn.addEventListener('click', setWordAndAssignRoles);
-        showRoleBtn.addEventListener('click', displayRole);
-        hideRoleBtn.addEventListener('click', hideRoleAndContinue);
-        playAgainBtn.addEventListener('click', playAgain);
-
+        
         toggleWordVisibilityBtn.addEventListener('click', () => {
             const isPassword = secretWordInput.type === 'password';
             secretWordInput.type = isPassword ? 'text' : 'password';
             eyeOpenIcon.classList.toggle('hidden', isPassword);
             eyeClosedIcon.classList.toggle('hidden', !isPassword);
         });
+        
+        showRoleBtn.addEventListener('click', async () => {
+            revealPrompt.style.display = 'none';
+            roleDisplay.classList.remove('hidden');
+            
+            const gameDoc = await getDoc(doc(db, "games", gameId));
+            const gameData = gameDoc.data();
+            
+            if (userId === gameData.moleId) {
+                roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in and don't get caught!</p>`;
+            } else {
+                roleText.innerHTML = `<p class="text-gray-300">The secret word is:</p><h2 class="text-3xl font-bold text-indigo-400 mt-2">${gameData.secretWord.toUpperCase()}</h2><p class="text-gray-300 mt-4">Find the Mole!</p>`;
+            }
+        });
+        
+        hideRoleBtn.addEventListener('click', acknowledgeRole);
 
-        // --- Initial Call ---
-        showScreen('setup-screen');
+        nextRoundBtn.addEventListener('click', startNewRound);
+
+
+        // --- Initial Load ---
+        signInAnonymously(auth).then((userCredential) => {
+            userId = userCredential.user.uid;
+            showScreen('home-screen');
+        }).catch((error) => {
+            console.error("Anonymous auth failed:", error);
+            alert("Could not connect to the game service. Please refresh.");
+        });
+
     </script>
 </body>
 </html>
