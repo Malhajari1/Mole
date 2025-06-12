@@ -510,7 +510,7 @@
                 await updateDoc(gameRef, {
                     secretWord: word,
                     moleId: mole.id,
-                    status: 'role_reveal'
+                    status: 'reveal'
                 });
             } catch (error) {
                 console.error("Error setting word:", error);
@@ -571,7 +571,7 @@
                 case 'round_start':
                     renderRoundStart(gameData);
                     break;
-                case 'role_reveal':
+                case 'reveal':
                     renderRoleReveal(gameData);
                     break;
                 case 'game':
