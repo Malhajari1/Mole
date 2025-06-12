@@ -658,7 +658,7 @@
                 clearInterval(gameTimerInterval);
             }
 
-            if (gameData.timerStartTime) {
+            if (gameData.timerStartTime && gameData.timerStartTime.toDate) {
                 const startTime = gameData.timerStartTime.toDate(); 
                 const timerDuration = 3 * 60; 
 
@@ -877,4 +877,4 @@
 
     </script>
 </body>
-</ht
+</html>
