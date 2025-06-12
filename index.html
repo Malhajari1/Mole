@@ -585,7 +585,10 @@
             const total = gameData.totalRounds;
             roundTitle.textContent = `Round ${roundNum} of ${total}`;
             
-            wordMasterWaitText.innerHTML = `Typer is typing ya manga please wait<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+            const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
+            const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
+            
+            wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to type the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
             wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${roundNum})`;
         }
         
@@ -819,4 +822,4 @@
 
     </script>
 </body>
-</html>
+</ht
