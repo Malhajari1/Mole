@@ -393,7 +393,11 @@
                 renderGame(gameData);
             }, (error) => {
                 console.error("Snapshot listener error:", error);
-                alert("Lost connection to the game. It's possible your browser extensions (like ad-blockers) are blocking the connection.");
+                if (error.code && error.code.includes('permission-denied')) {
+                     alert("Connection blocked. This may be caused by a browser extension (like an ad-blocker). Please disable it for this site and refresh.");
+                } else {
+                    alert("Lost connection to the game.");
+                }
             });
         }
 
@@ -514,24 +518,9 @@
         async function acknowledgeRole() {
             try {
                 const gameRef = doc(db, "games", gameId);
-                // First, optimistically add the user's ID to the acknowledgements
                 await updateDoc(gameRef, {
                     roleAcknowledgements: arrayUnion(userId)
                 });
-
-                // Then, get the latest game state to check if all players have acknowledged
-                const gameDoc = await getDoc(gameRef);
-                const gameData = gameDoc.data();
-
-                // If all players have acknowledged, the host sets the timer start time
-                if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
-                    if (userId === gameData.hostId) {
-                        await updateDoc(gameRef, { 
-                            status: 'game', 
-                            timerStartTime: serverTimestamp() 
-                        });
-                    }
-                }
             } catch (error) {
                 console.error("Error acknowledging role:", error);
                 alert("Could not acknowledge role. Error: " + error.message);
@@ -559,7 +548,6 @@
             const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
 
-            // Clear the master timer if the status is no longer 'game'
             if (status !== 'game' && gameTimerInterval) {
                 clearInterval(gameTimerInterval);
                 gameTimerInterval = null;
@@ -648,6 +636,13 @@
                 roleTextContent.classList.remove('invisible');
                 acknowledgeRoleBtn.classList.add('hidden');
             }
+            
+            if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
+                if(userId === gameData.hostId) {
+                    const gameRef = doc(db, "games", gameId);
+                    updateDoc(gameRef, { status: 'game' });
+                }
+            }
         }
         
         function renderGameScreen(gameData) {
@@ -659,16 +654,15 @@
                 gamePlayerList.appendChild(tag);
             });
 
-            // Clear any existing timer to prevent duplicates
             if (gameTimerInterval) {
                 clearInterval(gameTimerInterval);
             }
 
             if (gameData.timerStartTime) {
-                const startTime = gameData.timerStartTime.toDate(); // Convert Firestore timestamp to JS Date
-                const timerDuration = 3 * 60; // 3 minutes in seconds
+                const startTime = gameData.timerStartTime.toDate(); 
+                const timerDuration = 3 * 60; 
 
-                gameTimerInterval = setInterval(() => {
+                gameTimerInterval = setInterval(async () => {
                     const now = new Date();
                     const elapsedSeconds = Math.floor((now - startTime) / 1000);
                     const remainingSeconds = timerDuration - elapsedSeconds;
@@ -678,24 +672,24 @@
                         gameTimerInterval = null;
                         timerDisplay.textContent = "0:00";
                         
-                        // Only the host triggers the next state to avoid multiple updates
                         if (userId === gameData.hostId) {
-                             // Double check the status to prevent race conditions
-                            getDoc(doc(db, "games", gameId)).then(gameDoc => {
-                                if (gameDoc.exists() && gameDoc.data().status === 'game') {
-                                    updateDoc(doc(db, "games", gameId), { status: 'voting' });
-                                }
-                            });
+                            const gameRef = doc(db, "games", gameId);
+                            const currentDoc = await getDoc(gameRef);
+                            if (currentDoc.exists() && currentDoc.data().status === 'game') {
+                                updateDoc(gameRef, { status: 'voting' });
+                            }
                         }
                     } else {
                         const minutes = Math.floor(remainingSeconds / 60);
                         const seconds = remainingSeconds % 60;
                         timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                     }
-                }, 1000); // Update every second
+                }, 1000); 
             } else {
-                // If timerStartTime isn't set yet, show the default display
                 timerDisplay.textContent = "3:00";
+                if(userId === gameData.hostId && gameData.status === 'game'){
+                     updateDoc(doc(db, "games", gameId), { timerStartTime: serverTimestamp() });
+                }
             }
         }
 
@@ -883,4 +877,4 @@
 
     </script>
 </body>
-</html>
+</ht
