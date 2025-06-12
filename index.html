@@ -298,21 +298,26 @@
         // --- Game Logic Functions ---
 
         async function createGame() {
-            gameId = generateGameId();
-            const gameRef = doc(db, "games", gameId);
-            const hostId = userId;
-            
-            await setDoc(gameRef, {
-                hostId: hostId,
-                status: 'lobby',
-                players: [],
-                scores: {},
-                currentRound: 0,
-                totalRounds: 0,
-                createdAt: serverTimestamp()
-            });
-            
-            await joinGame(gameId);
+            try {
+                gameId = generateGameId();
+                const gameRef = doc(db, "games", gameId);
+                const hostId = userId;
+                
+                await setDoc(gameRef, {
+                    hostId: hostId,
+                    status: 'lobby',
+                    players: [],
+                    scores: {},
+                    currentRound: 0,
+                    totalRounds: 0,
+                    createdAt: serverTimestamp()
+                });
+                
+                await joinGame(gameId);
+            } catch (error) {
+                console.error("Error creating game:", error);
+                alert("Failed to create game. Please check your Firestore rules and internet connection. Error: " + error.message);
+            }
         }
 
         async function joinGame(id) {
@@ -462,7 +467,6 @@
             const currentScreenId = document.querySelector('.screen.active')?.id || '';
             const targetScreenId = gameData.status + '-screen';
             
-            // Special handling for word_input screen, which is client-side only
             if(targetScreenId === 'round_start-screen' && userId === gameData.wordMasterId) {
                  if(currentScreenId !== 'word-input-screen') {
                     showScreen(targetScreenId);
@@ -758,4 +762,4 @@
 
     </script>
 </body>
-</html>
+</ht
