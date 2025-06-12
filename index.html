@@ -5,11 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Mole Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DM Sans', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 25px 25px;
             -webkit-tap-highlight-color: transparent;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'DM Serif Display', serif;
         }
         .screen {
             display: none;
@@ -18,78 +28,102 @@
             display: flex;
         }
         .card {
-            background-color: #2d3748; /* slate-800 */
-            border-radius: 0.75rem;
+            background-color: #1f2937; /* gray-800 */
+            border-radius: 0.25rem; /* less rounded */
             padding: 2rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #4b5563; /* gray-600 */
             width: 90%;
             max-width: 450px;
         }
         .btn {
             display: inline-block;
-            background-color: #4f46e5; /* indigo-600 */
-            color: white;
+            background-color: #991b1b; /* red-800 */
+            color: #f3f4f6; /* gray-100 */
             padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+            border-radius: 0.25rem; /* sharper corners */
             text-align: center;
-            font-weight: 600;
+            font-weight: 700; /* bolder */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             cursor: pointer;
-            transition: background-color 0.2s;
-            border: none;
+            transition: all 0.2s;
+            border: 1px solid #dc2626; /* red-600 */
             width: 100%;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
         }
         .btn:hover {
-            background-color: #4338ca; /* indigo-700 */
+            background-color: #b91c1c; /* red-700 */
+            border-color: #ef4444; /* red-500 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn:disabled {
-            background-color: #4b5563;
+            background-color: #4b5563; /* gray-600 */
+            border-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
             cursor: not-allowed;
+            transform: none;
+            box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn-secondary {
-            background-color: #4b5563; /* gray-600 */
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563; /* gray-600 */
         }
         .btn-secondary:hover {
-            background-color: #374151; /* gray-700 */
+            background-color: #4b5563; /* gray-600 */
+            border-color: #6b7280; /* gray-500 */
         }
         .input-field {
-            background-color: #4b5563; /* gray-600 */
-            color: white;
+            background-color: #374151; /* gray-700 */
+            color: #f3f4f6; /* gray-100 */
             border: 1px solid #6b7280; /* gray-500 */
             padding: 0.75rem;
-            border-radius: 0.5rem;
+            border-radius: 0.25rem;
             width: 100%;
             margin-bottom: 1rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .input-field::placeholder {
+            color: #9ca3af; /* gray-400 */
         }
         .player-tag {
             background-color: #4b5563; /* gray-600 */
             color: white;
             padding: 0.5rem 1rem;
-            border-radius: 9999px;
+            border-radius: 0.25rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
+            border: 1px solid #6b7280; /* gray-500 */
         }
         #game-id-display {
-            background-color: #1f2937;
+            background-color: #111827; /* gray-900 */
             padding: 0.75rem;
-            border-radius: 0.5rem;
-            font-family: monospace;
+            border-radius: 0.25rem;
+            font-family: 'DM Sans', monospace;
             font-size: 1.25rem;
+            font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #4b5563;
+            border: 2px dashed #b91c1c; /* red-700 */
+            color: #fecaca; /* red-200 */
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
     
     <!-- Home screen to create or join a game -->
     <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-3xl font-bold mb-4">The Mole Game</h1>
+            <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
-            <div class="border-t border-gray-600 my-4"></div>
+            <div class="border-t border-gray-700 my-4"></div>
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
         </div>
@@ -98,21 +132,21 @@
     <!-- Lobby screen for waiting for players -->
     <div id="lobby-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
-            <h1 class="text-2xl font-bold text-center mb-2">Lobby</h1>
+            <h1 class="text-3xl font-bold text-center mb-2">Game Lobby</h1>
             <p class="text-gray-400 text-center mb-4">Share the Game ID with your friends!</p>
             <div id="game-id-display" class="mb-6" title="Click to copy"></div>
-            <p id="copy-confirm" class="text-green-400 text-center text-sm mb-4" style="visibility: hidden;">Copied!</p>
+            <p id="copy-confirm" class="text-amber-300 text-center text-sm mb-4" style="visibility: hidden;">Copied to clipboard!</p>
             
-            <p class="text-gray-400 text-center mb-4">Players (<span id="player-count">0</span>/10):</p>
+            <p class="text-gray-400 text-center mb-4">OPERATIVES (<span id="player-count">0</span>/10):</p>
             <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div>
             
             <div class="flex mb-4">
-                <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your name...">
+                <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your callsign...">
                 <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
             </div>
 
-            <button id="start-game-btn" class="btn">Start Game</button>
-            <p class="text-xs text-gray-500 text-center mt-2">Only the host can start the game.</p>
+            <button id="start-game-btn" class="btn">Initiate Mission</button>
+            <p class="text-xs text-gray-500 text-center mt-2">Only the handler can initiate the mission.</p>
         </div>
     </div>
 
@@ -128,29 +162,29 @@
     <div id="word-input-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
             <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4">Your Turn, Word Master!</h1>
-            <p class="text-gray-400 text-center mb-6">Enter the secret word. No one else should see this!</p>
+            <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
             <div class="relative w-full mb-4">
-                <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret word...">
+                <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret Codename...">
                 <button id="toggle-word-visibility-btn" type="button" class="absolute top-0 right-0 h-full px-4 flex items-center text-gray-400 hover:text-gray-200 focus:outline-none">
                     <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                     <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
                 </button>
             </div>
-            <button id="set-word-btn" class="btn">Set Word & Assign Roles</button>
+            <button id="set-word-btn" class="btn">Set Codename & Assign Roles</button>
         </div>
     </div>
 
     <!-- Screen for revealing roles to each player -->
     <div id="reveal-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-3xl font-bold mb-6">Time to see your role!</h1>
+            <h1 class="text-3xl font-bold mb-6">Receive Your Role</h1>
             <div id="reveal-prompt">
-                <p class="text-gray-400 mb-6">Make sure no one else is looking at your screen.</p>
-                <button id="show-role-btn" class="btn">Ready? Tap to See Role</button>
+                <p class="text-gray-400 mb-6">Ensure your screen is not being observed.</p>
+                <button id="show-role-btn" class="btn">Reveal Role</button>
             </div>
             <div id="role-display" class="hidden">
                 <div id="role-text" class="my-8"></div>
-                <button id="hide-role-btn" class="btn btn-secondary">I Understand</button>
+                <button id="hide-role-btn" class="btn btn-secondary">Understood</button>
             </div>
         </div>
     </div>
@@ -158,10 +192,10 @@
     <!-- Screen for the main game and timer -->
     <div id="game-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-2xl font-bold mb-2">Discuss!</h1>
-            <p class="text-gray-400 mb-6">Try to figure out who the Mole is.</p>
-            <div id="timer" class="text-6xl font-bold text-indigo-400 my-8">3:00</div>
-            <p class="text-gray-400 mb-4">Players in the game:</p>
+            <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
+            <p class="text-gray-400 mb-6">Identify the mole.</p>
+            <div id="timer" class="text-6xl font-bold text-red-500 my-8">3:00</div>
+            <p class="text-gray-400 mb-4">Operatives in play:</p>
             <div id="game-player-list" class="flex flex-wrap justify-center"></div>
         </div>
     </div>
@@ -169,23 +203,23 @@
     <!-- Screen for voting -->
     <div id="voting-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-2xl font-bold mb-2">Time to Vote!</h1>
-            <p id="voter-name" class="text-gray-400 mb-6">Place your vote:</p>
+            <h1 class="text-2xl font-bold mb-2">Cast Your Vote</h1>
+            <p id="voter-name" class="text-gray-400 mb-6">Who is the mole?</p>
             <div id="vote-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-            <p id="vote-wait-text" class="text-gray-400 mt-6 hidden">You have voted. Waiting for other players...</p>
+            <p id="vote-wait-text" class="text-gray-400 mt-6 hidden">Vote cast. Awaiting others...</p>
         </div>
     </div>
 
     <!-- Screen for showing round results -->
     <div id="results-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-3xl font-bold mb-4">Round Results</h1>
+            <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
             <div id="vote-tally" class="mb-6 text-left"></div>
-            <p class="text-xl mb-4">The player with the most votes was...</p>
+            <p class="text-xl mb-4">The operative with the most votes was...</p>
             <p id="voted-out-player" class="text-3xl font-bold text-red-500 mb-8"></p>
             <div id="mole-reveal" class="hidden">
                 <p class="text-xl mb-4">The actual Mole was...</p>
-                <p id="actual-mole" class="text-3xl font-bold text-indigo-400 mb-8"></p>
+                <p id="actual-mole" class="text-3xl font-bold text-red-400 mb-8"></p>
                 <p id="winner-announcement" class="text-2xl font-bold"></p>
             </div>
             <button id="next-round-btn" class="btn mt-8">Next Round</button>
@@ -195,11 +229,11 @@
     <!-- Screen for Game Over -->
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-3xl font-bold text-center mb-4">Game Over!</h1>
-            <p class="text-gray-400 text-center mb-6">Here are the final scores:</p>
+            <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
+            <p class="text-gray-400 text-center mb-6">Final scores:</p>
             <div id="final-scores" class="text-left w-full max-w-xs mx-auto mb-8"></div>
-            <p id="final-winner" class="text-2xl font-bold text-green-400 mb-8"></p>
-            <button id="play-again-btn" class="btn">Play Again</button>
+            <p id="final-winner" class="text-2xl font-bold text-emerald-400 mb-8"></p>
+            <button id="play-again-btn" class="btn">New Game</button>
         </div>
     </div>
 
@@ -503,7 +537,7 @@
             gameData.players.forEach(p => {
                 const tag = document.createElement('div');
                 tag.className = 'player-tag';
-                tag.textContent = p.name + (p.id === gameData.hostId ? ' (Host)' : '');
+                tag.textContent = p.name + (p.id === gameData.hostId ? ' (Handler)' : '');
                 playerList.appendChild(tag);
             });
             
@@ -523,10 +557,7 @@
             const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
             const wordMasterName = wordMaster ? wordMaster.name : '...';
             
-            // This is for the waiting screen
-            wordMasterWaitText.innerHTML = `Waiting for the Word Master, <strong>${wordMasterName}</strong>, to enter a word...`;
-
-            // This is for the word master's screen
+            wordMasterWaitText.innerHTML = `Awaiting intel from Word Master: <strong>${wordMasterName}</strong>...`;
             wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${roundNum})`;
         }
         
@@ -536,7 +567,7 @@
             roleDisplay.classList.add('hidden');
 
             if (playerHasAckd) {
-                roleText.innerHTML = `<p class="text-gray-300">Waiting for other players to see their roles...</p>`;
+                roleText.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
                 roleDisplay.classList.remove('hidden');
                 hideRoleBtn.disabled = true;
             } else {
@@ -642,8 +673,8 @@
             const moleWasVotedOut = votedOutIds.length === 1 && votedOutIds[0] === gameData.moleId;
             
             if (moleWasVotedOut) {
-                winnerAnnouncement.textContent = "The Players win the round!";
-                winnerAnnouncement.className = "text-2xl font-bold text-green-400";
+                winnerAnnouncement.textContent = "The Operatives win the round!";
+                winnerAnnouncement.className = "text-2xl font-bold text-emerald-400";
             } else {
                 winnerAnnouncement.textContent = "The Mole wins the round!";
                 winnerAnnouncement.className = "text-2xl font-bold text-red-500";
@@ -668,12 +699,12 @@
 
                 nextRoundBtn.classList.remove('hidden');
                 nextRoundBtn.disabled = false;
-                nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Show Final Results' : 'Start Next Round';
+                nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Show Final Results' : 'Proceed to Debrief';
 
             } else {
                 nextRoundBtn.classList.remove('hidden');
                 nextRoundBtn.disabled = true;
-                nextRoundBtn.textContent = 'Waiting for host...';
+                nextRoundBtn.textContent = 'Awaiting Handler...';
             }
         }
         
@@ -699,9 +730,9 @@
                      await updateDoc(doc(db, "games", gameId), { status: 'lobby', players: [], currentRound: 0, scores: {}, moleId: '', secretWord: '', votes: {}});
                  };
                  playAgainBtn.disabled = false;
-                 playAgainBtn.textContent = 'Play Again';
+                 playAgainBtn.textContent = 'New Game';
             } else {
-                playAgainBtn.textContent = 'Waiting for host to restart';
+                playAgainBtn.textContent = 'Awaiting Handler...';
                 playAgainBtn.disabled = true;
             }
         }
@@ -732,9 +763,9 @@
             const gameData = gameDoc.data();
             
             if (userId === gameData.moleId) {
-                roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in and don't get caught!</p>`;
+                roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
             } else {
-                roleText.innerHTML = `<p class="text-gray-300">The secret word is:</p><h2 class="text-3xl font-bold text-indigo-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Find the Mole!</p>`;
+                roleText.innerHTML = `<p class="text-gray-300">The Secret Codename is:</p><h2 class="text-3xl font-bold text-red-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Identify the Mole.</p>`;
             }
         });
         
