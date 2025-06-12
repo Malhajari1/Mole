@@ -411,18 +411,24 @@
             const players = gameDoc.data().players;
             
             if (players.length < 3) {
-                alert("You need at least 3 players to start.");
+                alert("You need at least 3 operatives to start.");
                 return;
             }
             
             const totalRounds = players.length >= 6 ? players.length : 6;
             const scores = players.reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
+            const wordMaster = players[Math.floor(Math.random() * players.length)];
 
             await updateDoc(gameRef, { 
                 status: 'round_start',
-                currentRound: 0,
+                currentRound: 1,
                 totalRounds: totalRounds,
-                scores: scores
+                scores: scores,
+                wordMasterId: wordMaster.id,
+                secretWord: '',
+                moleId: '',
+                votes: {},
+                roleAcknowledgements: []
              });
         }
 
