@@ -196,7 +196,7 @@
                     <svg id="reveal-eye-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 w-12 h-12"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </div>
                 <div id="role-text-content" class="invisible">
-                    </div>
+                </div>
             </div>
             <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
         </div>
@@ -393,7 +393,7 @@
                 renderGame(gameData);
             }, (error) => {
                 console.error("Snapshot listener error:", error);
-                if (error.code && error.code.includes('permission-denied')) {
+                if (error.code && (error.code.includes('permission-denied') || error.code.includes('resource-exhausted'))) {
                      alert("Connection blocked. This may be caused by a browser extension (like an ad-blocker). Please disable it for this site and refresh.");
                 } else {
                     alert("Lost connection to the game.");
@@ -448,7 +448,7 @@
                     moleId: '',
                     votes: {},
                     roleAcknowledgements: [],
-                    timerStartTime: null // Reset timer start time
+                    timerStartTime: null
                 });
             } catch (error) {
                 console.error("Error starting game:", error);
@@ -477,7 +477,7 @@
                     moleId: '',
                     votes: {},
                     roleAcknowledgements: [],
-                    timerStartTime: null // Reset timer start time
+                    timerStartTime: null
                 });
             } catch(error) {
                 console.error("Error starting new round:", error);
