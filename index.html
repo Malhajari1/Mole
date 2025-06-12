@@ -134,7 +134,6 @@
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
     
-    <!-- Home screen to create or join a game -->
     <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
@@ -146,7 +145,6 @@
         </div>
     </div>
 
-    <!-- Lobby screen for waiting for players -->
     <div id="lobby-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
             <h1 class="text-3xl font-bold text-center mb-2">Game Lobby</h1>
@@ -167,7 +165,6 @@
         </div>
     </div>
 
-    <!-- Screen to announce the start of a new round -->
     <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
@@ -175,7 +172,6 @@
         </div>
     </div>
 
-    <!-- Screen for the Word Master to enter the word -->
     <div id="word-input-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
             <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4">Your Turn, Word Master!</h1>
@@ -191,26 +187,21 @@
         </div>
     </div>
 
-    <!-- Screen for revealing roles to each player -->
     <div id="reveal-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-6">Your Role is Ready</h1>
             <p class="text-gray-400 mb-6">Ensure your screen is not being observed, then click the eye to reveal your role.</p>
             <div id="role-box" class="relative p-8 bg-gray-900 border-2 border-dashed border-gray-600 rounded-md">
-                <!-- Blurred overlay -->
                 <div id="role-blur-overlay" class="absolute inset-0 bg-gray-800/50 backdrop-blur-md flex items-center justify-center cursor-pointer transition-opacity duration-300">
                     <svg id="reveal-eye-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 w-12 h-12"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </div>
-                <!-- Actual role text, hidden initially -->
                 <div id="role-text-content" class="invisible">
-                    <!-- Content will be injected by JS -->
-                </div>
+                    </div>
             </div>
             <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
         </div>
     </div>
     
-    <!-- Screen for the main game and timer -->
     <div id="game-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
@@ -221,7 +212,6 @@
         </div>
     </div>
 
-    <!-- Screen for voting -->
     <div id="voting-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Cast Your Vote</h1>
@@ -231,7 +221,6 @@
         </div>
     </div>
 
-    <!-- Screen for showing round results -->
     <div id="results-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
@@ -247,7 +236,6 @@
         </div>
     </div>
     
-    <!-- Screen for Game Over -->
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
@@ -283,6 +271,7 @@
         let userId;
         let gameId;
         let gameUnsubscribe; // To stop listening to game updates
+        let gameTimerInterval = null; // To hold the timer interval
 
         // --- DOM Elements ---
         const screens = document.querySelectorAll('.screen');
@@ -305,7 +294,6 @@
         const eyeClosedIcon = document.getElementById('eye-closed-icon');
         const setWordBtn = document.getElementById('set-word-btn');
         
-        // New role reveal elements
         const roleBlurOverlay = document.getElementById('role-blur-overlay');
         const roleTextContent = document.getElementById('role-text-content');
         const acknowledgeRoleBtn = document.getElementById('acknowledge-role-btn');
@@ -369,7 +357,7 @@
                 await joinGame(gameId);
             } catch (error) {
                 console.error("Error creating game:", error);
-                alert("Failed to create game. Please check your Firestore rules and internet connection. Error: " + error.message);
+                alert("Failed to create game. Error: " + error.message);
             }
         }
 
@@ -386,11 +374,9 @@
                     return;
                 }
             } catch (error) {
-                alert("Could not connect to the database. Please check your Firebase security rules.");
                 console.error("Error fetching game doc:", error);
-                return;
+                alert("Could not connect to the database. Error: " + error.message);
             }
-
 
             gameId = id;
             
@@ -422,10 +408,15 @@
                 return;
             }
 
-            const gameRef = doc(db, "games", gameId);
-            await updateDoc(gameRef, {
-                players: arrayUnion({ id: userId, name: name })
-            });
+            try {
+                const gameRef = doc(db, "games", gameId);
+                await updateDoc(gameRef, {
+                    players: arrayUnion({ id: userId, name: name })
+                });
+            } catch(error) {
+                console.error("Error adding player:", error);
+                alert("Could not join the game. Error: " + error.message);
+            }
         }
 
         async function startGame() {
@@ -452,7 +443,8 @@
                     secretWord: '',
                     moleId: '',
                     votes: {},
-                    roleAcknowledgements: []
+                    roleAcknowledgements: [],
+                    timerStartTime: null // Reset timer start time
                 });
             } catch (error) {
                 console.error("Error starting game:", error);
@@ -480,7 +472,8 @@
                     secretWord: '',
                     moleId: '',
                     votes: {},
-                    roleAcknowledgements: []
+                    roleAcknowledgements: [],
+                    timerStartTime: null // Reset timer start time
                 });
             } catch(error) {
                 console.error("Error starting new round:", error);
@@ -521,9 +514,24 @@
         async function acknowledgeRole() {
             try {
                 const gameRef = doc(db, "games", gameId);
+                // First, optimistically add the user's ID to the acknowledgements
                 await updateDoc(gameRef, {
                     roleAcknowledgements: arrayUnion(userId)
                 });
+
+                // Then, get the latest game state to check if all players have acknowledged
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+
+                // If all players have acknowledged, the host sets the timer start time
+                if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
+                    if (userId === gameData.hostId) {
+                        await updateDoc(gameRef, { 
+                            status: 'game', 
+                            timerStartTime: serverTimestamp() 
+                        });
+                    }
+                }
             } catch (error) {
                 console.error("Error acknowledging role:", error);
                 alert("Could not acknowledge role. Error: " + error.message);
@@ -550,6 +558,12 @@
         function renderGame(gameData) {
             const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
+
+            // Clear the master timer if the status is no longer 'game'
+            if (status !== 'game' && gameTimerInterval) {
+                clearInterval(gameTimerInterval);
+                gameTimerInterval = null;
+            }
 
             let targetScreenId = status + '-screen';
             
@@ -622,7 +636,7 @@
         }
         
         function renderRoleReveal(gameData) {
-            const playerHasAckd = gameData.roleAcknowledgements.includes(userId);
+            const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
 
             roleBlurOverlay.classList.remove('opacity-0');
             roleTextContent.classList.add('invisible');
@@ -633,13 +647,6 @@
                 roleBlurOverlay.classList.add('opacity-0');
                 roleTextContent.classList.remove('invisible');
                 acknowledgeRoleBtn.classList.add('hidden');
-            }
-            
-            if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
-                if(userId === gameData.hostId) {
-                    const gameRef = doc(db, "games", gameId);
-                    updateDoc(gameRef, { status: 'game', timerStart: serverTimestamp() });
-                }
             }
         }
         
@@ -652,18 +659,43 @@
                 gamePlayerList.appendChild(tag);
             });
 
-            if (userId === gameData.hostId) {
-                const timerId = `game-timer-${gameData.currentRound}`;
-                if (!window[timerId]) {
-                    window[timerId] = setTimeout(async () => {
-                        const gameRef = doc(db, "games", gameId);
-                        const currentDoc = await getDoc(gameRef);
-                        if (currentDoc.exists() && currentDoc.data().status === 'game') {
-                            updateDoc(gameRef, { status: 'voting' });
+            // Clear any existing timer to prevent duplicates
+            if (gameTimerInterval) {
+                clearInterval(gameTimerInterval);
+            }
+
+            if (gameData.timerStartTime) {
+                const startTime = gameData.timerStartTime.toDate(); // Convert Firestore timestamp to JS Date
+                const timerDuration = 3 * 60; // 3 minutes in seconds
+
+                gameTimerInterval = setInterval(() => {
+                    const now = new Date();
+                    const elapsedSeconds = Math.floor((now - startTime) / 1000);
+                    const remainingSeconds = timerDuration - elapsedSeconds;
+
+                    if (remainingSeconds <= 0) {
+                        clearInterval(gameTimerInterval);
+                        gameTimerInterval = null;
+                        timerDisplay.textContent = "0:00";
+                        
+                        // Only the host triggers the next state to avoid multiple updates
+                        if (userId === gameData.hostId) {
+                             // Double check the status to prevent race conditions
+                            getDoc(doc(db, "games", gameId)).then(gameDoc => {
+                                if (gameDoc.exists() && gameDoc.data().status === 'game') {
+                                    updateDoc(doc(db, "games", gameId), { status: 'voting' });
+                                }
+                            });
                         }
-                        window[timerId] = null; 
-                    }, 180000); // 3 minutes
-                }
+                    } else {
+                        const minutes = Math.floor(remainingSeconds / 60);
+                        const seconds = remainingSeconds % 60;
+                        timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                }, 1000); // Update every second
+            } else {
+                // If timerStartTime isn't set yet, show the default display
+                timerDisplay.textContent = "3:00";
             }
         }
 
