@@ -113,6 +113,23 @@
             border: 2px dashed #b91c1c; /* red-700 */
             color: #fecaca; /* red-200 */
         }
+        .animating-dots span {
+            animation-name: blink;
+            animation-duration: 1.4s;
+            animation-iteration-count: infinite;
+            animation-fill-mode: both;
+        }
+        .animating-dots span:nth-child(2) {
+            animation-delay: .2s;
+        }
+        .animating-dots span:nth-child(3) {
+            animation-delay: .4s;
+        }
+        @keyframes blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
@@ -306,8 +323,13 @@
         // --- Core Functions ---
 
         function showScreen(screenId) {
+            const targetScreen = document.getElementById(screenId);
+            if (!targetScreen) {
+                console.error(`Error: Screen with ID "${screenId}" not found.`);
+                return; 
+            }
             screens.forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            targetScreen.classList.add('active');
         }
 
         function generateGameId() {
@@ -501,6 +523,8 @@
 
         function renderGame(gameData) {
             const status = gameData.status;
+            if (!status) return; // Don't render if status is missing
+
             let targetScreenId = status + '-screen';
             
             if (status === 'round_start') {
@@ -561,11 +585,8 @@
             const roundNum = gameData.currentRound;
             const total = gameData.totalRounds;
             roundTitle.textContent = `Round ${roundNum} of ${total}`;
-
-            const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
-            const wordMasterName = wordMaster ? wordMaster.name : '...';
             
-            wordMasterWaitText.innerHTML = `Awaiting intel from Word Master: <strong>${wordMasterName}</strong>...`;
+            wordMasterWaitText.innerHTML = `Typer is typing ya manga please wait<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
             wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${roundNum})`;
         }
         
