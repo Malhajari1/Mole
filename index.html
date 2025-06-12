@@ -120,10 +120,7 @@
     <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
-            <p class="text-gray-400 mb-2">The Word Master for this round is:</p>
-            <p id="round-word-master" class="text-2xl font-bold text-indigo-400 mb-6"></p>
-            <div id="word-master-wait-text">Waiting for the Word Master to enter a word...</div>
-            <button id="proceed-to-word-input-btn" class="btn hidden">Enter the Word</button>
+            <p id="word-master-wait-text" class="text-gray-300 text-lg"></p>
         </div>
     </div>
 
@@ -245,9 +242,8 @@
         const addPlayerBtn = document.getElementById('add-player-btn');
         const startGameBtn = document.getElementById('start-game-btn');
         const roundTitle = document.getElementById('round-title');
-        const roundWordMaster = document.getElementById('round-word-master');
+        const wordMasterTurnTitle = document.getElementById('word-master-turn-title');
         const wordMasterWaitText = document.getElementById('word-master-wait-text');
-        const proceedToWordInputBtn = document.getElementById('proceed-to-word-input-btn');
         const secretWordInput = document.getElementById('secret-word-input');
         const toggleWordVisibilityBtn = document.getElementById('toggle-word-visibility-btn');
         const eyeOpenIcon = document.getElementById('eye-open-icon');
@@ -464,18 +460,18 @@
         // --- Rendering Functions ---
 
         function renderGame(gameData) {
-            const currentScreenId = document.querySelector('.screen.active')?.id || '';
-            const targetScreenId = gameData.status + '-screen';
+            const status = gameData.status;
+            let targetScreenId = status + '-screen';
             
-            if(targetScreenId === 'round_start-screen' && userId === gameData.wordMasterId) {
-                 if(currentScreenId !== 'word-input-screen') {
-                    showScreen(targetScreenId);
+            if (status === 'round_start') {
+                if (userId === gameData.wordMasterId) {
+                    targetScreenId = 'word-input-screen';
                 }
-            } else if (currentScreenId !== targetScreenId) {
-                 showScreen(targetScreenId);
             }
 
-            switch (gameData.status) {
+            showScreen(targetScreenId);
+
+            switch (status) {
                 case 'lobby':
                     renderLobby(gameData);
                     break;
@@ -520,17 +516,18 @@
         }
 
         function renderRoundStart(gameData) {
-            roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
+            const roundNum = gameData.currentRound;
+            const total = gameData.totalRounds;
+            roundTitle.textContent = `Round ${roundNum} of ${total}`;
+
             const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
-            roundWordMaster.textContent = wordMaster ? wordMaster.name : '...';
+            const wordMasterName = wordMaster ? wordMaster.name : '...';
             
-            if (userId === gameData.wordMasterId) {
-                wordMasterWaitText.classList.add('hidden');
-                proceedToWordInputBtn.classList.remove('hidden');
-            } else {
-                wordMasterWaitText.classList.remove('hidden');
-                proceedToWordInputBtn.classList.add('hidden');
-            }
+            // This is for the waiting screen
+            wordMasterWaitText.innerHTML = `Waiting for the Word Master, <strong>${wordMasterName}</strong>, to enter a word...`;
+
+            // This is for the word master's screen
+            wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${roundNum})`;
         }
         
         function renderRoleReveal(gameData) {
@@ -688,7 +685,7 @@
                 finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${p.name}</span> <span>${gameData.scores[p.id] || 0} pts</span></p>`;
             });
 
-            const highScore = gameData.scores[sortedPlayers[0].id] || 0;
+            const highScore = sortedPlayers.length > 0 ? (gameData.scores[sortedPlayers[0].id] || 0) : 0;
             const winners = sortedPlayers.filter(p => (gameData.scores[p.id] || 0) === highScore).map(p => p.name);
 
             if (winners.length > 1) {
@@ -718,7 +715,6 @@
         });
         addPlayerBtn.addEventListener('click', addPlayer);
         startGameBtn.addEventListener('click', startGame);
-        proceedToWordInputBtn.addEventListener('click', () => showScreen('word-input-screen'));
         setWordBtn.addEventListener('click', setWordAndAssignRoles);
         
         toggleWordVisibilityBtn.addEventListener('click', () => {
@@ -762,4 +758,4 @@
 
     </script>
 </body>
-</ht
+</html>
