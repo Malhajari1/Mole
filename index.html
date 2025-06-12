@@ -212,16 +212,17 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: Replace with your actual Firebase config
+        // Your web app's Firebase configuration
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyAJqlQLiyN4Ddo2tNEDalfbcJ8eIr0oc3I",
+            authDomain: "mole-500ff.firebaseapp.com",
+            projectId: "mole-500ff",
+            storageBucket: "mole-500ff.appspot.com",
+            messagingSenderId: "854216033669",
+            appId: "1:854216033669:web:e33439d56feb15005a70ec",
+            measurementId: "G-XNHP89LS4Z"
         };
-
+        
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -243,7 +244,6 @@
         const playerNameInput = document.getElementById('player-name-input');
         const addPlayerBtn = document.getElementById('add-player-btn');
         const startGameBtn = document.getElementById('start-game-btn');
-        // ... (get all other elements as before)
         const roundTitle = document.getElementById('round-title');
         const roundWordMaster = document.getElementById('round-word-master');
         const wordMasterWaitText = document.getElementById('word-master-wait-text');
@@ -280,12 +280,10 @@
             document.getElementById(screenId).classList.add('active');
         }
 
-        // Generate a simple 6-digit game ID
         function generateGameId() {
             return Math.random().toString().substr(2, 6);
         }
 
-        // Copy Game ID to clipboard
         gameIdDisplay.addEventListener('click', () => {
             const tempInput = document.createElement('input');
             tempInput.value = gameIdDisplay.textContent;
@@ -319,22 +317,39 @@
 
         async function joinGame(id) {
             const gameRef = doc(db, "games", id);
-            const gameDoc = await getDoc(gameRef);
-
-            if (!gameDoc.exists()) {
-                alert("Game not found!");
+            try {
+                const gameDoc = await getDoc(gameRef);
+                if (!gameDoc.exists()) {
+                    alert("Game not found!");
+                    return;
+                }
+                if (gameDoc.data().status !== 'lobby') {
+                    alert("This game has already started and cannot be joined.");
+                    return;
+                }
+            } catch (error) {
+                alert("Could not connect to the database. Please check your Firebase security rules.");
+                console.error("Error fetching game doc:", error);
                 return;
             }
 
+
             gameId = id;
             
-            if (gameUnsubscribe) gameUnsubscribe(); // Stop listening to old game if any
+            if (gameUnsubscribe) gameUnsubscribe(); 
 
-            // Listen for real-time updates to the game state
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
                 const gameData = doc.data();
-                if (!gameData) return; // Game was deleted
+                if (!gameData) {
+                    if(gameUnsubscribe) gameUnsubscribe();
+                    showScreen('home-screen');
+                    alert("The game has ended or been deleted.");
+                    return;
+                }
                 renderGame(gameData);
+            }, (error) => {
+                console.error("Snapshot listener error:", error);
+                alert("Lost connection to the game.");
             });
         }
 
@@ -344,13 +359,15 @@
                 alert('Please enter a name.');
                 return;
             }
+            if (name.length > 15) {
+                alert('Name must be 15 characters or less.');
+                return;
+            }
 
             const gameRef = doc(db, "games", gameId);
             await updateDoc(gameRef, {
                 players: arrayUnion({ id: userId, name: name })
             });
-            playerNameInput.disabled = true;
-            addPlayerBtn.disabled = true;
         }
 
         async function startGame() {
@@ -368,11 +385,10 @@
 
             await updateDoc(gameRef, { 
                 status: 'round_start',
-                currentRound: 0, // Will be incremented by startNewRound
+                currentRound: 0,
                 totalRounds: totalRounds,
                 scores: scores
              });
-             await startNewRound(); // Host triggers the first round
         }
 
         async function startNewRound() {
@@ -410,6 +426,10 @@
             const gameData = gameDoc.data();
 
             const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
+            if (potentialMoles.length === 0) {
+                alert("Not enough players to assign a mole.");
+                return;
+            }
             const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
 
             await updateDoc(gameRef, {
@@ -431,8 +451,6 @@
             voteWaitText.classList.remove('hidden');
 
             const gameRef = doc(db, "games", gameId);
-            // This is a simplified way to handle votes. For a more robust system,
-            // you might use a subcollection.
             const newVotes = {};
             newVotes[`votes.${userId}`] = votedForId;
             await updateDoc(gameRef, newVotes);
@@ -441,8 +459,17 @@
         // --- Rendering Functions ---
 
         function renderGame(gameData) {
-            // Update UI based on game status
-            showScreen(gameData.status + '-screen');
+            const currentScreenId = document.querySelector('.screen.active')?.id || '';
+            const targetScreenId = gameData.status + '-screen';
+            
+            // Special handling for word_input screen, which is client-side only
+            if(targetScreenId === 'round_start-screen' && userId === gameData.wordMasterId) {
+                 if(currentScreenId !== 'word-input-screen') {
+                    showScreen(targetScreenId);
+                }
+            } else if (currentScreenId !== targetScreenId) {
+                 showScreen(targetScreenId);
+            }
 
             switch (gameData.status) {
                 case 'lobby':
@@ -450,9 +477,6 @@
                     break;
                 case 'round_start':
                     renderRoundStart(gameData);
-                    break;
-                case 'word_input':
-                     // This state is client-side for the word master only
                     break;
                 case 'role_reveal':
                     renderRoleReveal(gameData);
@@ -494,7 +518,7 @@
         function renderRoundStart(gameData) {
             roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
             const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
-            roundWordMaster.textContent = wordMaster.name;
+            roundWordMaster.textContent = wordMaster ? wordMaster.name : '...';
             
             if (userId === gameData.wordMasterId) {
                 wordMasterWaitText.classList.add('hidden');
@@ -513,11 +537,12 @@
             if (playerHasAckd) {
                 roleText.innerHTML = `<p class="text-gray-300">Waiting for other players to see their roles...</p>`;
                 roleDisplay.classList.remove('hidden');
+                hideRoleBtn.disabled = true;
+            } else {
+                 hideRoleBtn.disabled = false;
             }
             
-            // Check if all players have acknowledged
-            if (gameData.roleAcknowledgements.length === gameData.players.length) {
-                // Host triggers the timer start
+            if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
                 if(userId === gameData.hostId) {
                     const gameRef = doc(db, "games", gameId);
                     updateDoc(gameRef, { status: 'game', timerStart: serverTimestamp() });
@@ -526,9 +551,6 @@
         }
         
         function renderGameScreen(gameData) {
-            // Timer logic would be more complex and needs server-side calculation or trusted client
-            // For simplicity, we'll just show the discussion screen
-            showScreen('game-screen');
             gamePlayerList.innerHTML = '';
             gameData.players.forEach(p => {
                 const tag = document.createElement('div');
@@ -537,17 +559,18 @@
                 gamePlayerList.appendChild(tag);
             });
 
-            // A simple client-side timeout to move to voting
-            // In a real app, the host would control this transition
             if (userId === gameData.hostId) {
-                setTimeout(async () => {
-                    const gameRef = doc(db, "games", gameId);
-                    const currentDoc = await getDoc(gameRef);
-                    // Only advance if we are still in the game state
-                    if (currentDoc.data().status === 'game') {
-                         updateDoc(gameRef, { status: 'voting' });
-                    }
-                }, 180000); // 3 minutes
+                const timerId = `game-timer-${gameData.currentRound}`;
+                if (!window[timerId]) {
+                    window[timerId] = setTimeout(async () => {
+                        const gameRef = doc(db, "games", gameId);
+                        const currentDoc = await getDoc(gameRef);
+                        if (currentDoc.exists() && currentDoc.data().status === 'game') {
+                            updateDoc(gameRef, { status: 'voting' });
+                        }
+                        window[timerId] = null; 
+                    }, 180000); // 3 minutes
+                }
             }
         }
 
@@ -570,9 +593,8 @@
                 });
             }
 
-            // Check if all players have voted
             const voteCount = gameData.votes ? Object.keys(gameData.votes).length : 0;
-            if (voteCount === gameData.players.length) {
+            if (gameData.players.length > 0 && voteCount === gameData.players.length) {
                 if (userId === gameData.hostId) {
                     const gameRef = doc(db, "games", gameId);
                     updateDoc(gameRef, { status: 'results' });
@@ -581,11 +603,12 @@
         }
         
         async function renderResultsScreen(gameData) {
-            // Tally votes
             const voteCounts = {};
-            for (const voterId in gameData.votes) {
-                const votedForId = gameData.votes[voterId];
-                voteCounts[votedForId] = (voteCounts[votedForId] || 0) + 1;
+            if(gameData.votes) {
+                for (const voterId in gameData.votes) {
+                    const votedForId = gameData.votes[voterId];
+                    voteCounts[votedForId] = (voteCounts[votedForId] || 0) + 1;
+                }
             }
             
             voteTally.innerHTML = '<h3>Vote Counts:</h3>';
@@ -605,12 +628,15 @@
                 }
             }
 
-            const votedOutNames = votedOutIds.map(id => gameData.players.find(p => p.id === id).name).join(', ');
-            votedOutPlayer.textContent = votedOutNames;
+            const votedOutNames = votedOutIds.map(id => {
+                const p = gameData.players.find(player => player.id === id);
+                return p ? p.name : 'Unknown';
+            }).join(', ');
+            votedOutPlayer.textContent = votedOutNames || 'No one';
 
             moleReveal.classList.remove('hidden');
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
-            actualMole.textContent = actualMoleData.name;
+            actualMole.textContent = actualMoleData ? actualMoleData.name : '...';
 
             const moleWasVotedOut = votedOutIds.length === 1 && votedOutIds[0] === gameData.moleId;
             
@@ -622,47 +648,57 @@
                 winnerAnnouncement.className = "text-2xl font-bold text-red-500";
             }
             
-            // Only host handles scoring and moving to next round
             if (userId === gameData.hostId) {
-                const newScores = { ...gameData.scores };
-                if(moleWasVotedOut) {
-                    gameData.players.forEach(p => {
-                        if (p.id !== gameData.moleId) newScores[p.id]++;
-                    });
-                } else {
-                    newScores[gameData.moleId]++;
+                const gameRef = doc(db, "games", gameId);
+                const currentDoc = await getDoc(gameRef);
+                const currentScores = currentDoc.data().scores || {};
+
+                if(JSON.stringify(currentScores) === JSON.stringify(gameData.scores)) {
+                    const newScores = { ...gameData.scores };
+                    if(moleWasVotedOut) {
+                        gameData.players.forEach(p => {
+                            if (p.id !== gameData.moleId) newScores[p.id] = (newScores[p.id] || 0) + 1;
+                        });
+                    } else {
+                        newScores[gameData.moleId] = (newScores[gameData.moleId] || 0) + 1;
+                    }
+                    await updateDoc(gameRef, { scores: newScores });
                 }
-                
-                await updateDoc(doc(db, "games", gameId), { scores: newScores });
+
                 nextRoundBtn.classList.remove('hidden');
+                nextRoundBtn.disabled = false;
+                nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Show Final Results' : 'Start Next Round';
+
             } else {
-                nextRoundBtn.classList.add('hidden');
+                nextRoundBtn.classList.remove('hidden');
+                nextRoundBtn.disabled = true;
                 nextRoundBtn.textContent = 'Waiting for host...';
             }
         }
         
         function renderGameOverScreen(gameData) {
-             const sortedPlayers = gameData.players.sort((a, b) => (gameData.scores[b.id] || 0) - (gameData.scores[a.id] || 0));
+            const sortedPlayers = [...gameData.players].sort((a, b) => (gameData.scores[b.id] || 0) - (gameData.scores[a.id] || 0));
             
             finalScores.innerHTML = '';
             sortedPlayers.forEach(p => {
                 finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${p.name}</span> <span>${gameData.scores[p.id] || 0} pts</span></p>`;
             });
 
-            const highScore = gameData.scores[sortedPlayers[0].id];
-            const winners = sortedPlayers.filter(p => gameData.scores[p.id] === highScore).map(p => p.name);
+            const highScore = gameData.scores[sortedPlayers[0].id] || 0;
+            const winners = sortedPlayers.filter(p => (gameData.scores[p.id] || 0) === highScore).map(p => p.name);
 
             if (winners.length > 1) {
                 finalWinner.textContent = `It's a tie between ${winners.join(', ')}!`;
             } else {
-                finalWinner.textContent = `${winners[0]} is the winner!`;
+                finalWinner.textContent = winners.length > 0 ? `${winners[0]} is the winner!` : 'No winner!';
             }
 
             if (userId === gameData.hostId) {
                  playAgainBtn.onclick = async () => {
-                     // Reset the game to lobby state
-                     await updateDoc(doc(db, "games", gameId), { status: 'lobby', players: [], currentRound: 0 });
+                     await updateDoc(doc(db, "games", gameId), { status: 'lobby', players: [], currentRound: 0, scores: {}, moleId: '', secretWord: '', votes: {}});
                  };
+                 playAgainBtn.disabled = false;
+                 playAgainBtn.textContent = 'Play Again';
             } else {
                 playAgainBtn.textContent = 'Waiting for host to restart';
                 playAgainBtn.disabled = true;
@@ -698,14 +734,14 @@
             if (userId === gameData.moleId) {
                 roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in and don't get caught!</p>`;
             } else {
-                roleText.innerHTML = `<p class="text-gray-300">The secret word is:</p><h2 class="text-3xl font-bold text-indigo-400 mt-2">${gameData.secretWord.toUpperCase()}</h2><p class="text-gray-300 mt-4">Find the Mole!</p>`;
+                roleText.innerHTML = `<p class="text-gray-300">The secret word is:</p><h2 class="text-3xl font-bold text-indigo-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Find the Mole!</p>`;
             }
         });
         
         hideRoleBtn.addEventListener('click', acknowledgeRole);
 
         nextRoundBtn.addEventListener('click', startNewRound);
-
+        playAgainBtn.addEventListener('click', () => { /* Handled in renderGameOverScreen */ });
 
         // --- Initial Load ---
         signInAnonymously(auth).then((userCredential) => {
@@ -713,7 +749,11 @@
             showScreen('home-screen');
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
-            alert("Could not connect to the game service. Please refresh.");
+            if (error.code === 'auth/configuration-not-found') {
+                alert("Configuration Error: 'Anonymous' sign-in is not enabled for this project. Please go to your Firebase Console, open this project, go to Authentication > Sign-in method, and enable the 'Anonymous' provider.");
+            } else {
+                alert("Could not connect to the game service. Please refresh. Error: " + error.message);
+            }
         });
 
     </script>
