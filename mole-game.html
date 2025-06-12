@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Mole Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: flex;
+        }
+        .card {
+            background-color: #2d3748; /* slate-800 */
+            border-radius: 0.75rem;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            width: 90%;
+            max-width: 450px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #4f46e5; /* indigo-600 */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            border: none;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .btn-secondary {
+            background-color: #4b5563; /* gray-600 */
+        }
+        .btn-secondary:hover {
+            background-color: #374151; /* gray-700 */
+        }
+        .input-field {
+            background-color: #4b5563; /* gray-600 */
+            color: white;
+            border: 1px solid #6b7280; /* gray-500 */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        .player-tag {
+            background-color: #4b5563; /* gray-600 */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            margin: 0.25rem;
+        }
+        .player-tag button {
+            background: none;
+            border: none;
+            color: #d1d5db; /* gray-300 */
+            margin-left: 0.5rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <!-- Screen for setting up players -->
+    <div id="setup-screen" class="screen active flex-col items-center justify-center w-full">
+        <div class="card">
+            <h1 class="text-3xl font-bold text-center mb-4">The Mole Game</h1>
+            <p class="text-gray-400 text-center mb-6">Add 3 to 10 players to begin.</p>
+            <div class="flex mb-4">
+                <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter player name...">
+                <button id="add-player-btn" class="btn ml-2 w-auto px-4">Add</button>
+            </div>
+            <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div>
+            <button id="start-game-btn" class="btn">Start Game</button>
+        </div>
+    </div>
+
+    <!-- Screen to announce the start of a new round -->
+    <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 id="round-title" class="text-3xl font-bold mb-4">Round 1</h1>
+            <p class="text-gray-400 mb-2">The Word Master for this round is:</p>
+            <p id="round-word-master" class="text-2xl font-bold text-indigo-400 mb-6"></p>
+            <button id="proceed-to-word-input-btn" class="btn">Continue</button>
+        </div>
+    </div>
+
+    <!-- Screen for the Word Master to enter the word -->
+    <div id="word-input-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card">
+            <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4">Word Master's Turn</h1>
+            <p class="text-gray-400 text-center mb-6">Enter the secret word. No one else should see this!</p>
+            <div class="relative w-full mb-4">
+                <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret word...">
+                <button id="toggle-word-visibility-btn" type="button" class="absolute top-0 right-0 h-full px-4 flex items-center text-gray-400 hover:text-gray-200 focus:outline-none">
+                    <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
+                </button>
+            </div>
+            <button id="set-word-btn" class="btn">Set Word & Assign Roles</button>
+        </div>
+    </div>
+
+    <!-- Screen for revealing roles to each player -->
+    <div id="reveal-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 id="reveal-player-name" class="text-3xl font-bold mb-6"></h1>
+            <div id="reveal-prompt">
+                <p class="text-gray-400 mb-6">Pass the device to the player above. Make sure no one else is looking.</p>
+                <button id="show-role-btn" class="btn">Ready? Tap to See Role</button>
+            </div>
+            <div id="role-display" class="hidden">
+                <div id="role-text" class="my-8"></div>
+                <button id="hide-role-btn" class="btn btn-secondary">Done</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Screen for the main game and timer -->
+    <div id="game-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-2xl font-bold mb-2">Discuss!</h1>
+            <p class="text-gray-400 mb-6">Try to figure out who the Mole is.</p>
+            <div id="timer" class="text-6xl font-bold text-indigo-400 my-8">3:00</div>
+            <p class="text-gray-400 mb-4">Players in the game:</p>
+            <div id="game-player-list" class="flex flex-wrap justify-center"></div>
+        </div>
+    </div>
+
+    <!-- Screen for voting -->
+    <div id="voting-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-2xl font-bold mb-2">Time to Vote!</h1>
+            <p id="voter-name" class="text-gray-400 mb-6"></p>
+            <div id="vote-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
+        </div>
+    </div>
+
+    <!-- Screen for showing round results -->
+    <div id="results-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-3xl font-bold mb-4">Round Results</h1>
+            <div id="vote-tally" class="mb-6"></div>
+            <p class="text-xl mb-4">The player with the most votes was...</p>
+            <p id="voted-out-player" class="text-3xl font-bold text-red-500 mb-8"></p>
+            <div id="mole-reveal" class="hidden">
+                <p class="text-xl mb-4">The actual Mole was...</p>
+                <p id="actual-mole" class="text-3xl font-bold text-indigo-400 mb-8"></p>
+                <p id="winner-announcement" class="text-2xl font-bold"></p>
+            </div>
+            <button id="next-round-btn" class="btn mt-8">Next Round</button>
+        </div>
+    </div>
+    
+    <!-- Screen for Game Over -->
+    <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-3xl font-bold text-center mb-4">Game Over!</h1>
+            <p class="text-gray-400 text-center mb-6">Here are the final scores:</p>
+            <div id="final-scores" class="text-left w-full max-w-xs mx-auto mb-8"></div>
+            <p id="final-winner" class="text-2xl font-bold text-green-400 mb-8"></p>
+            <button id="play-again-btn" class="btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const screens = document.querySelectorAll('.screen');
+        const setupScreen = document.getElementById('setup-screen');
+        const playerNameInput = document.getElementById('player-name-input');
+        const addPlayerBtn = document.getElementById('add-player-btn');
+        const playerList = document.getElementById('player-list');
+        const startGameBtn = document.getElementById('start-game-btn');
+
+        const roundStartScreen = document.getElementById('round-start-screen');
+        const roundTitle = document.getElementById('round-title');
+        const roundWordMaster = document.getElementById('round-word-master');
+        const proceedToWordInputBtn = document.getElementById('proceed-to-word-input-btn');
+
+        const wordInputScreen = document.getElementById('word-input-screen');
+        const wordMasterTurnTitle = document.getElementById('word-master-turn-title');
+        const secretWordInput = document.getElementById('secret-word-input');
+        const setWordBtn = document.getElementById('set-word-btn');
+        const toggleWordVisibilityBtn = document.getElementById('toggle-word-visibility-btn');
+        const eyeOpenIcon = document.getElementById('eye-open-icon');
+        const eyeClosedIcon = document.getElementById('eye-closed-icon');
+
+        const revealScreen = document.getElementById('reveal-screen');
+        const revealPlayerName = document.getElementById('reveal-player-name');
+        const revealPrompt = document.getElementById('reveal-prompt');
+        const roleDisplay = document.getElementById('role-display');
+        const showRoleBtn = document.getElementById('show-role-btn');
+        const roleText = document.getElementById('role-text');
+        const hideRoleBtn = document.getElementById('hide-role-btn');
+
+        const gameScreen = document.getElementById('game-screen');
+        const timerDisplay = document.getElementById('timer');
+        const gamePlayerList = document.getElementById('game-player-list');
+        
+        const votingScreen = document.getElementById('voting-screen');
+        const voterName = document.getElementById('voter-name');
+        const voteButtons = document.getElementById('vote-buttons');
+
+        const resultsScreen = document.getElementById('results-screen');
+        const voteTally = document.getElementById('vote-tally');
+        const votedOutPlayer = document.getElementById('voted-out-player');
+        const moleReveal = document.getElementById('mole-reveal');
+        const actualMole = document.getElementById('actual-mole');
+        const winnerAnnouncement = document.getElementById('winner-announcement');
+        const nextRoundBtn = document.getElementById('next-round-btn');
+
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const finalScores = document.getElementById('final-scores');
+        const finalWinner = document.getElementById('final-winner');
+        const playAgainBtn = document.getElementById('play-again-btn');
+
+        // --- Game State Variables ---
+        let players = [];
+        let secretWord = '';
+        let mole = '';
+        let wordMaster = '';
+        let votes = {};
+        let scores = {};
+        let currentPlayerIndex = 0;
+        let timerInterval;
+        let currentRound = 0;
+        let totalRounds = 0;
+
+        // --- Functions ---
+        
+        function showScreen(screenId) {
+            screens.forEach(screen => screen.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function updatePlayerList() {
+            playerList.innerHTML = '';
+            players.forEach((player, index) => {
+                const playerTag = document.createElement('div');
+                playerTag.className = 'player-tag';
+                playerTag.textContent = player;
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '&times;';
+                removeBtn.onclick = () => removePlayer(index);
+                playerTag.appendChild(removeBtn);
+                playerList.appendChild(playerTag);
+            });
+        }
+
+        function removePlayer(index) {
+            players.splice(index, 1);
+            updatePlayerList();
+        }
+        
+        function startGame() {
+            if (players.length < 3) {
+                alert('You need at least 3 players to start the game.');
+                return;
+            }
+            // Determine total rounds
+            totalRounds = players.length >= 6 ? players.length : 6;
+            
+            // Reset scores and rounds
+            currentRound = 0;
+            scores = players.reduce((acc, player) => ({ ...acc, [player]: 0 }), {});
+            
+            startNewRound();
+        }
+
+        function startNewRound() {
+            currentRound++;
+            if (currentRound > totalRounds) {
+                endGame();
+                return;
+            }
+
+            // Randomly select a Word Master
+            wordMaster = players[Math.floor(Math.random() * players.length)];
+
+            // Setup and show the round start screen
+            roundTitle.textContent = `Round ${currentRound} of ${totalRounds}`;
+            roundWordMaster.textContent = wordMaster;
+            showScreen('round-start-screen');
+        }
+        
+        function setWordAndAssignRoles() {
+            secretWord = secretWordInput.value.trim();
+            if (!secretWord) {
+                alert('Please enter a secret word.');
+                return;
+            }
+
+            // Assign Mole from players who are NOT the word master
+            const potentialMoles = players.filter(p => p !== wordMaster);
+            mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
+            
+            currentPlayerIndex = 0;
+            startRoleReveal();
+        }
+
+        function startRoleReveal() {
+            if (currentPlayerIndex >= players.length) {
+                startDiscussionTimer();
+                return;
+            }
+            showScreen('reveal-screen');
+            revealPlayerName.textContent = `${players[currentPlayerIndex]}'s Turn`;
+            revealPrompt.style.display = 'block';
+            roleDisplay.classList.add('hidden');
+        }
+
+        function displayRole() {
+            revealPrompt.style.display = 'none';
+            roleDisplay.classList.remove('hidden');
+            const currentPlayer = players[currentPlayerIndex];
+            if (currentPlayer === mole) {
+                roleText.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in and don't get caught!</p>`;
+            } else {
+                roleText.innerHTML = `<p class="text-gray-300">The secret word is:</p><h2 class="text-3xl font-bold text-indigo-400 mt-2">${secretWord.toUpperCase()}</h2><p class="text-gray-300 mt-4">Find the Mole!</p>`;
+            }
+        }
+        
+        function hideRoleAndContinue() {
+            currentPlayerIndex++;
+            startRoleReveal();
+        }
+        
+        function startDiscussionTimer() {
+            showScreen('game-screen');
+            gamePlayerList.innerHTML = '';
+            players.forEach(p => {
+                const tag = document.createElement('div');
+                tag.className = 'player-tag';
+                tag.textContent = p;
+                gamePlayerList.appendChild(tag);
+            });
+            
+            let timeRemaining = 180;
+            timerDisplay.textContent = '3:00';
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                const minutes = Math.floor(timeRemaining / 60);
+                const seconds = timeRemaining % 60;
+                timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                if (timeRemaining <= 0) {
+                    clearInterval(timerInterval);
+                    startVoting();
+                }
+            }, 1000);
+        }
+
+        function startVoting() {
+            currentPlayerIndex = 0;
+            votes = players.reduce((acc, player) => ({ ...acc, [player]: 0 }), {});
+            setupNextVote();
+        }
+
+        function setupNextVote() {
+            if (currentPlayerIndex >= players.length) {
+                showRoundResults();
+                return;
+            }
+            showScreen('voting-screen');
+            const currentVoter = players[currentPlayerIndex];
+            voterName.textContent = `${currentVoter}, place your vote:`;
+            voteButtons.innerHTML = '';
+            players.forEach(player => {
+                if (player !== currentVoter) {
+                    const voteBtn = document.createElement('button');
+                    voteBtn.className = 'btn btn-secondary';
+                    voteBtn.textContent = player;
+                    voteBtn.onclick = () => castVote(player);
+                    voteButtons.appendChild(voteBtn);
+                }
+            });
+        }
+        
+        function castVote(votedFor) {
+            votes[votedFor]++;
+            currentPlayerIndex++;
+            setupNextVote();
+        }
+
+        function showRoundResults() {
+            showScreen('results-screen');
+            
+            voteTally.innerHTML = '<h3>Vote Counts:</h3>';
+            for (const player in votes) {
+                voteTally.innerHTML += `<p class="text-gray-400">${player}: ${votes[player]} vote(s)</p>`;
+            }
+
+            let maxVotes = -1;
+            let votedOut = [];
+            for(const player in votes) {
+                if (votes[player] > maxVotes) {
+                    maxVotes = votes[player];
+                    votedOut = [player];
+                } else if (votes[player] === maxVotes) {
+                    votedOut.push(player);
+                }
+            }
+            
+            const votedOutName = votedOut.join(', ');
+            votedOutPlayer.textContent = votedOutName;
+            moleReveal.classList.add('hidden'); // Hide until timeout
+
+            setTimeout(() => {
+                moleReveal.classList.remove('hidden');
+                actualMole.textContent = mole;
+
+                if (votedOut.length === 1 && votedOut[0] === mole) {
+                    winnerAnnouncement.textContent = "The Players win the round!";
+                    winnerAnnouncement.className = "text-2xl font-bold text-green-400";
+                    // Award points to everyone except the mole
+                    players.forEach(p => {
+                        if (p !== mole) scores[p]++;
+                    });
+                } else {
+                    winnerAnnouncement.textContent = "The Mole wins the round!";
+                    winnerAnnouncement.className = "text-2xl font-bold text-red-500";
+                    // Award point to the mole
+                    scores[mole]++;
+                }
+            }, 2000);
+
+            if (currentRound >= totalRounds) {
+                nextRoundBtn.textContent = "Show Final Results";
+                nextRoundBtn.onclick = endGame;
+            } else {
+                nextRoundBtn.textContent = "Next Round";
+                nextRoundBtn.onclick = startNewRound;
+            }
+        }
+
+        function endGame() {
+            showScreen('game-over-screen');
+            
+            // Sort players by score
+            const sortedPlayers = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            
+            finalScores.innerHTML = '';
+            sortedPlayers.forEach(([name, score]) => {
+                finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${name}</span> <span>${score} pts</span></p>`;
+            });
+
+            const highScore = sortedPlayers[0][1];
+            const winners = sortedPlayers.filter(([name, score]) => score === highScore).map(([name]) => name);
+
+            if (winners.length > 1) {
+                finalWinner.textContent = `It's a tie between ${winners.join(', ')}!`;
+            } else {
+                finalWinner.textContent = `${winners[0]} is the winner!`;
+            }
+        }
+
+        function playAgain() {
+            // Reset all state variables
+            players = [];
+            secretWord = '';
+            mole = '';
+            wordMaster = '';
+            votes = {};
+            scores = {};
+            currentPlayerIndex = 0;
+            clearInterval(timerInterval);
+            currentRound = 0;
+            totalRounds = 0;
+            
+            updatePlayerList();
+            secretWordInput.value = '';
+            playerNameInput.value = '';
+            moleReveal.classList.add('hidden');
+            
+            showScreen('setup-screen');
+        }
+
+        // --- Event Listeners ---
+        addPlayerBtn.addEventListener('click', () => {
+            if (players.length >= 10) {
+                alert('The game is full! You cannot add more than 10 players.');
+                return;
+            }
+            const newName = playerNameInput.value.trim();
+            if (newName && !players.includes(newName)) {
+                players.push(newName);
+                updatePlayerList();
+                playerNameInput.value = '';
+            } else if (players.includes(newName)) {
+                alert("This name is already taken.");
+            }
+        });
+
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addPlayerBtn.click();
+        });
+
+        startGameBtn.addEventListener('click', startGame);
+
+        proceedToWordInputBtn.addEventListener('click', () => {
+            wordMasterTurnTitle.textContent = `${wordMaster}'s Turn`;
+            showScreen('word-input-screen');
+        });
+
+        setWordBtn.addEventListener('click', setWordAndAssignRoles);
+        showRoleBtn.addEventListener('click', displayRole);
+        hideRoleBtn.addEventListener('click', hideRoleAndContinue);
+        playAgainBtn.addEventListener('click', playAgain);
+
+        toggleWordVisibilityBtn.addEventListener('click', () => {
+            const isPassword = secretWordInput.type === 'password';
+            secretWordInput.type = isPassword ? 'text' : 'password';
+            eyeOpenIcon.classList.toggle('hidden', isPassword);
+            eyeClosedIcon.classList.toggle('hidden', !isPassword);
+        });
+
+        // --- Initial Call ---
+        showScreen('setup-screen');
+    </script>
+</body>
+</html>
