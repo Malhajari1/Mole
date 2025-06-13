@@ -431,7 +431,8 @@
                     moleId: '',
                     votes: {},
                     roleAcknowledgements: [],
-                    timerStartTime: null
+                    timerStartTime: null,
+                    scoresAwarded: false
                 });
             } catch (error) {
                 console.error("Error starting game:", error);
@@ -533,6 +534,8 @@
                 if (userId === gameData.wordMasterId) {
                     targetScreenId = 'word-input-screen';
                 }
+            } else if (status === 'reveal') {
+                targetScreenId = 'reveal-screen';
             }
             
             showScreen(targetScreenId);
@@ -610,10 +613,10 @@
                 allDomElements.gamePlayerList.appendChild(tag);
             });
 
-            const isWordMaster = userId === gameData.wordMasterId;
+            const isHost = userId === gameData.hostId;
             const timerHasStarted = !!gameData.timerStartTime;
 
-            allDomElements.startTimerBtn.classList.toggle('hidden', !isWordMaster || timerHasStarted);
+            allDomElements.startTimerBtn.classList.toggle('hidden', !isHost || timerHasStarted);
 
             if (gameTimerInterval) clearInterval(gameTimerInterval);
             gameTimerInterval = null;
@@ -706,7 +709,7 @@
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
             allDomElements.actualMole.textContent = actualMoleData ? actualMoleData.name : '...';
 
-            const moleWasVotedOut = votedOutIds.length === 1 && votedOutIds[0] === gameData.moleId;
+            const moleWasVotedOut = votedOutIds.includes(gameData.moleId);
             
             if (moleWasVotedOut) {
                 allDomElements.winnerAnnouncement.textContent = "The Operatives win the round!";
@@ -803,10 +806,16 @@
             }
         });
 
-        allDomElements.nextRoundBtn.addEventListener('click', startNewRound);
+        allDomElements.nextRoundBtn.addEventListener('click', async () => {
+            allDomElements.nextRoundBtn.disabled = true; // Prevent double clicks
+            await startNewRound();
+        });
+        
         allDomElements.playAgainBtn.addEventListener('click', async () => {
-            if (userId === (await getDoc(doc(db, "games", gameId))).data()?.hostId) {
-                await deleteDoc(doc(db, "games", gameId));
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            if (userId === gameDoc.data()?.hostId) {
+                await deleteDoc(gameRef);
             }
         });
 
