@@ -450,7 +450,6 @@
                     totalRounds: totalRounds,
                     wordMasterId: wordMaster.id,
                     secretWord: '',
-                    translatedWord: '',
                     moleId: '',
                     roleAcknowledgements: []
                 });
@@ -477,7 +476,6 @@
                     currentRound: gameData.currentRound + 1,
                     wordMasterId: wordMaster.id,
                     secretWord: '',
-                    translatedWord: '',
                     moleId: '',
                     roleAcknowledgements: []
                 });
@@ -487,44 +485,13 @@
         }
         
         async function setWordAndAssignRoles() {
-            const word = allDomElements.secretWordInput.value.trim();
-            if (!word) {
-                alert('Please enter a secret word.');
-                return;
-            }
-
-            allDomElements.setWordBtn.disabled = true;
-            allDomElements.setWordBtn.textContent = 'Translating...';
-
             try {
-                // 1. Detect language and get translation
-                const arabicRegex = /[\u0600-\u06FF]/;
-                const isArabic = arabicRegex.test(word);
-                const targetLang = isArabic ? 'English' : 'Arabic';
-                const prompt = `Translate '${word}' to ${targetLang}. Provide only the translation.`;
-                
-                const apiKey = ""; 
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-                });
-
-                if (!response.ok) {
-                     const errorBody = await response.json();
-                    console.error("Translation API Error:", errorBody);
-                    throw new Error(`Translation API error (${response.status}): ${errorBody.error.message}`);
+                const word = allDomElements.secretWordInput.value.trim();
+                if (!word) {
+                    alert('Please enter a secret word.');
+                    return;
                 }
 
-                const result = await response.json();
-                 if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content || !result.candidates[0].content.parts || result.candidates[0].content.parts.length === 0) {
-                    console.error("Unexpected API response structure:", result);
-                    throw new Error("Could not parse translation from API response.");
-                }
-                const translatedWord = result.candidates[0].content.parts[0].text.trim();
-                
-                // 2. Assign roles and update database
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 const gameData = gameDoc.data();
@@ -538,21 +505,11 @@
 
                 await updateDoc(gameRef, {
                     secretWord: word,
-                    translatedWord: translatedWord,
                     moleId: mole.id,
                     status: 'reveal'
                 });
-
             } catch (error) {
-                console.error("Error setting word and translating:", error);
-                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-                    alert("Could not set the word. The connection to the translation service was blocked. Please try disabling browser extensions (like ad-blockers) and refreshing the page.");
-                } else {
-                    alert("Could not set the word. Please try again. Error: " + error.message);
-                }
-            } finally {
-                allDomElements.setWordBtn.disabled = false;
-                allDomElements.setWordBtn.textContent = 'Set Codename & Assign Roles';
+                console.error("Error setting word:", error);
             }
         }
         
@@ -712,10 +669,6 @@
                     <div>
                         <p class="text-gray-300">Codename:</p>
                         <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
-                    </div>
-                    <div class="mt-4">
-                        <p class="text-gray-300">Translation:</p>
-                        <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.translatedWord || '').toUpperCase()}</h2>
                     </div>
                 `;
             }
