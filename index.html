@@ -512,10 +512,16 @@
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Translation API error: ${response.statusText}`);
+                     const errorBody = await response.json();
+                    console.error("Translation API Error:", errorBody);
+                    throw new Error(`Translation API error (${response.status}): ${errorBody.error.message}`);
                 }
 
                 const result = await response.json();
+                 if (!result.candidates || result.candidates.length === 0 || !result.candidates[0].content || !result.candidates[0].content.parts || result.candidates[0].content.parts.length === 0) {
+                    console.error("Unexpected API response structure:", result);
+                    throw new Error("Could not parse translation from API response.");
+                }
                 const translatedWord = result.candidates[0].content.parts[0].text.trim();
                 
                 // 2. Assign roles and update database
@@ -539,7 +545,11 @@
 
             } catch (error) {
                 console.error("Error setting word and translating:", error);
-                alert("Could not set the word. Please try again.");
+                 if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    alert("Could not set the word. The connection to the translation service was blocked. Please try disabling browser extensions (like ad-blockers) and refreshing the page.");
+                } else {
+                    alert("Could not set the word. Please try again. Error: " + error.message);
+                }
             } finally {
                 allDomElements.setWordBtn.disabled = false;
                 allDomElements.setWordBtn.textContent = 'Set Codename & Assign Roles';
