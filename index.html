@@ -29,7 +29,7 @@
         }
         .card {
             background-color: #1f2937; /* gray-800 */
-            border-radius: 0.25rem; /* less rounded */
+            border-radius: 0.25rem;
             padding: 2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid #4b5563; /* gray-600 */
@@ -41,9 +41,9 @@
             background-color: #991b1b; /* red-800 */
             color: #f3f4f6; /* gray-100 */
             padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem; /* sharper corners */
+            border-radius: 0.25rem;
             text-align: center;
-            font-weight: 700; /* bolder */
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
@@ -63,25 +63,25 @@
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn:disabled {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #374151; /* gray-700 */
-            color: #9ca3af; /* gray-400 */
+            background-color: #4b5563;
+            border-color: #374151;
+            color: #9ca3af;
             cursor: not-allowed;
             transform: none;
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn-secondary {
-            background-color: #374151; /* gray-700 */
-            border-color: #4b5563; /* gray-600 */
+            background-color: #374151;
+            border-color: #4b5563;
         }
         .btn-secondary:hover {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #6b7280; /* gray-500 */
+            background-color: #4b5563;
+            border-color: #6b7280;
         }
         .input-field {
-            background-color: #374151; /* gray-700 */
-            color: #f3f4f6; /* gray-100 */
-            border: 1px solid #6b7280; /* gray-500 */
+            background-color: #374151;
+            color: #f3f4f6;
+            border: 1px solid #6b7280;
             padding: 0.75rem;
             border-radius: 0.25rem;
             width: 100%;
@@ -89,20 +89,20 @@
             font-family: 'DM Sans', sans-serif;
         }
         .input-field::placeholder {
-            color: #9ca3af; /* gray-400 */
+            color: #9ca3af;
         }
         .player-tag {
-            background-color: #4b5563; /* gray-600 */
+            background-color: #4b5563;
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
-            border: 1px solid #6b7280; /* gray-500 */
+            border: 1px solid #6b7280;
         }
         #game-id-display {
-            background-color: #111827; /* gray-900 */
+            background-color: #111827;
             padding: 0.75rem;
             border-radius: 0.25rem;
             font-family: 'DM Sans', monospace;
@@ -110,8 +110,8 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #b91c1c; /* red-700 */
-            color: #fecaca; /* red-200 */
+            border: 2px dashed #b91c1c;
+            color: #fecaca;
         }
         .animating-dots span {
             animation-name: blink;
@@ -151,15 +151,12 @@
             <p class="text-gray-400 text-center mb-4">Share the Game ID with your friends!</p>
             <div id="game-id-display" class="mb-6" title="Click to copy"></div>
             <p id="copy-confirm" class="text-amber-300 text-center text-sm mb-4" style="visibility: hidden;">Copied to clipboard!</p>
-            
             <p class="text-gray-400 text-center mb-4">OPERATIVES (<span id="player-count">0</span>/10):</p>
             <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div>
-            
             <div class="flex mb-4">
                 <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your callsign...">
                 <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
             </div>
-
             <button id="start-game-btn" class="btn">Initiate Mission</button>
             <p class="text-xs text-gray-500 text-center mt-2">Only the handler can initiate the mission.</p>
         </div>
@@ -174,7 +171,7 @@
 
     <div id="word-input-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
-            <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4">Your Turn, Word Master!</h1>
+            <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4"></h1>
             <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
             <div class="relative w-full mb-4">
                 <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret Codename...">
@@ -195,8 +192,7 @@
                 <div id="role-blur-overlay" class="absolute inset-0 bg-gray-800/50 backdrop-blur-md flex items-center justify-center cursor-pointer transition-opacity duration-300">
                     <svg id="reveal-eye-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 w-12 h-12"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 </div>
-                <div id="role-text-content" class="invisible">
-                </div>
+                <div id="role-text-content" class="invisible"></div>
             </div>
             <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
         </div>
@@ -206,17 +202,17 @@
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
             <p class="text-gray-400 mb-6">Discuss to identify the mole.</p>
-            <button id="end-round-btn" class="btn mb-4 hidden">End Round</button>
+            <button id="end-round-btn" class="btn my-8 hidden">End Round</button>
             <p class="text-gray-400 mb-4 mt-4">Operatives in play:</p>
             <div id="game-player-list" class="flex flex-wrap justify-center"></div>
         </div>
     </div>
 
-    <div id="results-screen" class="screen flex-col items-center justify-center w-full">
+    <div id="debrief-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
-            <p class="text-xl mb-4">The actual Mole was...</p>
-            <p id="actual-mole" class="text-3xl font-bold text-red-400 mb-8"></p>
+            <p class="text-xl mb-4">The Mole was...</p>
+            <p id="debrief-mole-name" class="text-3xl font-bold text-red-400 mb-8"></p>
             <button id="next-round-btn" class="btn mt-8">Next Round</button>
         </div>
     </div>
@@ -276,7 +272,7 @@
             acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
             endRoundBtn: document.getElementById('end-round-btn'),
             gamePlayerList: document.getElementById('game-player-list'),
-            actualMole: document.getElementById('actual-mole'),
+            debriefMoleName: document.getElementById('debrief-mole-name'),
             nextRoundBtn: document.getElementById('next-round-btn'),
             playAgainBtn: document.getElementById('play-again-btn')
         };
@@ -387,7 +383,7 @@
                     return;
                 }
                 
-                const totalRounds = players.length >= 6 ? players.length : 6;
+                const totalRounds = players.length; // One round per player
                 const wordMaster = players[Math.floor(Math.random() * players.length)];
 
                 await updateDoc(gameRef, { 
@@ -489,7 +485,7 @@
                 'round_start': renderRoundStart,
                 'reveal': renderRoleReveal,
                 'game': renderGameScreen,
-                'results': renderResultsScreen,
+                'debrief': renderDebriefScreen,
                 'game_over': renderGameOverScreen
             };
 
@@ -559,22 +555,20 @@
             const isHost = userId === gameData.hostId;
             allDomElements.endRoundBtn.classList.toggle('hidden', !isHost);
         }
-        
-        function renderResultsScreen(gameData) {
+
+        function renderDebriefScreen(gameData) {
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
-            allDomElements.actualMole.textContent = actualMoleData ? actualMoleData.name : '...';
+            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
 
             allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
             allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'End Game' : 'Next Round';
         }
-        
+
         function renderGameOverScreen(gameData) {
             allDomElements.playAgainBtn.textContent = (userId === gameData.hostId) ? 'End Game For All' : 'Awaiting Handler...';
             allDomElements.playAgainBtn.disabled = (userId !== gameData.hostId);
         }
 
-
-        // --- Event Listeners ---
         allDomElements.createGameBtn.addEventListener('click', createGame);
         allDomElements.joinGameBtn.addEventListener('click', () => {
             const id = allDomElements.joinGameIdInput.value.trim();
@@ -611,7 +605,7 @@
         allDomElements.endRoundBtn.addEventListener('click', async () => {
              try {
                 const gameRef = doc(db, "games", gameId);
-                await updateDoc(gameRef, { status: 'results' });
+                await updateDoc(gameRef, { status: 'debrief' });
             } catch (error) {
                 console.error("Error ending round:", error);
             }
@@ -630,7 +624,6 @@
             }
         });
 
-        // --- Initial Load ---
         window.addEventListener('beforeunload', () => {
             if (gameUnsubscribe) {
                 gameUnsubscribe();
