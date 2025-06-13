@@ -450,6 +450,7 @@
                     totalRounds: totalRounds,
                     wordMasterId: wordMaster.id,
                     secretWord: '',
+                    translatedWord: '',
                     moleId: '',
                     roleAcknowledgements: []
                 });
@@ -476,6 +477,7 @@
                     currentRound: gameData.currentRound + 1,
                     wordMasterId: wordMaster.id,
                     secretWord: '',
+                    translatedWord: '',
                     moleId: '',
                     roleAcknowledgements: []
                 });
@@ -485,13 +487,38 @@
         }
         
         async function setWordAndAssignRoles() {
+            const word = allDomElements.secretWordInput.value.trim();
+            if (!word) {
+                alert('Please enter a secret word.');
+                return;
+            }
+
+            allDomElements.setWordBtn.disabled = true;
+            allDomElements.setWordBtn.textContent = 'Translating...';
+
             try {
-                const word = allDomElements.secretWordInput.value.trim();
-                if (!word) {
-                    alert('Please enter a secret word.');
-                    return;
+                // 1. Detect language and get translation
+                const arabicRegex = /[\u0600-\u06FF]/;
+                const isArabic = arabicRegex.test(word);
+                const targetLang = isArabic ? 'English' : 'Arabic';
+                const prompt = `Translate '${word}' to ${targetLang}. Provide only the translation.`;
+                
+                const apiKey = ""; 
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Translation API error: ${response.statusText}`);
                 }
 
+                const result = await response.json();
+                const translatedWord = result.candidates[0].content.parts[0].text.trim();
+                
+                // 2. Assign roles and update database
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 const gameData = gameDoc.data();
@@ -505,11 +532,17 @@
 
                 await updateDoc(gameRef, {
                     secretWord: word,
+                    translatedWord: translatedWord,
                     moleId: mole.id,
                     status: 'reveal'
                 });
+
             } catch (error) {
-                console.error("Error setting word:", error);
+                console.error("Error setting word and translating:", error);
+                alert("Could not set the word. Please try again.");
+            } finally {
+                allDomElements.setWordBtn.disabled = false;
+                allDomElements.setWordBtn.textContent = 'Set Codename & Assign Roles';
             }
         }
         
@@ -587,6 +620,8 @@
             allDomElements.roleBlurOverlay.classList.remove('opacity-0');
             allDomElements.roleTextContent.classList.add('invisible');
             allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+            allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
+
 
             if (playerHasAckd) {
                 allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
@@ -622,9 +657,9 @@
             allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'End Game' : 'Next Round';
         }
 
-        function renderGameOverScreen(gameData) {
-            allDomElements.playAgainBtn.textContent = (userId === gameData.hostId) ? 'End Game For All' : 'Awaiting Handler...';
-            allDomElements.playAgainBtn.disabled = (userId !== gameData.hostId);
+        function renderGameOverScreen() {
+            allDomElements.playAgainBtn.textContent = 'End Game For All';
+            allDomElements.playAgainBtn.disabled = userId !== gameId.hostId;
         }
 
         allDomElements.createGameBtn.addEventListener('click', createGame);
@@ -653,6 +688,7 @@
         
         allDomElements.roleBlurOverlay.addEventListener('click', async () => {
             allDomElements.roleBlurOverlay.classList.add('opacity-0');
+            allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
             allDomElements.roleTextContent.classList.remove('invisible');
             allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
             
@@ -662,7 +698,16 @@
             if (userId === gameData.moleId) {
                 allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
             } else {
-                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">The Secret Codename is:</p><h2 class="text-3xl font-bold text-red-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Identify the Mole.</p>`;
+                 allDomElements.roleTextContent.innerHTML = `
+                    <div>
+                        <p class="text-gray-300">Codename:</p>
+                        <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-gray-300">Translation:</p>
+                        <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.translatedWord || '').toUpperCase()}</h2>
+                    </div>
+                `;
             }
         });
         
@@ -683,6 +728,7 @@
         });
         
         allDomElements.playAgainBtn.addEventListener('click', async () => {
+            if (!gameId) return;
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             if (userId === gameDoc.data()?.hostId) {
@@ -691,34 +737,95 @@
         });
 
         function setupMusic() {
-            const synth = new Tone.Synth({
-                oscillator: { type: 'fatsawtooth' },
-                envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.4 }
-            }).toDestination();
-            
-            const bass = new Tone.MonoSynth({
-                oscillator: { type: 'fatsine' },
-                envelope: { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.8 },
-                filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.8, baseFrequency: 200, octaves: 4 }
-            }).toDestination();
+            let currentTrackIndex = 0;
+            let parts = [];
 
-            const melody = new Tone.Sequence((time, note) => {
-                synth.triggerAttackRelease(note, '8n', time);
-            }, ['G4', null, 'Bb4', null, 'C5', 'G4', 'Bb4', null], '4n');
+            const instruments = {
+                kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" }, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" } }).toDestination(),
+                snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.2 } }).toDestination(),
+                hihat: new Tone.MetalSynth({ frequency: 250, envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination(),
+                bass: new Tone.MonoSynth({ oscillator: { type: "fmsquare" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.4 } }).toDestination(),
+                chord: new Tone.PolySynth(Tone.FMSynth, { harmonicity: 1.5, modulationIndex: 1.2, envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.4 } }).toDestination(),
+                vocal: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.03, decay: 0.05, sustain: 0.2, release: 0.1 } }).toDestination()
+            };
 
-            const bassline = new Tone.Sequence((time, note) => {
-                bass.triggerAttackRelease(note, '4n', time);
-            }, ['G2', 'Eb3', 'G2', 'C3'], '4n');
+            const tracks = [
+                { 
+                    bpm: 140,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null],
+                    chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null],
+                    vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null]
+                },
+                { 
+                    bpm: 130,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null],
+                    chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null],
+                    vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null]
+                },
+                { 
+                    bpm: 125,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['C2', 'G2', 'Ab2', 'F2'],
+                    chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null],
+                    vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null]
+                },
+                { 
+                    bpm: 150,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null],
+                    chords: [['A3', 'C4', 'E4'], null, ['G3', 'B3', 'D4'], null],
+                    vocals: ['A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'A4', null]
+                }
+            ];
 
-            melody.start(0);
-            bassline.start(0);
-            Tone.Transport.bpm.value = 90;
+            function changeTrack(index) {
+                parts.forEach(part => part.dispose());
+                parts = [];
+
+                const track = tracks[index];
+                Tone.Transport.bpm.value = track.bpm;
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.kick.triggerAttackRelease(note, "8n", time);
+                }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
+
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.snare.triggerAttackRelease("0.1", time);
+                }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.hihat.triggerAttackRelease('C4', '16n', time);
+                }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.bass.triggerAttackRelease(note, '8n', time);
+                }, track.bassline, '8n').start(0));
+
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.chord.triggerAttackRelease(note, '4n', time);
+                }, track.chords, '2n').start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.vocal.triggerAttackRelease(note, '16n', time);
+                }, track.vocals, '8n').start(0));
+            }
+
+            Tone.Transport.scheduleRepeat(() => {
+                currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+                changeTrack(currentTrackIndex);
+            }, "90s");
 
             allDomElements.musicToggle.addEventListener('click', () => {
                 if (Tone.context.state !== 'running') {
-                    Tone.context.resume();
-                }
-                if (Tone.Transport.state === 'started') {
+                    Tone.context.resume().then(() => {
+                        changeTrack(currentTrackIndex);
+                        Tone.Transport.start();
+                        allDomElements.musicOnIcon.classList.remove('hidden');
+                        allDomElements.musicOffIcon.classList.add('hidden');
+                    });
+                } else if (Tone.Transport.state === 'started') {
                     Tone.Transport.stop();
                     allDomElements.musicOnIcon.classList.add('hidden');
                     allDomElements.musicOffIcon.classList.remove('hidden');
@@ -728,6 +835,8 @@
                     allDomElements.musicOffIcon.classList.add('hidden');
                 }
             });
+
+            changeTrack(0);
         }
         setupMusic();
 
@@ -748,11 +857,10 @@
             const lastGameId = localStorage.getItem('moleGameId');
             if (lastGameId) {
                 allDomElements.reconnectGameIdInput.value = lastGameId;
-                allDomElements.reconnectBtn.click();
-            } else {
-                 showScreen('home-screen');
+                allDomElements.reconnectBtn.classList.remove('hidden');
             }
-
+            
+            showScreen('home-screen');
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
             if (error.code === 'auth/configuration-not-found') {
