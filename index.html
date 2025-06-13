@@ -153,10 +153,15 @@
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
-            <button id="reconnect-btn" class="btn btn-secondary mb-4 hidden">Reconnect to Last Game</button>
             <div class="border-t border-gray-700 my-4"></div>
-            <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID...">
+            <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Join...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+
+            <div class="border-t border-gray-700 my-8"></div>
+            
+            <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
+            <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
+            <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
         </div>
     </div>
 
@@ -269,6 +274,7 @@
             createGameBtn: document.getElementById('create-game-btn'),
             joinGameIdInput: document.getElementById('join-game-id-input'),
             joinGameBtn: document.getElementById('join-game-btn'),
+            reconnectGameIdInput: document.getElementById('reconnect-game-id-input'),
             reconnectBtn: document.getElementById('reconnect-btn'),
             gameIdDisplay: document.getElementById('game-id-display'),
             persistentGameIdContainer: document.getElementById('persistent-game-id'),
@@ -344,7 +350,7 @@
                     localStorage.removeItem('moleGameId');
                     return;
                 }
-                if (gameDoc.data().status !== 'lobby' && isNew) {
+                if (isNew && gameDoc.data().status !== 'lobby') {
                     alert("This game has already started and cannot be joined.");
                     return;
                 }
@@ -602,9 +608,11 @@
             if (id) joinGame(id, true);
         });
         allDomElements.reconnectBtn.addEventListener('click', () => {
-             const lastGameId = localStorage.getItem('moleGameId');
-             if(lastGameId) {
-                joinGame(lastGameId, false);
+             const id = allDomElements.reconnectGameIdInput.value.trim();
+             if(id) {
+                joinGame(id, false);
+             } else {
+                alert("Please enter a Game ID to reconnect.")
              }
         });
         allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
@@ -670,11 +678,6 @@
                 localStorage.setItem('moleUserId', storedUserId);
             }
             userId = storedUserId;
-
-            const lastGameId = localStorage.getItem('moleGameId');
-            if (lastGameId) {
-                allDomElements.reconnectBtn.classList.remove('hidden');
-            }
             
             showScreen('home-screen');
         }).catch((error) => {
