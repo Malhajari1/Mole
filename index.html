@@ -251,6 +251,7 @@
     </div>
 
     <script type="module">
+        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -581,7 +582,7 @@
             if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
                 const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
-                allDomElements.wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to type the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                allDomElements.wordMasterWaitText.innerHTML = `Wait Ya Managa Until Word Master Is Done Typing...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                 allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
             }
         }
