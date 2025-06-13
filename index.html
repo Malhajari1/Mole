@@ -257,7 +257,7 @@
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
-            <button id="play-again-btn" class="btn">End Game For All</button>
+            <button id="play-again-btn" class="btn">Play Again in Lobby</button>
         </div>
     </div>
 
@@ -441,7 +441,7 @@
                     return;
                 }
                 
-                const totalRounds = players.length;
+                const totalRounds = players.length * 2;
                 const wordMaster = players[Math.floor(Math.random() * players.length)];
 
                 await updateDoc(gameRef, { 
@@ -625,7 +625,7 @@
         }
 
         function renderGameOverScreen() {
-            allDomElements.playAgainBtn.textContent = 'End Game For All';
+            allDomElements.playAgainBtn.textContent = 'Play Again';
             allDomElements.playAgainBtn.disabled = userId !== gameId.hostId;
         }
 
@@ -693,10 +693,7 @@
         allDomElements.playAgainBtn.addEventListener('click', async () => {
             if (!gameId) return;
             const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            if (userId === gameDoc.data()?.hostId) {
-                await deleteDoc(gameRef);
-            }
+            await updateDoc(gameRef, { status: 'lobby' });
         });
 
         function setupMusic() {
