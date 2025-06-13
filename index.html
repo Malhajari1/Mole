@@ -205,37 +205,18 @@
     <div id="game-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
-            <p class="text-gray-400 mb-6">Identify the mole.</p>
-            <div id="timer" class="text-6xl font-bold text-red-500 my-8">3:00</div>
-            <div class="flex space-x-4">
-                 <button id="start-timer-btn" class="btn mb-4 hidden">Start Timer</button>
-                 <button id="end-timer-btn" class="btn btn-secondary mb-4 hidden">End Timer</button>
-            </div>
+            <p class="text-gray-400 mb-6">Discuss to identify the mole.</p>
+            <button id="end-round-btn" class="btn mb-4 hidden">End Round</button>
             <p class="text-gray-400 mb-4 mt-4">Operatives in play:</p>
             <div id="game-player-list" class="flex flex-wrap justify-center"></div>
-        </div>
-    </div>
-
-    <div id="voting-screen" class="screen flex-col items-center justify-center w-full">
-        <div class="card text-center">
-            <h1 class="text-2xl font-bold mb-2">Cast Your Vote</h1>
-            <p id="voter-name" class="text-gray-400 mb-6">Who is the mole?</p>
-            <div id="vote-buttons" class="grid grid-cols-2 md:grid-cols-3 gap-4"></div>
-            <p id="vote-wait-text" class="text-gray-400 mt-6 hidden">Vote cast. Awaiting others...</p>
         </div>
     </div>
 
     <div id="results-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
-            <div id="vote-tally" class="mb-6 text-left"></div>
-            <p class="text-xl mb-4">The operative with the most votes was...</p>
-            <p id="voted-out-player" class="text-3xl font-bold text-red-500 mb-8"></p>
-            <div id="mole-reveal" class="hidden">
-                <p class="text-xl mb-4">The actual Mole was...</p>
-                <p id="actual-mole" class="text-3xl font-bold text-red-400 mb-8"></p>
-                <p id="winner-announcement" class="text-2xl font-bold"></p>
-            </div>
+            <p class="text-xl mb-4">The actual Mole was...</p>
+            <p id="actual-mole" class="text-3xl font-bold text-red-400 mb-8"></p>
             <button id="next-round-btn" class="btn mt-8">Next Round</button>
         </div>
     </div>
@@ -243,15 +224,11 @@
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
-            <p class="text-gray-400 text-center mb-6">Final scores:</p>
-            <div id="final-scores" class="text-left w-full max-w-xs mx-auto mb-8"></div>
-            <p id="final-winner" class="text-2xl font-bold text-emerald-400 mb-8"></p>
             <button id="play-again-btn" class="btn">End Game For All</button>
         </div>
     </div>
 
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -273,7 +250,6 @@
         let userId;
         let gameId;
         let gameUnsubscribe;
-        let gameTimerInterval = null;
 
         const allDomElements = {
             screens: document.querySelectorAll('.screen'),
@@ -298,21 +274,10 @@
             roleBlurOverlay: document.getElementById('role-blur-overlay'),
             roleTextContent: document.getElementById('role-text-content'),
             acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
-            timerDisplay: document.getElementById('timer'),
-            startTimerBtn: document.getElementById('start-timer-btn'),
-            endTimerBtn: document.getElementById('end-timer-btn'),
+            endRoundBtn: document.getElementById('end-round-btn'),
             gamePlayerList: document.getElementById('game-player-list'),
-            voterName: document.getElementById('voter-name'),
-            voteButtons: document.getElementById('vote-buttons'),
-            voteWaitText: document.getElementById('vote-wait-text'),
-            voteTally: document.getElementById('vote-tally'),
-            votedOutPlayer: document.getElementById('voted-out-player'),
-            moleReveal: document.getElementById('mole-reveal'),
             actualMole: document.getElementById('actual-mole'),
-            winnerAnnouncement: document.getElementById('winner-announcement'),
             nextRoundBtn: document.getElementById('next-round-btn'),
-            finalScores: document.getElementById('final-scores'),
-            finalWinner: document.getElementById('final-winner'),
             playAgainBtn: document.getElementById('play-again-btn')
         };
 
@@ -423,21 +388,16 @@
                 }
                 
                 const totalRounds = players.length >= 6 ? players.length : 6;
-                const scores = players.reduce((acc, p) => ({ ...acc, [p.id]: 0 }), {});
                 const wordMaster = players[Math.floor(Math.random() * players.length)];
 
                 await updateDoc(gameRef, { 
                     status: 'round_start',
                     currentRound: 1,
                     totalRounds: totalRounds,
-                    scores: scores,
                     wordMasterId: wordMaster.id,
                     secretWord: '',
                     moleId: '',
-                    votes: {},
-                    roleAcknowledgements: [],
-                    timerStartTime: null,
-                    scoresAwarded: false
+                    roleAcknowledgements: []
                 });
             } catch (error) {
                 console.error("Error starting game:", error);
@@ -463,10 +423,7 @@
                     wordMasterId: wordMaster.id,
                     secretWord: '',
                     moleId: '',
-                    votes: {},
-                    roleAcknowledgements: [],
-                    timerStartTime: null,
-                    scoresAwarded: false
+                    roleAcknowledgements: []
                 });
             } catch(error) {
                 console.error("Error starting new round:", error);
@@ -513,25 +470,9 @@
             }
         }
 
-        async function castVote(votedForId) {
-            try {
-                const gameRef = doc(db, "games", gameId);
-                const newVotes = {};
-                newVotes[`votes.${userId}`] = votedForId;
-                await updateDoc(gameRef, newVotes);
-            } catch (error) {
-                console.error("Error casting vote:", error);
-            }
-        }
-
         function renderGame(gameData) {
             const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
-
-            if (status !== 'game' && gameTimerInterval) {
-                clearInterval(gameTimerInterval);
-                gameTimerInterval = null;
-            }
 
             let targetScreenId = status + '-screen';
             
@@ -548,7 +489,6 @@
                 'round_start': renderRoundStart,
                 'reveal': renderRoleReveal,
                 'game': renderGameScreen,
-                'voting': renderVotingScreen,
                 'results': renderResultsScreen,
                 'game_over': renderGameOverScreen
             };
@@ -616,154 +556,21 @@
                 allDomElements.gamePlayerList.appendChild(tag);
             });
 
-            const isWordMaster = userId === gameData.wordMasterId;
-            const timerHasStarted = !!gameData.timerStartTime;
-
-            allDomElements.startTimerBtn.classList.toggle('hidden', !isWordMaster || timerHasStarted);
-            allDomElements.endTimerBtn.classList.toggle('hidden', !isWordMaster || !timerHasStarted);
-
-            if (gameTimerInterval) clearInterval(gameTimerInterval);
-            gameTimerInterval = null;
-
-            if (timerHasStarted && gameData.timerStartTime.toDate) {
-                const startTime = gameData.timerStartTime.toDate(); 
-                const timerDuration = 180; 
-
-                gameTimerInterval = setInterval(async () => {
-                    const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
-                    const remainingSeconds = timerDuration - elapsedSeconds;
-
-                    if (remainingSeconds <= 0) {
-                        clearInterval(gameTimerInterval);
-                        gameTimerInterval = null;
-                        allDomElements.timerDisplay.textContent = "0:00";
-                        
-                        if (userId === gameData.hostId) {
-                            const gameRef = doc(db, "games", gameId);
-                            const currentDoc = await getDoc(gameRef);
-                            if (currentDoc.exists() && currentDoc.data().status === 'game') {
-                                updateDoc(gameRef, { status: 'voting' });
-                            }
-                        }
-                    } else {
-                        const minutes = Math.floor(remainingSeconds / 60);
-                        const seconds = remainingSeconds % 60;
-                        allDomElements.timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-                    }
-                }, 1000); 
-            } else {
-                allDomElements.timerDisplay.textContent = "3:00";
-            }
-        }
-
-        function renderVotingScreen(gameData) {
-            const playerHasVoted = gameData.votes && gameData.votes[userId];
-            allDomElements.voteWaitText.classList.toggle('hidden', !playerHasVoted);
-            allDomElements.voteButtons.innerHTML = '';
-
-            if (!playerHasVoted) {
-                gameData.players.forEach(player => {
-                    if (player.id !== userId) {
-                        const voteBtn = document.createElement('button');
-                        voteBtn.className = 'btn btn-secondary';
-                        voteBtn.textContent = player.name;
-                        voteBtn.onclick = () => castVote(player.id);
-                        allDomElements.voteButtons.appendChild(voteBtn);
-                    }
-                });
-            }
-
-            const voteCount = gameData.votes ? Object.keys(gameData.votes).length : 0;
-            if (gameData.players.length > 0 && voteCount === gameData.players.length) {
-                if (userId === gameData.hostId) {
-                    updateDoc(doc(db, "games", gameId), { status: 'results' });
-                }
-            }
+            const isHost = userId === gameData.hostId;
+            allDomElements.endRoundBtn.classList.toggle('hidden', !isHost);
         }
         
-        async function renderResultsScreen(gameData) {
-            const voteCounts = {};
-            if(gameData.votes) {
-                for (const voterId in gameData.votes) {
-                    voteCounts[gameData.votes[voterId]] = (voteCounts[gameData.votes[voterId]] || 0) + 1;
-                }
-            }
-            
-            allDomElements.voteTally.innerHTML = '<h3>Vote Counts:</h3>';
-            gameData.players.forEach(p => {
-                 const count = voteCounts[p.id] || 0;
-                 allDomElements.voteTally.innerHTML += `<p class="text-gray-400">${p.name}: ${count} vote(s)</p>`;
-            });
-
-            let maxVotes = -1;
-            let votedOutIds = [];
-            for (const playerId in voteCounts) {
-                if (voteCounts[playerId] > maxVotes) {
-                    maxVotes = voteCounts[playerId];
-                    votedOutIds = [playerId];
-                } else if (voteCounts[playerId] === maxVotes) {
-                    votedOutIds.push(playerId);
-                }
-            }
-
-            const votedOutNames = votedOutIds.map(id => gameData.players.find(p => p.id === id)?.name || 'Unknown').join(', ');
-            allDomElements.votedOutPlayer.textContent = votedOutNames || 'No one';
-
-            allDomElements.moleReveal.classList.remove('hidden');
+        function renderResultsScreen(gameData) {
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
             allDomElements.actualMole.textContent = actualMoleData ? actualMoleData.name : '...';
 
-            const moleWasVotedOut = votedOutIds.includes(gameData.moleId);
-            
-            if (moleWasVotedOut) {
-                allDomElements.winnerAnnouncement.textContent = "The Operatives win the round!";
-                allDomElements.winnerAnnouncement.className = "text-2xl font-bold text-emerald-400";
-            } else {
-                allDomElements.winnerAnnouncement.textContent = "The Mole wins the round!";
-                allDomElements.winnerAnnouncement.className = "text-2xl font-bold text-red-500";
-            }
-            
-            if (userId === gameData.hostId && !gameData.scoresAwarded) {
-                const gameRef = doc(db, "games", gameId);
-                const newScores = { ...gameData.scores };
-                if (moleWasVotedOut) {
-                    gameData.players.forEach(p => {
-                        if (p.id !== gameData.moleId) newScores[p.id] = (newScores[p.id] || 0) + 1;
-                    });
-                } else {
-                    newScores[gameData.moleId] = (newScores[gameData.moleId] || 0) + 1;
-                }
-                await updateDoc(gameRef, { scores: newScores, scoresAwarded: true });
-            }
-
             allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
-            allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Show Final Results' : 'Proceed to Debrief';
+            allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'End Game' : 'Next Round';
         }
         
         function renderGameOverScreen(gameData) {
-            const sortedPlayers = [...gameData.players].sort((a, b) => (gameData.scores[b.id] || 0) - (gameData.scores[a.id] || 0));
-            
-            allDomElements.finalScores.innerHTML = '';
-            sortedPlayers.forEach(p => {
-                allDomElements.finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${p.name}</span> <span>${gameData.scores[p.id] || 0} pts</span></p>`;
-            });
-
-            const highScore = sortedPlayers.length > 0 ? (gameData.scores[sortedPlayers[0].id] || 0) : 0;
-            const winners = sortedPlayers.filter(p => (gameData.scores[p.id] || 0) === highScore).map(p => p.name);
-
-            if (winners.length > 1) {
-                allDomElements.finalWinner.textContent = `It's a tie between ${winners.join(', ')}!`;
-            } else {
-                allDomElements.finalWinner.textContent = winners.length > 0 ? `${winners[0]} is the winner!` : 'No winner!';
-            }
-
-            if (userId === gameData.hostId) {
-                 allDomElements.playAgainBtn.textContent = 'End Game For All';
-                 allDomElements.playAgainBtn.disabled = false;
-            } else {
-                allDomElements.playAgainBtn.textContent = 'Awaiting Handler...';
-                allDomElements.playAgainBtn.disabled = true;
-            }
+            allDomElements.playAgainBtn.textContent = (userId === gameData.hostId) ? 'End Game For All' : 'Awaiting Handler...';
+            allDomElements.playAgainBtn.disabled = (userId !== gameData.hostId);
         }
 
 
@@ -801,21 +608,12 @@
         
         allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
 
-        allDomElements.startTimerBtn.addEventListener('click', async () => {
-            try {
-                const gameRef = doc(db, "games", gameId);
-                await updateDoc(gameRef, { timerStartTime: serverTimestamp() });
-            } catch (error) {
-                console.error("Error starting timer:", error);
-            }
-        });
-
-        allDomElements.endTimerBtn.addEventListener('click', async () => {
+        allDomElements.endRoundBtn.addEventListener('click', async () => {
              try {
                 const gameRef = doc(db, "games", gameId);
-                await updateDoc(gameRef, { status: 'voting' });
+                await updateDoc(gameRef, { status: 'results' });
             } catch (error) {
-                console.error("Error ending timer:", error);
+                console.error("Error ending round:", error);
             }
         });
 
