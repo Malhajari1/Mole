@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         body {
             font-family: 'DM Sans', sans-serif;
@@ -144,6 +145,22 @@
             z-index: 1000;
             display: none;
         }
+        #music-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0,0,0,0.5);
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+            border-radius: 9999px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
@@ -246,6 +263,11 @@
 
     <div id="persistent-game-id">Game ID: <span></span></div>
 
+    <button id="music-toggle">
+        <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" x2="17" y1="9" y2="15"></line><line x1="17" x2="23" y1="9" y2="15"></line></svg>
+    </button>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -300,7 +322,10 @@
             gamePlayerList: document.getElementById('game-player-list'),
             debriefMoleName: document.getElementById('debrief-mole-name'),
             nextRoundBtn: document.getElementById('next-round-btn'),
-            playAgainBtn: document.getElementById('play-again-btn')
+            playAgainBtn: document.getElementById('play-again-btn'),
+            musicToggle: document.getElementById('music-toggle'),
+            musicOnIcon: document.getElementById('music-on-icon'),
+            musicOffIcon: document.getElementById('music-off-icon')
         };
 
         function showScreen(screenId) {
@@ -498,7 +523,7 @@
                 console.error("Error acknowledging role:", error);
             }
         }
-        
+
         function renderGame(gameData) {
             const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
@@ -665,6 +690,47 @@
             }
         });
 
+        function setupMusic() {
+            const synth = new Tone.Synth({
+                oscillator: { type: 'fatsawtooth' },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.4 }
+            }).toDestination();
+            
+            const bass = new Tone.MonoSynth({
+                oscillator: { type: 'fatsine' },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.4, release: 0.8 },
+                filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.8, baseFrequency: 200, octaves: 4 }
+            }).toDestination();
+
+            const melody = new Tone.Sequence((time, note) => {
+                synth.triggerAttackRelease(note, '8n', time);
+            }, ['G4', null, 'Bb4', null, 'C5', 'G4', 'Bb4', null], '4n');
+
+            const bassline = new Tone.Sequence((time, note) => {
+                bass.triggerAttackRelease(note, '4n', time);
+            }, ['G2', 'Eb3', 'G2', 'C3'], '4n');
+
+            melody.start(0);
+            bassline.start(0);
+            Tone.Transport.bpm.value = 90;
+
+            allDomElements.musicToggle.addEventListener('click', () => {
+                if (Tone.context.state !== 'running') {
+                    Tone.context.resume();
+                }
+                if (Tone.Transport.state === 'started') {
+                    Tone.Transport.stop();
+                    allDomElements.musicOnIcon.classList.add('hidden');
+                    allDomElements.musicOffIcon.classList.remove('hidden');
+                } else {
+                    Tone.Transport.start();
+                    allDomElements.musicOnIcon.classList.remove('hidden');
+                    allDomElements.musicOffIcon.classList.add('hidden');
+                }
+            });
+        }
+        setupMusic();
+
         window.addEventListener('beforeunload', () => {
             if (gameUnsubscribe) {
                 gameUnsubscribe();
@@ -679,7 +745,14 @@
             }
             userId = storedUserId;
             
-            showScreen('home-screen');
+            const lastGameId = localStorage.getItem('moleGameId');
+            if (lastGameId) {
+                allDomElements.reconnectGameIdInput.value = lastGameId;
+                allDomElements.reconnectBtn.click();
+            } else {
+                 showScreen('home-screen');
+            }
+
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
             if (error.code === 'auth/configuration-not-found') {
