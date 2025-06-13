@@ -29,7 +29,7 @@
         }
         .card {
             background-color: #1f2937; /* gray-800 */
-            border-radius: 0.25rem;
+            border-radius: 0.25rem; /* less rounded */
             padding: 2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid #4b5563; /* gray-600 */
@@ -41,9 +41,9 @@
             background-color: #991b1b; /* red-800 */
             color: #f3f4f6; /* gray-100 */
             padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem;
+            border-radius: 0.25rem; /* sharper corners */
             text-align: center;
-            font-weight: 700;
+            font-weight: 700; /* bolder */
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
@@ -63,25 +63,25 @@
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn:disabled {
-            background-color: #4b5563;
-            border-color: #374151;
-            color: #9ca3af;
+            background-color: #4b5563; /* gray-600 */
+            border-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
             cursor: not-allowed;
             transform: none;
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn-secondary {
-            background-color: #374151;
-            border-color: #4b5563;
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563; /* gray-600 */
         }
         .btn-secondary:hover {
-            background-color: #4b5563;
-            border-color: #6b7280;
+            background-color: #4b5563; /* gray-600 */
+            border-color: #6b7280; /* gray-500 */
         }
         .input-field {
-            background-color: #374151;
-            color: #f3f4f6;
-            border: 1px solid #6b7280;
+            background-color: #374151; /* gray-700 */
+            color: #f3f4f6; /* gray-100 */
+            border: 1px solid #6b7280; /* gray-500 */
             padding: 0.75rem;
             border-radius: 0.25rem;
             width: 100%;
@@ -89,20 +89,20 @@
             font-family: 'DM Sans', sans-serif;
         }
         .input-field::placeholder {
-            color: #9ca3af;
+            color: #9ca3af; /* gray-400 */
         }
         .player-tag {
-            background-color: #4b5563;
+            background-color: #4b5563; /* gray-600 */
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
-            border: 1px solid #6b7280;
+            border: 1px solid #6b7280; /* gray-500 */
         }
         #game-id-display {
-            background-color: #111827;
+            background-color: #111827; /* gray-900 */
             padding: 0.75rem;
             border-radius: 0.25rem;
             font-family: 'DM Sans', monospace;
@@ -110,8 +110,8 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #b91c1c;
-            color: #fecaca;
+            border: 2px dashed #b91c1c; /* red-700 */
+            color: #fecaca; /* red-200 */
         }
         .animating-dots span {
             animation-name: blink;
@@ -130,6 +130,20 @@
             20% { opacity: 1; }
             100% { opacity: .2; }
         }
+        #persistent-game-id {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7);
+            color: #e5e7eb;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: 'DM Sans', monospace;
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
@@ -139,6 +153,7 @@
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
+            <button id="reconnect-btn" class="btn btn-secondary mb-4 hidden">Reconnect to Last Game</button>
             <div class="border-t border-gray-700 my-4"></div>
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
@@ -224,6 +239,8 @@
         </div>
     </div>
 
+    <div id="persistent-game-id">Game ID: <span></span></div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -252,7 +269,10 @@
             createGameBtn: document.getElementById('create-game-btn'),
             joinGameIdInput: document.getElementById('join-game-id-input'),
             joinGameBtn: document.getElementById('join-game-btn'),
+            reconnectBtn: document.getElementById('reconnect-btn'),
             gameIdDisplay: document.getElementById('game-id-display'),
+            persistentGameIdContainer: document.getElementById('persistent-game-id'),
+            persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
             copyConfirm: document.getElementById('copy-confirm'),
             playerCount: document.getElementById('player-count'),
             playerList: document.getElementById('player-list'),
@@ -308,22 +328,23 @@
                     players: [],
                     createdAt: serverTimestamp()
                 });
-                await joinGame(gameId);
+                await joinGame(gameId, true);
             } catch (error) {
                 console.error("Error creating game:", error);
                 alert("Failed to create game. Error: " + error.message);
             }
         }
 
-        async function joinGame(id) {
+        async function joinGame(id, isNew = false) {
             const gameRef = doc(db, "games", id);
             try {
                 const gameDoc = await getDoc(gameRef);
                 if (!gameDoc.exists()) {
                     alert("Game not found!");
+                    localStorage.removeItem('moleGameId');
                     return;
                 }
-                if (gameDoc.data().status !== 'lobby') {
+                if (gameDoc.data().status !== 'lobby' && isNew) {
                     alert("This game has already started and cannot be joined.");
                     return;
                 }
@@ -333,12 +354,18 @@
             }
 
             gameId = id;
+            localStorage.setItem('moleGameId', gameId);
+            allDomElements.persistentGameIdSpan.textContent = gameId;
+            allDomElements.persistentGameIdContainer.style.display = 'block';
+
             if (gameUnsubscribe) gameUnsubscribe(); 
 
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
                 const gameData = doc.data();
                 if (!gameData) {
                     if (gameUnsubscribe) gameUnsubscribe();
+                    localStorage.removeItem('moleGameId');
+                    allDomElements.persistentGameIdContainer.style.display = 'none';
                     showScreen('home-screen');
                     alert("The game has ended.");
                     return;
@@ -346,14 +373,14 @@
                 renderGame(gameData);
             }, (error) => {
                 console.error("Snapshot listener error:", error);
-                if (error.code && (error.code.includes('permission-denied') || error.code.includes('resource-exhausted'))) {
+                 if (error.code && (error.code.includes('permission-denied') || error.code.includes('resource-exhausted'))) {
                      alert("Connection blocked. This may be caused by a browser extension (like an ad-blocker). Please disable it for this site and refresh.");
                 } else {
                     alert("Lost connection to the game.");
                 }
             });
         }
-
+        
         async function addPlayer() {
             const name = allDomElements.playerNameInput.value.trim();
             if (!name) {
@@ -383,7 +410,7 @@
                     return;
                 }
                 
-                const totalRounds = players.length; // One round per player
+                const totalRounds = players.length;
                 const wordMaster = players[Math.floor(Math.random() * players.length)];
 
                 await updateDoc(gameRef, { 
@@ -465,7 +492,7 @@
                 console.error("Error acknowledging role:", error);
             }
         }
-
+        
         function renderGame(gameData) {
             const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
@@ -572,7 +599,13 @@
         allDomElements.createGameBtn.addEventListener('click', createGame);
         allDomElements.joinGameBtn.addEventListener('click', () => {
             const id = allDomElements.joinGameIdInput.value.trim();
-            if (id) joinGame(id);
+            if (id) joinGame(id, true);
+        });
+        allDomElements.reconnectBtn.addEventListener('click', () => {
+             const lastGameId = localStorage.getItem('moleGameId');
+             if(lastGameId) {
+                joinGame(lastGameId, false);
+             }
         });
         allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
         allDomElements.startGameBtn.addEventListener('click', startGame);
@@ -631,7 +664,18 @@
         });
 
         signInAnonymously(auth).then((userCredential) => {
-            userId = userCredential.user.uid;
+            let storedUserId = localStorage.getItem('moleUserId');
+            if(!storedUserId){
+                storedUserId = userCredential.user.uid;
+                localStorage.setItem('moleUserId', storedUserId);
+            }
+            userId = storedUserId;
+
+            const lastGameId = localStorage.getItem('moleGameId');
+            if (lastGameId) {
+                allDomElements.reconnectBtn.classList.remove('hidden');
+            }
+            
             showScreen('home-screen');
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
