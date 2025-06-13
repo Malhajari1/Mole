@@ -248,12 +248,10 @@
     </div>
 
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAJqlQLiyN4Ddo2tNEDalfbcJ8eIr0oc3I",
             authDomain: "mole-500ff.firebaseapp.com",
@@ -264,66 +262,62 @@
             measurementId: "G-XNHP89LS4Z"
         };
         
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         
         let userId;
         let gameId;
-        let gameUnsubscribe; // To stop listening to game updates
-        let gameTimerInterval = null; // To hold the timer interval
+        let gameUnsubscribe;
+        let gameTimerInterval = null;
 
-        // --- DOM Elements ---
-        const screens = document.querySelectorAll('.screen');
-        const createGameBtn = document.getElementById('create-game-btn');
-        const joinGameIdInput = document.getElementById('join-game-id-input');
-        const joinGameBtn = document.getElementById('join-game-btn');
-        const gameIdDisplay = document.getElementById('game-id-display');
-        const copyConfirm = document.getElementById('copy-confirm');
-        const playerCount = document.getElementById('player-count');
-        const playerList = document.getElementById('player-list');
-        const playerNameInput = document.getElementById('player-name-input');
-        const addPlayerBtn = document.getElementById('add-player-btn');
-        const startGameBtn = document.getElementById('start-game-btn');
-        const roundTitle = document.getElementById('round-title');
-        const wordMasterTurnTitle = document.getElementById('word-master-turn-title');
-        const wordMasterWaitText = document.getElementById('word-master-wait-text');
-        const secretWordInput = document.getElementById('secret-word-input');
-        const toggleWordVisibilityBtn = document.getElementById('toggle-word-visibility-btn');
-        const eyeOpenIcon = document.getElementById('eye-open-icon');
-        const eyeClosedIcon = document.getElementById('eye-closed-icon');
-        const setWordBtn = document.getElementById('set-word-btn');
-        
-        const roleBlurOverlay = document.getElementById('role-blur-overlay');
-        const roleTextContent = document.getElementById('role-text-content');
-        const acknowledgeRoleBtn = document.getElementById('acknowledge-role-btn');
-        
-        const timerDisplay = document.getElementById('timer');
-        const startTimerBtn = document.getElementById('start-timer-btn');
-        const gamePlayerList = document.getElementById('game-player-list');
-        const voterName = document.getElementById('voter-name');
-        const voteButtons = document.getElementById('vote-buttons');
-        const voteWaitText = document.getElementById('vote-wait-text');
-        const voteTally = document.getElementById('vote-tally');
-        const votedOutPlayer = document.getElementById('voted-out-player');
-        const moleReveal = document.getElementById('mole-reveal');
-        const actualMole = document.getElementById('actual-mole');
-        const winnerAnnouncement = document.getElementById('winner-announcement');
-        const nextRoundBtn = document.getElementById('next-round-btn');
-        const finalScores = document.getElementById('final-scores');
-        const finalWinner = document.getElementById('final-winner');
-        const playAgainBtn = document.getElementById('play-again-btn');
-
-        // --- Core Functions ---
+        const allDomElements = {
+            screens: document.querySelectorAll('.screen'),
+            createGameBtn: document.getElementById('create-game-btn'),
+            joinGameIdInput: document.getElementById('join-game-id-input'),
+            joinGameBtn: document.getElementById('join-game-btn'),
+            gameIdDisplay: document.getElementById('game-id-display'),
+            copyConfirm: document.getElementById('copy-confirm'),
+            playerCount: document.getElementById('player-count'),
+            playerList: document.getElementById('player-list'),
+            playerNameInput: document.getElementById('player-name-input'),
+            addPlayerBtn: document.getElementById('add-player-btn'),
+            startGameBtn: document.getElementById('start-game-btn'),
+            roundTitle: document.getElementById('round-title'),
+            wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
+            wordMasterWaitText: document.getElementById('word-master-wait-text'),
+            secretWordInput: document.getElementById('secret-word-input'),
+            toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'),
+            eyeOpenIcon: document.getElementById('eye-open-icon'),
+            eyeClosedIcon: document.getElementById('eye-closed-icon'),
+            setWordBtn: document.getElementById('set-word-btn'),
+            roleBlurOverlay: document.getElementById('role-blur-overlay'),
+            roleTextContent: document.getElementById('role-text-content'),
+            acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
+            timerDisplay: document.getElementById('timer'),
+            startTimerBtn: document.getElementById('start-timer-btn'),
+            gamePlayerList: document.getElementById('game-player-list'),
+            voterName: document.getElementById('voter-name'),
+            voteButtons: document.getElementById('vote-buttons'),
+            voteWaitText: document.getElementById('vote-wait-text'),
+            voteTally: document.getElementById('vote-tally'),
+            votedOutPlayer: document.getElementById('voted-out-player'),
+            moleReveal: document.getElementById('mole-reveal'),
+            actualMole: document.getElementById('actual-mole'),
+            winnerAnnouncement: document.getElementById('winner-announcement'),
+            nextRoundBtn: document.getElementById('next-round-btn'),
+            finalScores: document.getElementById('final-scores'),
+            finalWinner: document.getElementById('final-winner'),
+            playAgainBtn: document.getElementById('play-again-btn')
+        };
 
         function showScreen(screenId) {
             const targetScreen = document.getElementById(screenId);
             if (!targetScreen) {
                 console.error(`Error: Screen with ID "${screenId}" not found.`);
-                return; 
+                return;
             }
-            screens.forEach(s => s.classList.remove('active'));
+            allDomElements.screens.forEach(s => s.classList.remove('active'));
             targetScreen.classList.add('active');
         }
 
@@ -331,31 +325,23 @@
             return Math.random().toString().substr(2, 6);
         }
 
-        gameIdDisplay.addEventListener('click', () => {
-            navigator.clipboard.writeText(gameIdDisplay.textContent).then(() => {
-                copyConfirm.style.visibility = 'visible';
-                setTimeout(() => { copyConfirm.style.visibility = 'hidden' }, 2000);
+        allDomElements.gameIdDisplay.addEventListener('click', () => {
+            navigator.clipboard.writeText(allDomElements.gameIdDisplay.textContent).then(() => {
+                allDomElements.copyConfirm.style.visibility = 'visible';
+                setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
             });
         });
-
-        // --- Game Logic Functions ---
 
         async function createGame() {
             try {
                 gameId = generateGameId();
                 const gameRef = doc(db, "games", gameId);
-                const hostId = userId;
-                
                 await setDoc(gameRef, {
-                    hostId: hostId,
+                    hostId: userId,
                     status: 'lobby',
                     players: [],
-                    scores: {},
-                    currentRound: 0,
-                    totalRounds: 0,
                     createdAt: serverTimestamp()
                 });
-                
                 await joinGame(gameId);
             } catch (error) {
                 console.error("Error creating game:", error);
@@ -381,15 +367,14 @@
             }
 
             gameId = id;
-            
             if (gameUnsubscribe) gameUnsubscribe(); 
 
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
                 const gameData = doc.data();
                 if (!gameData) {
-                    if(gameUnsubscribe) gameUnsubscribe();
+                    if (gameUnsubscribe) gameUnsubscribe();
                     showScreen('home-screen');
-                    alert("The game has ended or been deleted.");
+                    alert("The game has ended.");
                     return;
                 }
                 renderGame(gameData);
@@ -404,7 +389,7 @@
         }
 
         async function addPlayer() {
-            const name = playerNameInput.value.trim();
+            const name = allDomElements.playerNameInput.value.trim();
             if (!name) {
                 alert('Please enter a name.');
                 return;
@@ -413,15 +398,11 @@
                 alert('Name must be 15 characters or less.');
                 return;
             }
-
             try {
                 const gameRef = doc(db, "games", gameId);
-                await updateDoc(gameRef, {
-                    players: arrayUnion({ id: userId, name: name })
-                });
+                await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
             } catch(error) {
                 console.error("Error adding player:", error);
-                alert("Could not join the game. Error: " + error.message);
             }
         }
 
@@ -454,7 +435,6 @@
                 });
             } catch (error) {
                 console.error("Error starting game:", error);
-                alert("Could not start the game. Error: " + error.message);
             }
         }
 
@@ -479,17 +459,17 @@
                     moleId: '',
                     votes: {},
                     roleAcknowledgements: [],
-                    timerStartTime: null
+                    timerStartTime: null,
+                    scoresAwarded: false
                 });
             } catch(error) {
                 console.error("Error starting new round:", error);
-                alert("Could not start the next round. Error: " + error.message);
             }
         }
         
         async function setWordAndAssignRoles() {
             try {
-                const word = secretWordInput.value.trim();
+                const word = allDomElements.secretWordInput.value.trim();
                 if (!word) {
                     alert('Please enter a secret word.');
                     return;
@@ -513,7 +493,6 @@
                 });
             } catch (error) {
                 console.error("Error setting word:", error);
-                alert("Could not set the word. Error: " + error.message);
             }
         }
         
@@ -525,26 +504,19 @@
                 });
             } catch (error) {
                 console.error("Error acknowledging role:", error);
-                alert("Could not acknowledge role. Error: " + error.message);
             }
         }
 
         async function castVote(votedForId) {
             try {
-                voteButtons.innerHTML = '';
-                voteWaitText.classList.remove('hidden');
-
                 const gameRef = doc(db, "games", gameId);
                 const newVotes = {};
                 newVotes[`votes.${userId}`] = votedForId;
                 await updateDoc(gameRef, newVotes);
             } catch (error) {
                 console.error("Error casting vote:", error);
-                alert("Could not cast vote. Error: " + error.message);
             }
         }
-
-        // --- Rendering Functions ---
 
         function renderGame(gameData) {
             const status = gameData.status ? gameData.status.trim() : null;
@@ -563,122 +535,101 @@
                 }
             }
             
-            const currentScreenId = document.querySelector('.screen.active')?.id;
-            if (currentScreenId !== targetScreenId) {
-                showScreen(targetScreenId);
-            }
+            showScreen(targetScreenId);
             
-            switch (status) {
-                case 'lobby':
-                    renderLobby(gameData);
-                    break;
-                case 'round_start':
-                    renderRoundStart(gameData);
-                    break;
-                case 'reveal':
-                    renderRoleReveal(gameData);
-                    break;
-                case 'game':
-                    renderGameScreen(gameData);
-                    break;
-                case 'voting':
-                    renderVotingScreen(gameData);
-                    break;
-                case 'results':
-                    renderResultsScreen(gameData);
-                    break;
-                case 'game_over':
-                    renderGameOverScreen(gameData);
-                    break;
+            const renderer = {
+                'lobby': renderLobby,
+                'round_start': renderRoundStart,
+                'reveal': renderRoleReveal,
+                'game': renderGameScreen,
+                'voting': renderVotingScreen,
+                'results': renderResultsScreen,
+                'game_over': renderGameOverScreen
+            };
+
+            if (renderer[status]) {
+                renderer[status](gameData);
             }
         }
         
         function renderLobby(gameData) {
-            gameIdDisplay.textContent = gameId;
-            playerCount.textContent = gameData.players.length;
-            playerList.innerHTML = '';
+            allDomElements.gameIdDisplay.textContent = gameId;
+            allDomElements.playerCount.textContent = gameData.players.length;
+            allDomElements.playerList.innerHTML = '';
             gameData.players.forEach(p => {
                 const tag = document.createElement('div');
                 tag.className = 'player-tag';
                 tag.textContent = p.name + (p.id === gameData.hostId ? ' (Handler)' : '');
-                playerList.appendChild(tag);
+                allDomElements.playerList.appendChild(tag);
             });
             
             const playerIsHost = userId === gameData.hostId;
-            startGameBtn.disabled = !playerIsHost;
+            allDomElements.startGameBtn.disabled = !playerIsHost;
             
             const playerInGame = gameData.players.some(p => p.id === userId);
-            playerNameInput.disabled = playerInGame;
-            addPlayerBtn.disabled = playerInGame;
+            allDomElements.playerNameInput.disabled = playerInGame;
+            allDomElements.addPlayerBtn.disabled = playerInGame;
         }
 
         function renderRoundStart(gameData) {
-            const roundNum = gameData.currentRound;
-            const total = gameData.totalRounds;
-            roundTitle.textContent = `Round ${roundNum} of ${total}`;
-            
+            allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
             if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
                 const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
-                wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to type the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
-                wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${roundNum})`;
+                allDomElements.wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to type the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
             }
         }
         
         function renderRoleReveal(gameData) {
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
-
-            roleBlurOverlay.classList.remove('opacity-0');
-            roleTextContent.classList.add('invisible');
-            acknowledgeRoleBtn.classList.add('hidden');
+            
+            allDomElements.roleBlurOverlay.classList.remove('opacity-0');
+            allDomElements.roleTextContent.classList.add('invisible');
+            allDomElements.acknowledgeRoleBtn.classList.add('hidden');
 
             if (playerHasAckd) {
-                roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
-                roleBlurOverlay.classList.add('opacity-0');
-                roleTextContent.classList.remove('invisible');
-                acknowledgeRoleBtn.classList.add('hidden');
+                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
+                allDomElements.roleBlurOverlay.classList.add('opacity-0');
+                allDomElements.roleTextContent.classList.remove('invisible');
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
                 if(userId === gameData.hostId) {
-                    const gameRef = doc(db, "games", gameId);
-                    updateDoc(gameRef, { status: 'game' });
+                    updateDoc(doc(db, "games", gameId), { status: 'game' });
                 }
             }
         }
         
         function renderGameScreen(gameData) {
-            gamePlayerList.innerHTML = '';
+            allDomElements.gamePlayerList.innerHTML = '';
             gameData.players.forEach(p => {
                 const tag = document.createElement('div');
                 tag.className = 'player-tag';
                 tag.textContent = p.name;
-                gamePlayerList.appendChild(tag);
+                allDomElements.gamePlayerList.appendChild(tag);
             });
 
             const isWordMaster = userId === gameData.wordMasterId;
             const timerHasStarted = !!gameData.timerStartTime;
 
-            startTimerBtn.classList.toggle('hidden', !isWordMaster || timerHasStarted);
+            allDomElements.startTimerBtn.classList.toggle('hidden', !isWordMaster || timerHasStarted);
 
-            if (gameTimerInterval) {
-                clearInterval(gameTimerInterval);
-                gameTimerInterval = null;
-            }
+            if (gameTimerInterval) clearInterval(gameTimerInterval);
+            gameTimerInterval = null;
 
             if (timerHasStarted && gameData.timerStartTime.toDate) {
                 const startTime = gameData.timerStartTime.toDate(); 
-                const timerDuration = 3 * 60; 
+                const timerDuration = 180; 
 
                 gameTimerInterval = setInterval(async () => {
-                    const now = new Date();
-                    const elapsedSeconds = Math.floor((now - startTime) / 1000);
+                    const elapsedSeconds = Math.floor((new Date() - startTime) / 1000);
                     const remainingSeconds = timerDuration - elapsedSeconds;
 
                     if (remainingSeconds <= 0) {
                         clearInterval(gameTimerInterval);
                         gameTimerInterval = null;
-                        timerDisplay.textContent = "0:00";
+                        allDomElements.timerDisplay.textContent = "0:00";
                         
                         if (userId === gameData.hostId) {
                             const gameRef = doc(db, "games", gameId);
@@ -690,29 +641,27 @@
                     } else {
                         const minutes = Math.floor(remainingSeconds / 60);
                         const seconds = remainingSeconds % 60;
-                        timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                        allDomElements.timerDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
                     }
                 }, 1000); 
             } else {
-                timerDisplay.textContent = "3:00";
+                allDomElements.timerDisplay.textContent = "3:00";
             }
         }
 
         function renderVotingScreen(gameData) {
             const playerHasVoted = gameData.votes && gameData.votes[userId];
-            if (playerHasVoted) {
-                voteButtons.innerHTML = '';
-                voteWaitText.classList.remove('hidden');
-            } else {
-                voteButtons.innerHTML = '';
-                voteWaitText.classList.add('hidden');
+            allDomElements.voteWaitText.classList.toggle('hidden', !playerHasVoted);
+            allDomElements.voteButtons.innerHTML = '';
+
+            if (!playerHasVoted) {
                 gameData.players.forEach(player => {
                     if (player.id !== userId) {
                         const voteBtn = document.createElement('button');
                         voteBtn.className = 'btn btn-secondary';
                         voteBtn.textContent = player.name;
                         voteBtn.onclick = () => castVote(player.id);
-                        voteButtons.appendChild(voteBtn);
+                        allDomElements.voteButtons.appendChild(voteBtn);
                     }
                 });
             }
@@ -720,8 +669,7 @@
             const voteCount = gameData.votes ? Object.keys(gameData.votes).length : 0;
             if (gameData.players.length > 0 && voteCount === gameData.players.length) {
                 if (userId === gameData.hostId) {
-                    const gameRef = doc(db, "games", gameId);
-                    updateDoc(gameRef, { status: 'results' });
+                    updateDoc(doc(db, "games", gameId), { status: 'results' });
                 }
             }
         }
@@ -730,15 +678,14 @@
             const voteCounts = {};
             if(gameData.votes) {
                 for (const voterId in gameData.votes) {
-                    const votedForId = gameData.votes[voterId];
-                    voteCounts[votedForId] = (voteCounts[votedForId] || 0) + 1;
+                    voteCounts[gameData.votes[voterId]] = (voteCounts[gameData.votes[voterId]] || 0) + 1;
                 }
             }
             
-            voteTally.innerHTML = '<h3>Vote Counts:</h3>';
+            allDomElements.voteTally.innerHTML = '<h3>Vote Counts:</h3>';
             gameData.players.forEach(p => {
                  const count = voteCounts[p.id] || 0;
-                 voteTally.innerHTML += `<p class="text-gray-400">${p.name}: ${count} vote(s)</p>`;
+                 allDomElements.voteTally.innerHTML += `<p class="text-gray-400">${p.name}: ${count} vote(s)</p>`;
             });
 
             let maxVotes = -1;
@@ -752,132 +699,124 @@
                 }
             }
 
-            const votedOutNames = votedOutIds.map(id => {
-                const p = gameData.players.find(player => player.id === id);
-                return p ? p.name : 'Unknown';
-            }).join(', ');
-            votedOutPlayer.textContent = votedOutNames || 'No one';
+            const votedOutNames = votedOutIds.map(id => gameData.players.find(p => p.id === id)?.name || 'Unknown').join(', ');
+            allDomElements.votedOutPlayer.textContent = votedOutNames || 'No one';
 
-            moleReveal.classList.remove('hidden');
+            allDomElements.moleReveal.classList.remove('hidden');
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
-            actualMole.textContent = actualMoleData ? actualMoleData.name : '...';
+            allDomElements.actualMole.textContent = actualMoleData ? actualMoleData.name : '...';
 
             const moleWasVotedOut = votedOutIds.length === 1 && votedOutIds[0] === gameData.moleId;
             
             if (moleWasVotedOut) {
-                winnerAnnouncement.textContent = "The Operatives win the round!";
-                winnerAnnouncement.className = "text-2xl font-bold text-emerald-400";
+                allDomElements.winnerAnnouncement.textContent = "The Operatives win the round!";
+                allDomElements.winnerAnnouncement.className = "text-2xl font-bold text-emerald-400";
             } else {
-                winnerAnnouncement.textContent = "The Mole wins the round!";
-                winnerAnnouncement.className = "text-2xl font-bold text-red-500";
+                allDomElements.winnerAnnouncement.textContent = "The Mole wins the round!";
+                allDomElements.winnerAnnouncement.className = "text-2xl font-bold text-red-500";
             }
             
-            if (userId === gameData.hostId) {
+            if (userId === gameData.hostId && !gameData.scoresAwarded) {
                 const gameRef = doc(db, "games", gameId);
-                const currentDoc = await getDoc(gameRef);
-                const currentScores = currentDoc.data().scores || {};
-
-                if(JSON.stringify(currentScores) === JSON.stringify(gameData.scores)) {
-                    const newScores = { ...gameData.scores };
-                    if(moleWasVotedOut) {
-                        gameData.players.forEach(p => {
-                            if (p.id !== gameData.moleId) newScores[p.id] = (newScores[p.id] || 0) + 1;
-                        });
-                    } else {
-                        newScores[gameData.moleId] = (newScores[gameData.moleId] || 0) + 1;
-                    }
-                    await updateDoc(gameRef, { scores: newScores });
+                const newScores = { ...gameData.scores };
+                if (moleWasVotedOut) {
+                    gameData.players.forEach(p => {
+                        if (p.id !== gameData.moleId) newScores[p.id] = (newScores[p.id] || 0) + 1;
+                    });
+                } else {
+                    newScores[gameData.moleId] = (newScores[gameData.moleId] || 0) + 1;
                 }
-
-                nextRoundBtn.classList.remove('hidden');
-                nextRoundBtn.disabled = false;
-                nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Show Final Results' : 'Proceed to Debrief';
-
-            } else {
-                nextRoundBtn.classList.remove('hidden');
-                nextRoundBtn.disabled = true;
-                nextRoundBtn.textContent = 'Awaiting Handler...';
+                await updateDoc(gameRef, { scores: newScores, scoresAwarded: true });
             }
+
+            allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
+            allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Show Final Results' : 'Proceed to Debrief';
         }
         
         function renderGameOverScreen(gameData) {
             const sortedPlayers = [...gameData.players].sort((a, b) => (gameData.scores[b.id] || 0) - (gameData.scores[a.id] || 0));
             
-            finalScores.innerHTML = '';
+            allDomElements.finalScores.innerHTML = '';
             sortedPlayers.forEach(p => {
-                finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${p.name}</span> <span>${gameData.scores[p.id] || 0} pts</span></p>`;
+                allDomElements.finalScores.innerHTML += `<p class="text-lg text-gray-300 py-1 flex justify-between"><span>${p.name}</span> <span>${gameData.scores[p.id] || 0} pts</span></p>`;
             });
 
             const highScore = sortedPlayers.length > 0 ? (gameData.scores[sortedPlayers[0].id] || 0) : 0;
             const winners = sortedPlayers.filter(p => (gameData.scores[p.id] || 0) === highScore).map(p => p.name);
 
             if (winners.length > 1) {
-                finalWinner.textContent = `It's a tie between ${winners.join(', ')}!`;
+                allDomElements.finalWinner.textContent = `It's a tie between ${winners.join(', ')}!`;
             } else {
-                finalWinner.textContent = winners.length > 0 ? `${winners[0]} is the winner!` : 'No winner!';
+                allDomElements.finalWinner.textContent = winners.length > 0 ? `${winners[0]} is the winner!` : 'No winner!';
             }
 
             if (userId === gameData.hostId) {
-                 playAgainBtn.onclick = async () => {
-                     await updateDoc(doc(db, "games", gameId), { status: 'lobby', players: [], currentRound: 0, scores: {}, moleId: '', secretWord: '', votes: {}});
-                 };
-                 playAgainBtn.disabled = false;
-                 playAgainBtn.textContent = 'New Game';
+                 allDomElements.playAgainBtn.textContent = 'End Game For All';
+                 allDomElements.playAgainBtn.disabled = false;
             } else {
-                playAgainBtn.textContent = 'Awaiting Handler...';
-                playAgainBtn.disabled = true;
+                allDomElements.playAgainBtn.textContent = 'Awaiting Handler...';
+                allDomElements.playAgainBtn.disabled = true;
             }
         }
 
 
         // --- Event Listeners ---
-        createGameBtn.addEventListener('click', createGame);
-        joinGameBtn.addEventListener('click', () => {
-            const id = joinGameIdInput.value.trim();
+        allDomElements.createGameBtn.addEventListener('click', createGame);
+        allDomElements.joinGameBtn.addEventListener('click', () => {
+            const id = allDomElements.joinGameIdInput.value.trim();
             if (id) joinGame(id);
         });
-        addPlayerBtn.addEventListener('click', addPlayer);
-        startGameBtn.addEventListener('click', startGame);
-        setWordBtn.addEventListener('click', setWordAndAssignRoles);
+        allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
+        allDomElements.startGameBtn.addEventListener('click', startGame);
+        allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
         
-        toggleWordVisibilityBtn.addEventListener('click', () => {
-            const isPassword = secretWordInput.type === 'password';
-            secretWordInput.type = isPassword ? 'text' : 'password';
-            eyeOpenIcon.classList.toggle('hidden', isPassword);
-            eyeClosedIcon.classList.toggle('hidden', !isPassword);
+        allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
+            const isPassword = allDomElements.secretWordInput.type === 'password';
+            allDomElements.secretWordInput.type = isPassword ? 'text' : 'password';
+            allDomElements.eyeOpenIcon.classList.toggle('hidden', isPassword);
+            allDomElements.eyeClosedIcon.classList.toggle('hidden', !isPassword);
         });
         
-        roleBlurOverlay.addEventListener('click', async () => {
-            roleBlurOverlay.classList.add('opacity-0');
-            roleTextContent.classList.remove('invisible');
-            acknowledgeRoleBtn.classList.remove('hidden');
+        allDomElements.roleBlurOverlay.addEventListener('click', async () => {
+            allDomElements.roleBlurOverlay.classList.add('opacity-0');
+            allDomElements.roleTextContent.classList.remove('invisible');
+            allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
             
             const gameDoc = await getDoc(doc(db, "games", gameId));
             const gameData = gameDoc.data();
             
             if (userId === gameData.moleId) {
-                roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
             } else {
-                roleTextContent.innerHTML = `<p class="text-gray-300">The Secret Codename is:</p><h2 class="text-3xl font-bold text-red-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Identify the Mole.</p>`;
+                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">The Secret Codename is:</p><h2 class="text-3xl font-bold text-red-400 mt-2">${(gameData.secretWord || '').toUpperCase()}</h2><p class="text-gray-300 mt-4">Identify the Mole.</p>`;
             }
         });
         
-        acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
+        allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
 
-        startTimerBtn.addEventListener('click', async () => {
+        allDomElements.startTimerBtn.addEventListener('click', async () => {
             try {
                 const gameRef = doc(db, "games", gameId);
                 await updateDoc(gameRef, { timerStartTime: serverTimestamp() });
             } catch (error) {
                 console.error("Error starting timer:", error);
-                alert("Could not start timer. Error: " + error.message);
             }
         });
 
-        nextRoundBtn.addEventListener('click', startNewRound);
-        playAgainBtn.addEventListener('click', () => { /* Handled in renderGameOverScreen */ });
+        allDomElements.nextRoundBtn.addEventListener('click', startNewRound);
+        allDomElements.playAgainBtn.addEventListener('click', async () => {
+            if (userId === (await getDoc(doc(db, "games", gameId))).data()?.hostId) {
+                await deleteDoc(doc(db, "games", gameId));
+            }
+        });
 
         // --- Initial Load ---
+        window.addEventListener('beforeunload', () => {
+            if (gameUnsubscribe) {
+                gameUnsubscribe();
+            }
+        });
+
         signInAnonymously(auth).then((userCredential) => {
             userId = userCredential.user.uid;
             showScreen('home-screen');
