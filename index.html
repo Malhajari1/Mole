@@ -207,8 +207,11 @@
             <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
             <p class="text-gray-400 mb-6">Identify the mole.</p>
             <div id="timer" class="text-6xl font-bold text-red-500 my-8">3:00</div>
-            <button id="start-timer-btn" class="btn mb-4 hidden">Start Timer</button>
-            <p class="text-gray-400 mb-4">Operatives in play:</p>
+            <div class="flex space-x-4">
+                 <button id="start-timer-btn" class="btn mb-4 hidden">Start Timer</button>
+                 <button id="end-timer-btn" class="btn btn-secondary mb-4 hidden">End Timer</button>
+            </div>
+            <p class="text-gray-400 mb-4 mt-4">Operatives in play:</p>
             <div id="game-player-list" class="flex flex-wrap justify-center"></div>
         </div>
     </div>
@@ -243,7 +246,7 @@
             <p class="text-gray-400 text-center mb-6">Final scores:</p>
             <div id="final-scores" class="text-left w-full max-w-xs mx-auto mb-8"></div>
             <p id="final-winner" class="text-2xl font-bold text-emerald-400 mb-8"></p>
-            <button id="play-again-btn" class="btn">New Game</button>
+            <button id="play-again-btn" class="btn">End Game For All</button>
         </div>
     </div>
 
@@ -296,6 +299,7 @@
             acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
             timerDisplay: document.getElementById('timer'),
             startTimerBtn: document.getElementById('start-timer-btn'),
+            endTimerBtn: document.getElementById('end-timer-btn'),
             gamePlayerList: document.getElementById('game-player-list'),
             voterName: document.getElementById('voter-name'),
             voteButtons: document.getElementById('vote-buttons'),
@@ -534,8 +538,6 @@
                 if (userId === gameData.wordMasterId) {
                     targetScreenId = 'word-input-screen';
                 }
-            } else if (status === 'reveal') {
-                targetScreenId = 'reveal-screen';
             }
             
             showScreen(targetScreenId);
@@ -613,10 +615,11 @@
                 allDomElements.gamePlayerList.appendChild(tag);
             });
 
-            const isHost = userId === gameData.hostId;
+            const isWordMaster = userId === gameData.wordMasterId;
             const timerHasStarted = !!gameData.timerStartTime;
 
-            allDomElements.startTimerBtn.classList.toggle('hidden', !isHost || timerHasStarted);
+            allDomElements.startTimerBtn.classList.toggle('hidden', !isWordMaster || timerHasStarted);
+            allDomElements.endTimerBtn.classList.toggle('hidden', !isWordMaster || !timerHasStarted);
 
             if (gameTimerInterval) clearInterval(gameTimerInterval);
             gameTimerInterval = null;
@@ -806,8 +809,17 @@
             }
         });
 
+        allDomElements.endTimerBtn.addEventListener('click', async () => {
+             try {
+                const gameRef = doc(db, "games", gameId);
+                await updateDoc(gameRef, { status: 'voting' });
+            } catch (error) {
+                console.error("Error ending timer:", error);
+            }
+        });
+
         allDomElements.nextRoundBtn.addEventListener('click', async () => {
-            allDomElements.nextRoundBtn.disabled = true; // Prevent double clicks
+            allDomElements.nextRoundBtn.disabled = true; 
             await startNewRound();
         });
         
