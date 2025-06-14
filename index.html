@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mole Game</title>
+    <title>The Mole (Beta 1.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&family=Special+Elite&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <style>
         body {
@@ -30,21 +30,36 @@
         }
         .card {
             background-color: #1f2937; /* gray-800 */
-            border-radius: 0.25rem; /* less rounded */
+            border-radius: 0.25rem;
             padding: 2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid #4b5563; /* gray-600 */
             width: 90%;
             max-width: 450px;
+            position: relative;
+            overflow: visible;
+        }
+        .beta-stamp {
+            font-family: 'Special Elite', monospace;
+            position: absolute;
+            top: -10px;
+            right: -15px;
+            border: 3px solid #b91c1c;
+            color: #b91c1c;
+            padding: 0.25rem 0.75rem;
+            transform: rotate(10deg);
+            text-transform: uppercase;
+            font-size: 1rem;
+            background-color: #1f2937;
         }
         .btn {
             display: inline-block;
             background-color: #991b1b; /* red-800 */
             color: #f3f4f6; /* gray-100 */
             padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem; /* sharper corners */
+            border-radius: 0.25rem;
             text-align: center;
-            font-weight: 700; /* bolder */
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
@@ -64,25 +79,25 @@
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn:disabled {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #374151; /* gray-700 */
-            color: #9ca3af; /* gray-400 */
+            background-color: #4b5563;
+            border-color: #374151;
+            color: #9ca3af;
             cursor: not-allowed;
             transform: none;
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn-secondary {
-            background-color: #374151; /* gray-700 */
-            border-color: #4b5563; /* gray-600 */
+            background-color: #374151;
+            border-color: #4b5563;
         }
         .btn-secondary:hover {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #6b7280; /* gray-500 */
+            background-color: #4b5563;
+            border-color: #6b7280;
         }
         .input-field {
-            background-color: #374151; /* gray-700 */
-            color: #f3f4f6; /* gray-100 */
-            border: 1px solid #6b7280; /* gray-500 */
+            background-color: #374151;
+            color: #f3f4f6;
+            border: 1px solid #6b7280;
             padding: 0.75rem;
             border-radius: 0.25rem;
             width: 100%;
@@ -90,20 +105,20 @@
             font-family: 'DM Sans', sans-serif;
         }
         .input-field::placeholder {
-            color: #9ca3af; /* gray-400 */
+            color: #9ca3af;
         }
         .player-tag {
-            background-color: #4b5563; /* gray-600 */
+            background-color: #4b5563;
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
-            border: 1px solid #6b7280; /* gray-500 */
+            border: 1px solid #6b7280;
         }
         #game-id-display {
-            background-color: #111827; /* gray-900 */
+            background-color: #111827;
             padding: 0.75rem;
             border-radius: 0.25rem;
             font-family: 'DM Sans', monospace;
@@ -111,8 +126,8 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #b91c1c; /* red-700 */
-            color: #fecaca; /* red-200 */
+            border: 2px dashed #b91c1c;
+            color: #fecaca;
         }
         .animating-dots span {
             animation-name: blink;
@@ -120,17 +135,9 @@
             animation-iteration-count: infinite;
             animation-fill-mode: both;
         }
-        .animating-dots span:nth-child(2) {
-            animation-delay: .2s;
-        }
-        .animating-dots span:nth-child(3) {
-            animation-delay: .4s;
-        }
-        @keyframes blink {
-            0% { opacity: .2; }
-            20% { opacity: 1; }
-            100% { opacity: .2; }
-        }
+        .animating-dots span:nth-child(2) { animation-delay: .2s; }
+        .animating-dots span:nth-child(3) { animation-delay: .4s; }
+        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
         #persistent-game-id {
             position: fixed;
             bottom: 10px;
@@ -167,15 +174,16 @@
     
     <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <h1 class="text-4xl font-bold mb-4">The Mole</h1>
+            <div class="flex items-center justify-center gap-2 mb-4">
+                <h1 class="text-4xl font-bold">The Mole</h1>
+                <span class="beta-stamp" style="font-size: 0.8rem; transform: rotate(15deg) translateY(-10px);">(Beta 1.1)</span>
+            </div>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
             <div class="border-t border-gray-700 my-4"></div>
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Join...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
-
             <div class="border-t border-gray-700 my-8"></div>
-            
             <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
             <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
             <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
@@ -195,7 +203,7 @@
                 <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
             </div>
             <button id="start-game-btn" class="btn">Initiate Mission</button>
-            <p class="text-xs text-gray-500 text-center mt-2">Only the handler can initiate the mission.</p>
+            <button id="back-to-menu-btn" class="btn btn-secondary mt-4">Back to Main Menu</button>
         </div>
     </div>
 
@@ -267,7 +275,7 @@
         <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
         <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" x2="17" y1="9" y2="15"></line><line x1="17" x2="23" y1="9" y2="15"></line></svg>
     </button>
-
+    
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -307,6 +315,7 @@
             playerNameInput: document.getElementById('player-name-input'),
             addPlayerBtn: document.getElementById('add-player-btn'),
             startGameBtn: document.getElementById('start-game-btn'),
+            backToMenuBtn: document.getElementById('back-to-menu-btn'),
             roundTitle: document.getElementById('round-title'),
             wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
             wordMasterWaitText: document.getElementById('word-master-wait-text'),
@@ -348,7 +357,7 @@
                 setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
             });
         });
-
+        
         async function createGame() {
             try {
                 gameId = generateGameId();
@@ -630,7 +639,7 @@
             allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'End Game' : 'Next Round';
         }
 
-        function renderGameOverScreen(gameData) {
+        function renderGameOverScreen() {
             allDomElements.playAgainBtn.disabled = false;
         }
 
@@ -699,25 +708,47 @@
             if (!gameId) return;
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
+            if(gameDoc.exists()){
+                const gameData = gameDoc.data();
+                
+                if (userId === gameData.hostId) {
+                    await updateDoc(gameRef, { status: 'lobby' });
+                } else {
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
+                     if(myPlayerObject) {
+                        await updateDoc(gameRef, {
+                            players: arrayRemove(myPlayerObject)
+                        });
+                    }
+                    if (gameUnsubscribe) gameUnsubscribe();
+                    localStorage.removeItem('moleGameId');
+                    allDomElements.persistentGameIdContainer.style.display = 'none';
+                    showScreen('home-screen');
+                }
+            }
+        });
+
+        allDomElements.backToMenuBtn.addEventListener('click', async () => {
+            if (!gameId) return;
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
             const gameData = gameDoc.data();
-            
+
             if (userId === gameData.hostId) {
-                // Host resets the lobby for everyone else
-                await updateDoc(gameRef, { status: 'lobby' });
+                await deleteDoc(gameRef);
             } else {
-                // Other players just leave
                 const myPlayerObject = gameData.players.find(p => p.id === userId);
                 if (myPlayerObject) {
                     await updateDoc(gameRef, {
                         players: arrayRemove(myPlayerObject)
                     });
                 }
-                // Disconnect and go home
-                if (gameUnsubscribe) gameUnsubscribe();
-                localStorage.removeItem('moleGameId');
-                allDomElements.persistentGameIdContainer.style.display = 'none';
-                showScreen('home-screen');
             }
+
+            if (gameUnsubscribe) gameUnsubscribe();
+            localStorage.removeItem('moleGameId');
+            allDomElements.persistentGameIdContainer.style.display = 'none';
+            showScreen('home-screen');
         });
 
         function setupMusic() {
@@ -838,10 +869,17 @@
             }
             userId = storedUserId;
             
-            const lastGameId = localStorage.getItem('moleGameId');
-            if (lastGameId) {
-                allDomElements.reconnectGameIdInput.value = lastGameId;
-                allDomElements.reconnectBtn.classList.remove('hidden');
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameIdFromUrl = urlParams.get('gameId');
+
+            if (gameIdFromUrl) {
+                joinGame(gameIdFromUrl, true);
+            } else {
+                const lastGameId = localStorage.getItem('moleGameId');
+                if (lastGameId) {
+                    allDomElements.reconnectGameIdInput.value = lastGameId;
+                    allDomElements.reconnectBtn.classList.remove('hidden');
+                }
             }
             
             showScreen('home-screen');
