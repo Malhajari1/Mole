@@ -631,8 +631,7 @@
         }
 
         function renderGameOverScreen(gameData) {
-            allDomElements.playAgainBtn.disabled = false; // Everyone can click it now
-            allDomElements.playAgainBtn.textContent = 'Return to Lobby';
+            allDomElements.playAgainBtn.disabled = false;
         }
 
         allDomElements.createGameBtn.addEventListener('click', createGame);
@@ -701,13 +700,11 @@
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             const gameData = gameDoc.data();
-
+            
             if (userId === gameData.hostId) {
-                // Host resets the lobby for everyone else
-                await updateDoc(gameRef, { status: 'lobby' });
+                 await updateDoc(gameRef, { status: 'lobby' });
             } else {
-                // Other players just leave
-                if(gameUnsubscribe) gameUnsubscribe();
+                if (gameUnsubscribe) gameUnsubscribe();
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
                 showScreen('home-screen');
