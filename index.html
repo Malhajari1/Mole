@@ -257,7 +257,7 @@
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
-            <button id="play-again-btn" class="btn">Return to Lobby</button>
+            <button id="play-again-btn" class="btn">Play Again in Lobby</button>
         </div>
     </div>
 
@@ -269,6 +269,7 @@
     </button>
 
     <script type="module">
+        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -631,7 +632,7 @@
         }
 
         function renderGameOverScreen(gameData) {
-            allDomElements.playAgainBtn.disabled = false;
+            allDomElements.playAgainBtn.disabled = false; // Everyone can click it now
         }
 
         allDomElements.createGameBtn.addEventListener('click', createGame);
@@ -702,8 +703,21 @@
             const gameData = gameDoc.data();
             
             if (userId === gameData.hostId) {
-                 await updateDoc(gameRef, { status: 'lobby' });
+                // If I am the host, reset the lobby. If I am the last player, delete the game.
+                if(gameData.players.length <= 1) {
+                     await deleteDoc(gameRef);
+                } else {
+                    await updateDoc(gameRef, { status: 'lobby' });
+                }
             } else {
+                // If I am not the host, just remove myself from the game
+                const myPlayerObject = gameData.players.find(p => p.id === userId);
+                if (myPlayerObject) {
+                    await updateDoc(gameRef, {
+                        players: arrayRemove(myPlayerObject)
+                    });
+                }
+                // Disconnect from the game
                 if (gameUnsubscribe) gameUnsubscribe();
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
