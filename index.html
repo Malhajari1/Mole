@@ -30,7 +30,7 @@
         }
         .card {
             background-color: #1f2937; /* gray-800 */
-            border-radius: 0.25rem;
+            border-radius: 0.25rem; /* less rounded */
             padding: 2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid #4b5563; /* gray-600 */
@@ -52,14 +52,26 @@
             font-size: 1rem;
             background-color: #1f2937;
         }
+         .disclaimer-box {
+            font-family: 'Special Elite', monospace;
+            border: 3px solid #b91c1c;
+            color: #b91c1c; /* Changed to match border */
+            padding: 1rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-top: 2rem;
+            border-radius: 0.25rem;
+            text-align: center; /* Centered text */
+            line-height: 1.5;
+        }
         .btn {
             display: inline-block;
             background-color: #991b1b; /* red-800 */
             color: #f3f4f6; /* gray-100 */
             padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem;
+            border-radius: 0.25rem; /* sharper corners */
             text-align: center;
-            font-weight: 700;
+            font-weight: 700; /* bolder */
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
@@ -79,25 +91,25 @@
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn:disabled {
-            background-color: #4b5563;
-            border-color: #374151;
-            color: #9ca3af;
+            background-color: #4b5563; /* gray-600 */
+            border-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
             cursor: not-allowed;
             transform: none;
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn-secondary {
-            background-color: #374151;
-            border-color: #4b5563;
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563; /* gray-600 */
         }
         .btn-secondary:hover {
-            background-color: #4b5563;
-            border-color: #6b7280;
+            background-color: #4b5563; /* gray-600 */
+            border-color: #6b7280; /* gray-500 */
         }
         .input-field {
-            background-color: #374151;
-            color: #f3f4f6;
-            border: 1px solid #6b7280;
+            background-color: #374151; /* gray-700 */
+            color: #f3f4f6; /* gray-100 */
+            border: 1px solid #6b7280; /* gray-500 */
             padding: 0.75rem;
             border-radius: 0.25rem;
             width: 100%;
@@ -105,20 +117,20 @@
             font-family: 'DM Sans', sans-serif;
         }
         .input-field::placeholder {
-            color: #9ca3af;
+            color: #9ca3af; /* gray-400 */
         }
         .player-tag {
-            background-color: #4b5563;
+            background-color: #4b5563; /* gray-600 */
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
-            border: 1px solid #6b7280;
+            border: 1px solid #6b7280; /* gray-500 */
         }
         #game-id-display {
-            background-color: #111827;
+            background-color: #111827; /* gray-900 */
             padding: 0.75rem;
             border-radius: 0.25rem;
             font-family: 'DM Sans', monospace;
@@ -126,8 +138,8 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #b91c1c;
-            color: #fecaca;
+            border: 2px dashed #b91c1c; /* red-700 */
+            color: #fecaca; /* red-200 */
         }
         .animating-dots span {
             animation-name: blink;
@@ -174,19 +186,22 @@
     
     <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <div class="flex items-center justify-center gap-2 mb-4">
-                <h1 class="text-4xl font-bold">The Mole</h1>
-                <span class="beta-stamp" style="font-size: 0.8rem; transform: rotate(15deg) translateY(-10px);">(Beta 1.1)</span>
-            </div>
+            <span class="beta-stamp">(Beta 1.1)</span>
+            <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
             <div class="border-t border-gray-700 my-4"></div>
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Join...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+
             <div class="border-t border-gray-700 my-8"></div>
+            
             <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
             <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
             <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
+             <div class="disclaimer-box">
+                Disclaimer: This website is intended for personal, non-commercial use only. No financial gain is received from this website and we are not liable for any data entered.
+            </div>
         </div>
     </div>
 
@@ -720,12 +735,13 @@
                             players: arrayRemove(myPlayerObject)
                         });
                     }
-                    if (gameUnsubscribe) gameUnsubscribe();
-                    localStorage.removeItem('moleGameId');
-                    allDomElements.persistentGameIdContainer.style.display = 'none';
-                    showScreen('home-screen');
                 }
             }
+            
+            if (gameUnsubscribe) gameUnsubscribe();
+            localStorage.removeItem('moleGameId');
+            allDomElements.persistentGameIdContainer.style.display = 'none';
+            showScreen('home-screen');
         });
 
         allDomElements.backToMenuBtn.addEventListener('click', async () => {
