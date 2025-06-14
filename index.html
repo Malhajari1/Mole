@@ -701,7 +701,7 @@
             const gameDoc = await getDoc(gameRef);
             const gameData = gameDoc.data();
             const myPlayerObject = gameData.players.find(p => p.id === userId);
-
+            
             if (userId === gameData.hostId) {
                 if (gameData.players.length <= 1) {
                      await deleteDoc(gameRef);
@@ -715,8 +715,7 @@
                     });
                 }
             }
-
-            if (gameUnsubscribe) gameUnsubscribe();
+            if(gameUnsubscribe) gameUnsubscribe();
             localStorage.removeItem('moleGameId');
             allDomElements.persistentGameIdContainer.style.display = 'none';
             showScreen('home-screen');
