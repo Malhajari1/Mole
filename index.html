@@ -442,13 +442,15 @@
                 }
                 
                 const totalRounds = players.length * 2;
-                const wordMaster = players[Math.floor(Math.random() * players.length)];
+                const roundOrder = [...players, ...players].map(p => p.id); // Each player goes twice
+                const wordMaster = roundOrder[0];
 
                 await updateDoc(gameRef, { 
                     status: 'round_start',
                     currentRound: 1,
                     totalRounds: totalRounds,
-                    wordMasterId: wordMaster.id,
+                    roundOrder: roundOrder,
+                    wordMasterId: wordMaster,
                     secretWord: '',
                     moleId: '',
                     roleAcknowledgements: []
@@ -463,18 +465,20 @@
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 const gameData = gameDoc.data();
+                
+                const nextRoundNum = gameData.currentRound + 1;
 
-                if (gameData.currentRound >= gameData.totalRounds) {
+                if (nextRoundNum > gameData.totalRounds) {
                     await updateDoc(gameRef, { status: 'game_over' });
                     return;
                 }
 
-                const wordMaster = gameData.players[Math.floor(Math.random() * gameData.players.length)];
+                const wordMasterId = gameData.roundOrder[nextRoundNum - 1];
                 
                 await updateDoc(gameRef, {
                     status: 'round_start',
-                    currentRound: gameData.currentRound + 1,
-                    wordMasterId: wordMaster.id,
+                    currentRound: nextRoundNum,
+                    wordMasterId: wordMasterId,
                     secretWord: '',
                     moleId: '',
                     roleAcknowledgements: []
@@ -625,7 +629,7 @@
         }
 
         function renderGameOverScreen() {
-            allDomElements.playAgainBtn.textContent = 'Play Again';
+            allDomElements.playAgainBtn.textContent = 'Play Again in Lobby';
             allDomElements.playAgainBtn.disabled = userId !== gameId.hostId;
         }
 
