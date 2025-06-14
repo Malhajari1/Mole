@@ -700,25 +700,29 @@
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             const gameData = gameDoc.data();
-            const myPlayerObject = gameData.players.find(p => p.id === userId);
             
-            if (userId === gameData.hostId) {
-                if (gameData.players.length <= 1) {
-                     await deleteDoc(gameRef);
+            const isHost = userId === gameData.hostId;
+            const myPlayerObject = gameData.players.find(p => p.id === userId);
+
+            // If host clicks, reset the game. If it's the last player, delete it.
+            if(isHost){
+                if(gameData.players.length <= 1) {
+                    await deleteDoc(gameRef);
                 } else {
-                    await updateDoc(gameRef, { status: 'lobby' });
+                     await updateDoc(gameRef, { status: 'lobby' });
                 }
             } else {
-                if (myPlayerObject) {
+                // If not host, just remove this player
+                 if (myPlayerObject) {
                     await updateDoc(gameRef, {
                         players: arrayRemove(myPlayerObject)
                     });
                 }
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
             }
-            if(gameUnsubscribe) gameUnsubscribe();
-            localStorage.removeItem('moleGameId');
-            allDomElements.persistentGameIdContainer.style.display = 'none';
-            showScreen('home-screen');
         });
 
         function setupMusic() {
