@@ -443,9 +443,8 @@
                 
                 const totalRounds = players.length * 2;
                 const playerIds = players.map(p => p.id);
-                // Shuffle the player IDs to randomize the first pass
                 const shuffledPlayerIds = playerIds.sort(() => Math.random() - 0.5);
-                const roundOrder = [...shuffledPlayerIds, ...shuffledPlayerIds]; // Each player goes twice
+                const roundOrder = [...shuffledPlayerIds, ...shuffledPlayerIds];
                 const wordMasterId = roundOrder[0];
 
                 await updateDoc(gameRef, { 
@@ -631,9 +630,9 @@
             allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'End Game' : 'Next Round';
         }
 
-        function renderGameOverScreen() {
+        function renderGameOverScreen(gameData) {
             allDomElements.playAgainBtn.textContent = 'Play Again in Lobby';
-            allDomElements.playAgainBtn.disabled = userId !== gameId.hostId;
+            allDomElements.playAgainBtn.disabled = userId !== gameData.hostId;
         }
 
         allDomElements.createGameBtn.addEventListener('click', createGame);
