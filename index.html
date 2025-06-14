@@ -443,7 +443,9 @@
                 
                 const totalRounds = players.length * 2;
                 const playerIds = players.map(p => p.id);
-                const roundOrder = [...playerIds, ...playerIds]; // Each player goes twice
+                // Shuffle the player IDs to randomize the first pass
+                const shuffledPlayerIds = playerIds.sort(() => Math.random() - 0.5);
+                const roundOrder = [...shuffledPlayerIds, ...shuffledPlayerIds]; // Each player goes twice
                 const wordMasterId = roundOrder[0];
 
                 await updateDoc(gameRef, { 
