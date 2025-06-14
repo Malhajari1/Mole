@@ -257,7 +257,7 @@
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
-            <button id="play-again-btn" class="btn">Play Again in Lobby</button>
+            <button id="play-again-btn" class="btn">Return to Lobby</button>
         </div>
     </div>
 
@@ -631,8 +631,7 @@
         }
 
         function renderGameOverScreen(gameData) {
-            allDomElements.playAgainBtn.textContent = 'Play Again in Lobby';
-            allDomElements.playAgainBtn.disabled = userId !== gameData.hostId;
+            allDomElements.playAgainBtn.disabled = false; // Everyone can click it
         }
 
         allDomElements.createGameBtn.addEventListener('click', createGame);
@@ -699,7 +698,25 @@
         allDomElements.playAgainBtn.addEventListener('click', async () => {
             if (!gameId) return;
             const gameRef = doc(db, "games", gameId);
-            await updateDoc(gameRef, { status: 'lobby' });
+            const gameDoc = await getDoc(gameRef);
+            if (userId === gameDoc.data()?.hostId) {
+                 await updateDoc(gameRef, { 
+                    status: 'lobby',
+                    players: [],
+                    currentRound: 0,
+                    totalRounds: 0,
+                    roundOrder: [],
+                    wordMasterId: '',
+                    secretWord: '',
+                    moleId: '',
+                    roleAcknowledgements: []
+                });
+            } else {
+                if(gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
+            }
         });
 
         function setupMusic() {
