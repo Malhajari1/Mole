@@ -631,7 +631,8 @@
         }
 
         function renderGameOverScreen(gameData) {
-            allDomElements.playAgainBtn.disabled = false; // Everyone can click it
+            allDomElements.playAgainBtn.disabled = false; // Everyone can click it now
+            allDomElements.playAgainBtn.textContent = 'Return to Lobby';
         }
 
         allDomElements.createGameBtn.addEventListener('click', createGame);
@@ -699,19 +700,13 @@
             if (!gameId) return;
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
-            if (userId === gameDoc.data()?.hostId) {
-                 await updateDoc(gameRef, { 
-                    status: 'lobby',
-                    players: [],
-                    currentRound: 0,
-                    totalRounds: 0,
-                    roundOrder: [],
-                    wordMasterId: '',
-                    secretWord: '',
-                    moleId: '',
-                    roleAcknowledgements: []
-                });
+            const gameData = gameDoc.data();
+
+            if (userId === gameData.hostId) {
+                // Host resets the lobby for everyone else
+                await updateDoc(gameRef, { status: 'lobby' });
             } else {
+                // Other players just leave
                 if(gameUnsubscribe) gameUnsubscribe();
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
