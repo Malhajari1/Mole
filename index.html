@@ -52,7 +52,7 @@
             font-size: 1rem;
             background-color: #1f2937;
         }
-         .disclaimer-box {
+        .disclaimer-box {
             font-family: 'Special Elite', monospace;
             border: 3px solid #b91c1c;
             color: #b91c1c;
@@ -199,7 +199,7 @@
             <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
             <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
             <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
-            <div class="disclaimer-box">
+             <div class="disclaimer-box">
                 Disclaimer: This website is intended for personal, non-commercial use only. All trademarks and registered trademarks are the property of their respective owners. No financial gain is received from this website and we are not liable for any data entered.
             </div>
         </div>
@@ -448,6 +448,15 @@
             }
             try {
                 const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                if(gameDoc.exists()){
+                    const players = gameDoc.data().players || [];
+                    const nameExists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
+                    if (nameExists) {
+                        alert("That name is already taken. Please choose another.");
+                        return; 
+                    }
+                }
                 await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
             } catch(error) {
                 console.error("Error adding player:", error);
@@ -725,13 +734,15 @@
             const gameDoc = await getDoc(gameRef);
             if(gameDoc.exists()){
                 const gameData = gameDoc.data();
-                const myPlayerObject = gameData.players.find(p => p.id === userId);
-
-                // If I am the last player, delete the game doc
-                if (gameData.players.length <= 1 && userId === gameData.hostId) {
-                     await deleteDoc(gameRef);
+                
+                if (userId === gameData.hostId) {
+                    if (gameData.players.length <= 1) {
+                         await deleteDoc(gameRef);
+                    } else {
+                        await updateDoc(gameRef, { status: 'lobby' });
+                    }
                 } else {
-                     // Otherwise, just remove me from the players list
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
                      if(myPlayerObject) {
                         await updateDoc(gameRef, {
                             players: arrayRemove(myPlayerObject)
