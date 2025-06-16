@@ -199,7 +199,7 @@
             <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
             <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
             <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
-            <div class="disclaimer-box">
+             <div class="disclaimer-box">
                 Disclaimer: This website is intended for personal, non-commercial use only. All trademarks and registered trademarks are the property of their respective owners. No financial gain is received from this website and we are not liable for any data entered.
             </div>
         </div>
@@ -736,7 +736,11 @@
                 const gameData = gameDoc.data();
                 
                 if (userId === gameData.hostId) {
-                    await updateDoc(gameRef, { status: 'lobby' });
+                    if (gameData.players.length <= 1) {
+                         await deleteDoc(gameRef);
+                    } else {
+                        await updateDoc(gameRef, { status: 'lobby' });
+                    }
                 } else {
                     const myPlayerObject = gameData.players.find(p => p.id === userId);
                      if(myPlayerObject) {
