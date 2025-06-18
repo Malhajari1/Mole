@@ -31,7 +31,7 @@
         }
         .card {
             background-color: #1f2937; /* gray-800 */
-            border-radius: 0.25rem; /* less rounded */
+            border-radius: 0.25rem;
             padding: 2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid #4b5563; /* gray-600 */
@@ -70,9 +70,9 @@
             background-color: #991b1b; /* red-800 */
             color: #f3f4f6; /* gray-100 */
             padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem; /* sharper corners */
+            border-radius: 0.25rem;
             text-align: center;
-            font-weight: 700; /* bolder */
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
@@ -188,7 +188,7 @@
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
     
-    <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
+    <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <span class="beta-stamp">(Beta 1.1)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
@@ -203,9 +203,18 @@
             <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
             <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
             <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
-             <div class="disclaimer-box">
+            <div class="disclaimer-box">
                 Disclaimer: This website is intended for personal, non-commercial use only. All trademarks and registered trademarks are the property of their respective owners. No financial gain is received from this website and we are not liable for any data entered.
             </div>
+        </div>
+    </div>
+
+    <div id="reconnect-modal" class="screen fixed inset-0 bg-black bg-opacity-75 z-50 flex-col items-center justify-center">
+        <div class="card text-center">
+            <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
+            <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
+            <button id="reconnect-confirm-btn" class="btn mb-4">Yes, Reconnect</button>
+            <button id="reconnect-cancel-btn" class="btn btn-secondary">No, Start New Game</button>
         </div>
     </div>
 
@@ -323,8 +332,6 @@
             createGameBtn: document.getElementById('create-game-btn'),
             joinGameIdInput: document.getElementById('join-game-id-input'),
             joinGameBtn: document.getElementById('join-game-btn'),
-            reconnectGameIdInput: document.getElementById('reconnect-game-id-input'),
-            reconnectBtn: document.getElementById('reconnect-btn'),
             gameIdDisplay: document.getElementById('game-id-display'),
             persistentGameIdContainer: document.getElementById('persistent-game-id'),
             persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
@@ -335,6 +342,10 @@
             addPlayerBtn: document.getElementById('add-player-btn'),
             startGameBtn: document.getElementById('start-game-btn'),
             backToMenuBtn: document.getElementById('back-to-menu-btn'),
+            reconnectModal: document.getElementById('reconnect-modal'),
+            reconnectModalGameId: document.getElementById('reconnect-modal-game-id'),
+            reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
+            reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'),
             roundTitle: document.getElementById('round-title'),
             wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
             wordMasterWaitText: document.getElementById('word-master-wait-text'),
@@ -906,10 +917,20 @@
             
             const lastGameId = localStorage.getItem('moleGameId');
             if(lastGameId){
-                joinGame(lastGameId, false);
+                allDomElements.reconnectModalGameId.textContent = lastGameId;
+                showScreen('reconnect-modal');
             } else {
-                 showScreen('home-screen');
+                showScreen('home-screen');
             }
+
+            allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
+                 joinGame(lastGameId, false);
+            });
+
+            allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+                localStorage.removeItem('moleGameId');
+                showScreen('home-screen');
+            });
             
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
