@@ -188,7 +188,7 @@
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
     
-    <div id="home-screen" class="screen active flex-col items-center justify-center w-full">
+    <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <span class="beta-stamp">(Beta 1.1)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
@@ -206,6 +206,15 @@
             <div class="disclaimer-box">
                 Disclaimer: This website is intended for personal, non-commercial use only. All trademarks and registered trademarks are the property of their respective owners. No financial gain is received from this website and we are not liable for any data entered.
             </div>
+        </div>
+    </div>
+
+    <div id="reconnect-modal" class="screen fixed inset-0 bg-black bg-opacity-75 z-50 flex-col items-center justify-center">
+        <div class="card text-center">
+            <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
+            <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
+            <button id="reconnect-confirm-btn" class="btn mb-4">Yes, Reconnect</button>
+            <button id="reconnect-cancel-btn" class="btn btn-secondary">No, Start New Game</button>
         </div>
     </div>
 
@@ -323,8 +332,6 @@
             createGameBtn: document.getElementById('create-game-btn'),
             joinGameIdInput: document.getElementById('join-game-id-input'),
             joinGameBtn: document.getElementById('join-game-btn'),
-            reconnectGameIdInput: document.getElementById('reconnect-game-id-input'),
-            reconnectBtn: document.getElementById('reconnect-btn'),
             gameIdDisplay: document.getElementById('game-id-display'),
             persistentGameIdContainer: document.getElementById('persistent-game-id'),
             persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
@@ -335,6 +342,10 @@
             addPlayerBtn: document.getElementById('add-player-btn'),
             startGameBtn: document.getElementById('start-game-btn'),
             backToMenuBtn: document.getElementById('back-to-menu-btn'),
+            reconnectModal: document.getElementById('reconnect-modal'),
+            reconnectModalGameId: document.getElementById('reconnect-modal-game-id'),
+            reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
+            reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'),
             roundTitle: document.getElementById('round-title'),
             wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
             wordMasterWaitText: document.getElementById('word-master-wait-text'),
@@ -370,6 +381,13 @@
             return Math.random().toString().substr(2, 6);
         }
 
+        allDomElements.gameIdDisplay.addEventListener('click', () => {
+            navigator.clipboard.writeText(allDomElements.gameIdDisplay.textContent).then(() => {
+                allDomElements.copyConfirm.style.visibility = 'visible';
+                setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
+            });
+        });
+        
         async function createGame() {
             try {
                 gameId = generateGameId();
@@ -619,18 +637,17 @@
         
         function renderRoleReveal(gameData) {
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
+            
+            allDomElements.roleBlurOverlay.classList.remove('opacity-0');
+            allDomElements.roleTextContent.classList.add('invisible');
+            allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+            allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
+
 
             if (playerHasAckd) {
                 allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
-                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
                 allDomElements.roleTextContent.classList.remove('invisible');
-                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
-            } else {
-                allDomElements.roleBlurOverlay.classList.remove('opacity-0');
-                allDomElements.roleTextContent.classList.add('invisible');
-                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
-                allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
@@ -900,17 +917,17 @@
             
             const lastGameId = localStorage.getItem('moleGameId');
             if(lastGameId){
-                document.getElementById('reconnect-modal-game-id').textContent = lastGameId;
+                allDomElements.reconnectModalGameId.textContent = lastGameId;
                 showScreen('reconnect-modal');
             } else {
                 showScreen('home-screen');
             }
-            
-            document.getElementById('reconnect-confirm-btn').addEventListener('click', () => {
+
+            allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
                  joinGame(lastGameId, false);
             });
 
-            document.getElementById('reconnect-cancel-btn').addEventListener('click', () => {
+            allDomElements.reconnectCancelBtn.addEventListener('click', () => {
                 localStorage.removeItem('moleGameId');
                 showScreen('home-screen');
             });
