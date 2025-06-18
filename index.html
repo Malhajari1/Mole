@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&family=Special+Elite&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
         body {
             font-family: 'DM Sans', sans-serif;
@@ -52,7 +53,7 @@
             font-size: 1rem;
             background-color: #1f2937;
         }
-        .disclaimer-box {
+         .disclaimer-box {
             font-family: 'Special Elite', monospace;
             border: 3px solid #b91c1c;
             color: #b91c1c;
@@ -179,6 +180,9 @@
             justify-content: center;
             cursor: pointer;
             z-index: 1001;
+        }
+        .mole-title {
+            text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444;
         }
     </style>
 </head>
@@ -672,14 +676,7 @@
             const id = allDomElements.joinGameIdInput.value.trim();
             if (id) joinGame(id, true);
         });
-        allDomElements.reconnectBtn.addEventListener('click', () => {
-             const id = allDomElements.reconnectGameIdInput.value.trim();
-             if(id) {
-                joinGame(id, false);
-             } else {
-                alert("Please enter a Game ID to reconnect.")
-             }
-        });
+        
         allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
         allDomElements.startGameBtn.addEventListener('click', startGame);
         allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
@@ -701,7 +698,17 @@
             const gameData = gameDoc.data();
             
             if (userId === gameData.moleId) {
-                allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                anime({
+                    targets: '.mole-title',
+                    textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
+                    translateX: [anime.random(-2, 2), anime.random(-2, 2)],
+                    translateY: [anime.random(-2, 2), anime.random(-2, 2)],
+                    duration: 100,
+                    loop: 10,
+                    direction: 'alternate',
+                    easing: 'easeInOutQuad'
+                });
             } else {
                  allDomElements.roleTextContent.innerHTML = `
                     <div>
@@ -734,15 +741,13 @@
             const gameDoc = await getDoc(gameRef);
             if(gameDoc.exists()){
                 const gameData = gameDoc.data();
-                
-                if (userId === gameData.hostId) {
-                    if (gameData.players.length <= 1) {
-                         await deleteDoc(gameRef);
-                    } else {
-                        await updateDoc(gameRef, { status: 'lobby' });
-                    }
+                const myPlayerObject = gameData.players.find(p => p.id === userId);
+
+                // If I am the last player, delete the game doc
+                if (gameData.players.length <= 1 && userId === gameData.hostId) {
+                     await deleteDoc(gameRef);
                 } else {
-                    const myPlayerObject = gameData.players.find(p => p.id === userId);
+                     // Otherwise, just remove me from the players list
                      if(myPlayerObject) {
                         await updateDoc(gameRef, {
                             players: arrayRemove(myPlayerObject)
@@ -751,6 +756,7 @@
                 }
             }
             
+            // Disconnect this client from the game and go home
             if (gameUnsubscribe) gameUnsubscribe();
             localStorage.removeItem('moleGameId');
             allDomElements.persistentGameIdContainer.style.display = 'none';
@@ -898,20 +904,13 @@
             }
             userId = storedUserId;
             
-            const urlParams = new URLSearchParams(window.location.search);
-            const gameIdFromUrl = urlParams.get('gameId');
-
-            if (gameIdFromUrl) {
-                joinGame(gameIdFromUrl, true);
+            const lastGameId = localStorage.getItem('moleGameId');
+            if(lastGameId){
+                joinGame(lastGameId, false);
             } else {
-                const lastGameId = localStorage.getItem('moleGameId');
-                if (lastGameId) {
-                    allDomElements.reconnectGameIdInput.value = lastGameId;
-                    allDomElements.reconnectBtn.classList.remove('hidden');
-                }
+                 showScreen('home-screen');
             }
             
-            showScreen('home-screen');
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
             if (error.code === 'auth/configuration-not-found') {
