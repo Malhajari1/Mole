@@ -387,6 +387,22 @@
             allDomElements.startGameBtn.addEventListener('click', startGame);
             allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
             
+            allDomElements.gameIdDisplay.addEventListener('click', () => {
+                const textToCopy = allDomElements.gameIdDisplay.textContent;
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    allDomElements.copyConfirm.style.visibility = 'visible';
+                    setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(textArea);
+            });
+
             allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
                 const isPassword = allDomElements.secretWordInput.type === 'password';
                 allDomElements.secretWordInput.type = isPassword ? 'text' : 'password';
@@ -450,7 +466,7 @@
                     
                     if (userId === gameData.hostId) {
                         if (gameData.players.length <= 1) {
-                            await deleteDoc(gameRef);
+                             await deleteDoc(gameRef);
                         } else {
                             await updateDoc(gameRef, { status: 'lobby' });
                         }
