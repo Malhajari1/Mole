@@ -198,11 +198,12 @@
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Join...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
 
-            <div class="border-t border-gray-700 my-8"></div>
-            
-            <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
-            <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
-            <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
+            <div id="reconnect-section" class="hidden">
+                 <div class="border-t border-gray-700 my-8"></div>
+                <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
+                <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
+                <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
+            </div>
             <div class="disclaimer-box">
                 Disclaimer: This website is intended for personal, non-commercial use only. All trademarks and registered trademarks are the property of their respective owners. No financial gain is received from this website and we are not liable for any data entered.
             </div>
@@ -214,7 +215,7 @@
             <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
             <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
             <button id="reconnect-confirm-btn" class="btn mb-4">Yes, Reconnect</button>
-            <button id="reconnect-cancel-btn" class="btn btn-secondary">No, Start New Game</button>
+            <button id="reconnect-cancel-btn" class="btn btn-secondary">Return to Lobby</button>
         </div>
     </div>
 
@@ -327,45 +328,171 @@
         let gameId;
         let gameUnsubscribe;
 
-        const allDomElements = {
-            screens: document.querySelectorAll('.screen'),
-            createGameBtn: document.getElementById('create-game-btn'),
-            joinGameIdInput: document.getElementById('join-game-id-input'),
-            joinGameBtn: document.getElementById('join-game-btn'),
-            gameIdDisplay: document.getElementById('game-id-display'),
-            persistentGameIdContainer: document.getElementById('persistent-game-id'),
-            persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
-            copyConfirm: document.getElementById('copy-confirm'),
-            playerCount: document.getElementById('player-count'),
-            playerList: document.getElementById('player-list'),
-            playerNameInput: document.getElementById('player-name-input'),
-            addPlayerBtn: document.getElementById('add-player-btn'),
-            startGameBtn: document.getElementById('start-game-btn'),
-            backToMenuBtn: document.getElementById('back-to-menu-btn'),
-            reconnectModal: document.getElementById('reconnect-modal'),
-            reconnectModalGameId: document.getElementById('reconnect-modal-game-id'),
-            reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
-            reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'),
-            roundTitle: document.getElementById('round-title'),
-            wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
-            wordMasterWaitText: document.getElementById('word-master-wait-text'),
-            secretWordInput: document.getElementById('secret-word-input'),
-            toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'),
-            eyeOpenIcon: document.getElementById('eye-open-icon'),
-            eyeClosedIcon: document.getElementById('eye-closed-icon'),
-            setWordBtn: document.getElementById('set-word-btn'),
-            roleBlurOverlay: document.getElementById('role-blur-overlay'),
-            roleTextContent: document.getElementById('role-text-content'),
-            acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
-            endRoundBtn: document.getElementById('end-round-btn'),
-            gamePlayerList: document.getElementById('game-player-list'),
-            debriefMoleName: document.getElementById('debrief-mole-name'),
-            nextRoundBtn: document.getElementById('next-round-btn'),
-            playAgainBtn: document.getElementById('play-again-btn'),
-            musicToggle: document.getElementById('music-toggle'),
-            musicOnIcon: document.getElementById('music-on-icon'),
-            musicOffIcon: document.getElementById('music-off-icon')
-        };
+        let allDomElements;
+
+        function initializeDomAndListeners() {
+            allDomElements = {
+                screens: document.querySelectorAll('.screen'),
+                createGameBtn: document.getElementById('create-game-btn'),
+                joinGameIdInput: document.getElementById('join-game-id-input'),
+                joinGameBtn: document.getElementById('join-game-btn'),
+                reconnectGameIdInput: document.getElementById('reconnect-game-id-input'),
+                reconnectBtn: document.getElementById('reconnect-btn'),
+                reconnectSection: document.getElementById('reconnect-section'),
+                gameIdDisplay: document.getElementById('game-id-display'),
+                persistentGameIdContainer: document.getElementById('persistent-game-id'),
+                persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
+                copyConfirm: document.getElementById('copy-confirm'),
+                playerCount: document.getElementById('player-count'),
+                playerList: document.getElementById('player-list'),
+                playerNameInput: document.getElementById('player-name-input'),
+                addPlayerBtn: document.getElementById('add-player-btn'),
+                startGameBtn: document.getElementById('start-game-btn'),
+                backToMenuBtn: document.getElementById('back-to-menu-btn'),
+                reconnectModal: document.getElementById('reconnect-modal'),
+                reconnectModalGameId: document.getElementById('reconnect-modal-game-id'),
+                reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
+                reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'),
+                roundTitle: document.getElementById('round-title'),
+                wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
+                wordMasterWaitText: document.getElementById('word-master-wait-text'),
+                secretWordInput: document.getElementById('secret-word-input'),
+                toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'),
+                eyeOpenIcon: document.getElementById('eye-open-icon'),
+                eyeClosedIcon: document.getElementById('eye-closed-icon'),
+                setWordBtn: document.getElementById('set-word-btn'),
+                roleBlurOverlay: document.getElementById('role-blur-overlay'),
+                roleTextContent: document.getElementById('role-text-content'),
+                acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
+                endRoundBtn: document.getElementById('end-round-btn'),
+                gamePlayerList: document.getElementById('game-player-list'),
+                debriefMoleName: document.getElementById('debrief-mole-name'),
+                nextRoundBtn: document.getElementById('next-round-btn'),
+                playAgainBtn: document.getElementById('play-again-btn'),
+                musicToggle: document.getElementById('music-toggle'),
+                musicOnIcon: document.getElementById('music-on-icon'),
+                musicOffIcon: document.getElementById('music-off-icon')
+            };
+
+            allDomElements.createGameBtn.addEventListener('click', createGame);
+            allDomElements.joinGameBtn.addEventListener('click', () => {
+                const id = allDomElements.joinGameIdInput.value.trim();
+                if (id) joinGame(id, true);
+            });
+            allDomElements.reconnectBtn.addEventListener('click', () => {
+                const id = allDomElements.reconnectGameIdInput.value.trim();
+                if (id) joinGame(id, false);
+            });
+            allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
+            allDomElements.startGameBtn.addEventListener('click', startGame);
+            allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
+            
+            allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
+                const isPassword = allDomElements.secretWordInput.type === 'password';
+                allDomElements.secretWordInput.type = isPassword ? 'text' : 'password';
+                allDomElements.eyeOpenIcon.classList.toggle('hidden', isPassword);
+                allDomElements.eyeClosedIcon.classList.toggle('hidden', !isPassword);
+            });
+            
+            allDomElements.roleBlurOverlay.addEventListener('click', async () => {
+                allDomElements.roleBlurOverlay.classList.add('opacity-0');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
+                allDomElements.roleTextContent.classList.remove('invisible');
+                allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
+                
+                const gameDoc = await getDoc(doc(db, "games", gameId));
+                const gameData = gameDoc.data();
+                
+                if (userId === gameData.moleId) {
+                    allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                    anime({
+                        targets: '.mole-title',
+                        textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
+                        translateX: [anime.random(-2, 2), anime.random(-2, 2)],
+                        translateY: [anime.random(-2, 2), anime.random(-2, 2)],
+                        duration: 100,
+                        loop: 10,
+                        direction: 'alternate',
+                        easing: 'easeInOutQuad'
+                    });
+                } else {
+                    allDomElements.roleTextContent.innerHTML = `
+                        <div>
+                            <p class="text-gray-300">Codename:</p>
+                            <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
+                        </div>
+                    `;
+                }
+            });
+            
+            allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
+
+            allDomElements.endRoundBtn.addEventListener('click', async () => {
+                try {
+                    const gameRef = doc(db, "games", gameId);
+                    await updateDoc(gameRef, { status: 'debrief' });
+                } catch (error) {
+                    console.error("Error ending round:", error);
+                }
+            });
+
+            allDomElements.nextRoundBtn.addEventListener('click', async () => {
+                allDomElements.nextRoundBtn.disabled = true; 
+                await startNewRound();
+            });
+            
+            allDomElements.playAgainBtn.addEventListener('click', async () => {
+                if (!gameId) return;
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                if(gameDoc.exists()){
+                    const gameData = gameDoc.data();
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
+
+                    // If I am the last player, delete the game doc
+                    if (gameData.players.length <= 1 && userId === gameData.hostId) {
+                         await deleteDoc(gameRef);
+                    } else {
+                         // Otherwise, just remove me from the players list
+                         if(myPlayerObject) {
+                            await updateDoc(gameRef, {
+                                players: arrayRemove(myPlayerObject)
+                            });
+                        }
+                    }
+                }
+                
+                // Disconnect this client from the game and go home
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
+            });
+
+            allDomElements.backToMenuBtn.addEventListener('click', async () => {
+                if (!gameId) return;
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+
+                if (userId === gameData.hostId) {
+                    await deleteDoc(gameRef);
+                } else {
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
+                    if (myPlayerObject) {
+                        await updateDoc(gameRef, {
+                            players: arrayRemove(myPlayerObject)
+                        });
+                    }
+                }
+
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
+            });
+            setupMusic();
+        }
 
         function showScreen(screenId) {
             const targetScreen = document.getElementById(screenId);
@@ -373,20 +500,13 @@
                 console.error(`Error: Screen with ID "${screenId}" not found.`);
                 return;
             }
-            allDomElements.screens.forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             targetScreen.classList.add('active');
         }
 
         function generateGameId() {
             return Math.random().toString().substr(2, 6);
         }
-
-        allDomElements.gameIdDisplay.addEventListener('click', () => {
-            navigator.clipboard.writeText(allDomElements.gameIdDisplay.textContent).then(() => {
-                allDomElements.copyConfirm.style.visibility = 'visible';
-                setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
-            });
-        });
         
         async function createGame() {
             try {
@@ -412,6 +532,7 @@
                 if (!gameDoc.exists()) {
                     alert("Game not found!");
                     localStorage.removeItem('moleGameId');
+                    showScreen('home-screen');
                     return;
                 }
                 if (isNew && gameDoc.data().status !== 'lobby') {
@@ -425,6 +546,9 @@
 
             gameId = id;
             localStorage.setItem('moleGameId', gameId);
+            
+            if (!allDomElements) initializeDomAndListeners();
+
             allDomElements.persistentGameIdSpan.textContent = gameId;
             allDomElements.persistentGameIdContainer.style.display = 'block';
 
@@ -637,17 +761,18 @@
         
         function renderRoleReveal(gameData) {
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
-            
-            allDomElements.roleBlurOverlay.classList.remove('opacity-0');
-            allDomElements.roleTextContent.classList.add('invisible');
-            allDomElements.acknowledgeRoleBtn.classList.add('hidden');
-            allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
-
 
             if (playerHasAckd) {
                 allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
                 allDomElements.roleTextContent.classList.remove('invisible');
+                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+            } else {
+                allDomElements.roleBlurOverlay.classList.remove('opacity-0');
+                allDomElements.roleTextContent.classList.add('invisible');
+                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
@@ -681,121 +806,6 @@
         function renderGameOverScreen() {
             allDomElements.playAgainBtn.disabled = false;
         }
-
-        allDomElements.createGameBtn.addEventListener('click', createGame);
-        allDomElements.joinGameBtn.addEventListener('click', () => {
-            const id = allDomElements.joinGameIdInput.value.trim();
-            if (id) joinGame(id, true);
-        });
-        
-        allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
-        allDomElements.startGameBtn.addEventListener('click', startGame);
-        allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
-        
-        allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
-            const isPassword = allDomElements.secretWordInput.type === 'password';
-            allDomElements.secretWordInput.type = isPassword ? 'text' : 'password';
-            allDomElements.eyeOpenIcon.classList.toggle('hidden', isPassword);
-            allDomElements.eyeClosedIcon.classList.toggle('hidden', !isPassword);
-        });
-        
-        allDomElements.roleBlurOverlay.addEventListener('click', async () => {
-            allDomElements.roleBlurOverlay.classList.add('opacity-0');
-            allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
-            allDomElements.roleTextContent.classList.remove('invisible');
-            allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
-            
-            const gameDoc = await getDoc(doc(db, "games", gameId));
-            const gameData = gameDoc.data();
-            
-            if (userId === gameData.moleId) {
-                allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
-                anime({
-                    targets: '.mole-title',
-                    textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
-                    translateX: [anime.random(-2, 2), anime.random(-2, 2)],
-                    translateY: [anime.random(-2, 2), anime.random(-2, 2)],
-                    duration: 100,
-                    loop: 10,
-                    direction: 'alternate',
-                    easing: 'easeInOutQuad'
-                });
-            } else {
-                 allDomElements.roleTextContent.innerHTML = `
-                    <div>
-                        <p class="text-gray-300">Codename:</p>
-                        <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
-                    </div>
-                `;
-            }
-        });
-        
-        allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
-
-        allDomElements.endRoundBtn.addEventListener('click', async () => {
-             try {
-                const gameRef = doc(db, "games", gameId);
-                await updateDoc(gameRef, { status: 'debrief' });
-            } catch (error) {
-                console.error("Error ending round:", error);
-            }
-        });
-
-        allDomElements.nextRoundBtn.addEventListener('click', async () => {
-            allDomElements.nextRoundBtn.disabled = true; 
-            await startNewRound();
-        });
-        
-        allDomElements.playAgainBtn.addEventListener('click', async () => {
-            if (!gameId) return;
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            if(gameDoc.exists()){
-                const gameData = gameDoc.data();
-                const myPlayerObject = gameData.players.find(p => p.id === userId);
-
-                // If I am the last player, delete the game doc
-                if (gameData.players.length <= 1 && userId === gameData.hostId) {
-                     await deleteDoc(gameRef);
-                } else {
-                     // Otherwise, just remove me from the players list
-                     if(myPlayerObject) {
-                        await updateDoc(gameRef, {
-                            players: arrayRemove(myPlayerObject)
-                        });
-                    }
-                }
-            }
-            
-            // Disconnect this client from the game and go home
-            if (gameUnsubscribe) gameUnsubscribe();
-            localStorage.removeItem('moleGameId');
-            allDomElements.persistentGameIdContainer.style.display = 'none';
-            showScreen('home-screen');
-        });
-
-        allDomElements.backToMenuBtn.addEventListener('click', async () => {
-            if (!gameId) return;
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const gameData = gameDoc.data();
-
-            if (userId === gameData.hostId) {
-                await deleteDoc(gameRef);
-            } else {
-                const myPlayerObject = gameData.players.find(p => p.id === userId);
-                if (myPlayerObject) {
-                    await updateDoc(gameRef, {
-                        players: arrayRemove(myPlayerObject)
-                    });
-                }
-            }
-
-            if (gameUnsubscribe) gameUnsubscribe();
-            localStorage.removeItem('moleGameId');
-            allDomElements.persistentGameIdContainer.style.display = 'none';
-            showScreen('home-screen');
-        });
 
         function setupMusic() {
             let currentTrackIndex = 0;
@@ -899,8 +909,7 @@
 
             changeTrack(0);
         }
-        setupMusic();
-
+        
         window.addEventListener('beforeunload', () => {
             if (gameUnsubscribe) {
                 gameUnsubscribe();
@@ -915,6 +924,8 @@
             }
             userId = storedUserId;
             
+            initializeDomAndListeners();
+            
             const lastGameId = localStorage.getItem('moleGameId');
             if(lastGameId){
                 allDomElements.reconnectModalGameId.textContent = lastGameId;
@@ -928,8 +939,9 @@
             });
 
             allDomElements.reconnectCancelBtn.addEventListener('click', () => {
-                localStorage.removeItem('moleGameId');
                 showScreen('home-screen');
+                allDomElements.reconnectSection.classList.remove('hidden');
+                allDomElements.reconnectGameIdInput.value = lastGameId;
             });
             
         }).catch((error) => {
