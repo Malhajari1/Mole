@@ -466,7 +466,7 @@
                     
                     if (userId === gameData.hostId) {
                         if (gameData.players.length <= 1) {
-                             await deleteDoc(gameRef);
+                            await deleteDoc(gameRef);
                         } else {
                             await updateDoc(gameRef, { status: 'lobby' });
                         }
