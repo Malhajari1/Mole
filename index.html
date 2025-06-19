@@ -465,25 +465,21 @@
                     const gameData = gameDoc.data();
                     
                     if (userId === gameData.hostId) {
-                         await updateDoc(gameRef, { status: 'lobby' });
+                        await updateDoc(gameRef, { status: 'lobby' });
                     } else {
                         const myPlayerObject = gameData.players.find(p => p.id === userId);
-                         if(myPlayerObject) {
+                        if(myPlayerObject) {
                             await updateDoc(gameRef, {
                                 players: arrayRemove(myPlayerObject)
                             });
                         }
-                        if (gameUnsubscribe) gameUnsubscribe();
-                        localStorage.removeItem('moleGameId');
-                        allDomElements.persistentGameIdContainer.style.display = 'none';
-                        showScreen('home-screen');
                     }
-                } else {
-                     if (gameUnsubscribe) gameUnsubscribe();
-                     localStorage.removeItem('moleGameId');
-                     allDomElements.persistentGameIdContainer.style.display = 'none';
-                     showScreen('home-screen');
                 }
+                
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
             });
 
             allDomElements.backToMenuBtn.addEventListener('click', async () => {
@@ -933,7 +929,7 @@
             }
         });
 
-        signInAnonymously(auth).then((userCredential) => {
+        signInAnonymously(auth).then(async (userCredential) => {
             let storedUserId = localStorage.getItem('moleUserId');
             if(!storedUserId){
                 storedUserId = userCredential.user.uid;
@@ -945,21 +941,29 @@
             
             const lastGameId = localStorage.getItem('moleGameId');
             if(lastGameId){
-                allDomElements.reconnectModalGameId.textContent = lastGameId;
-                showScreen('reconnect-modal');
+                const gameRef = doc(db, "games", lastGameId);
+                const gameDoc = await getDoc(gameRef);
+
+                if (gameDoc.exists() && gameDoc.data().status !== 'game_over') {
+                    allDomElements.reconnectModalGameId.textContent = lastGameId;
+                    showScreen('reconnect-modal');
+                } else {
+                    localStorage.removeItem('moleGameId');
+                    showScreen('home-screen');
+                }
+
+                allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
+                     joinGame(lastGameId, false);
+                });
+
+                allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+                    allDomElements.reconnectSection.classList.remove('hidden');
+                    allDomElements.reconnectGameIdInput.value = lastGameId;
+                    showScreen('home-screen');
+                });
             } else {
                 showScreen('home-screen');
             }
-
-            allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
-                 joinGame(lastGameId, false);
-            });
-
-            allDomElements.reconnectCancelBtn.addEventListener('click', () => {
-                allDomElements.reconnectSection.classList.remove('hidden');
-                allDomElements.reconnectGameIdInput.value = lastGameId;
-                showScreen('home-screen');
-            });
             
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
