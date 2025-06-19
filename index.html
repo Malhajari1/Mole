@@ -833,8 +833,10 @@
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
             allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
 
+            const isFinalRound = gameData.currentRound >= gameData.totalRounds;
             allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
-            allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Finish Mission' : 'Next Round';
+            allDomElements.nextRoundBtn.textContent = isFinalRound ? 'Finish Mission' : 'Next Round';
+            allDomElements.returnToLobbyBtn.classList.toggle('hidden', !isFinalRound);
         }
 
         function renderGameOverScreen() {
