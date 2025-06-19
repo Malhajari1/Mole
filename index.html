@@ -479,11 +479,6 @@
                         }
                     }
                 }
-                
-                if (gameUnsubscribe) gameUnsubscribe();
-                localStorage.removeItem('moleGameId');
-                allDomElements.persistentGameIdContainer.style.display = 'none';
-                showScreen('home-screen');
             });
 
             allDomElements.backToMenuBtn.addEventListener('click', async () => {
