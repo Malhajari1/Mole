@@ -288,6 +288,7 @@
             <p class="text-xl mb-4">The Mole was...</p>
             <p id="debrief-mole-name" class="text-3xl font-bold text-red-400 mb-8"></p>
             <button id="next-round-btn" class="btn mt-8">Next Round</button>
+            <button id="return-to-lobby-btn" class="btn btn-secondary mt-4 hidden">Return to Lobby</button>
         </div>
     </div>
     
@@ -368,6 +369,7 @@
                 gamePlayerList: document.getElementById('game-player-list'),
                 debriefMoleName: document.getElementById('debrief-mole-name'),
                 nextRoundBtn: document.getElementById('next-round-btn'),
+                returnToLobbyBtn: document.getElementById('return-to-lobby-btn'),
                 playAgainBtn: document.getElementById('play-again-btn'),
                 musicToggle: document.getElementById('music-toggle'),
                 musicOnIcon: document.getElementById('music-on-icon'),
@@ -465,7 +467,7 @@
                     const gameData = gameDoc.data();
                     
                     if (userId === gameData.hostId) {
-                        await updateDoc(gameRef, { status: 'lobby' });
+                         await updateDoc(gameRef, { status: 'lobby' });
                     } else {
                         const myPlayerObject = gameData.players.find(p => p.id === userId);
                         if(myPlayerObject) {
@@ -476,6 +478,25 @@
                     }
                 }
                 
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
+            });
+            
+            allDomElements.returnToLobbyBtn.addEventListener('click', async () => {
+                 if (!gameId) return;
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                if(gameDoc.exists()){
+                    const gameData = gameDoc.data();
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
+                    if(myPlayerObject) {
+                        await updateDoc(gameRef, {
+                            players: arrayRemove(myPlayerObject)
+                        });
+                    }
+                }
                 if (gameUnsubscribe) gameUnsubscribe();
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
@@ -813,7 +834,7 @@
             allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
 
             allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
-            allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'End Game' : 'Next Round';
+            allDomElements.nextRoundBtn.textContent = (gameData.currentRound >= gameData.totalRounds) ? 'Finish Mission' : 'Next Round';
         }
 
         function renderGameOverScreen() {
