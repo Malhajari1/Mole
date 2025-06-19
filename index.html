@@ -455,48 +455,35 @@
             });
 
             allDomElements.nextRoundBtn.addEventListener('click', async () => {
-                allDomElements.nextRoundBtn.disabled = true; 
-                await startNewRound();
+                allDomElements.nextRoundBtn.disabled = true;
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+                const isFinalRound = gameData.currentRound >= gameData.totalRounds;
+
+                if (isFinalRound) {
+                     await updateDoc(gameRef, { status: 'game_over' });
+                } else {
+                    await startNewRound();
+                }
             });
             
             allDomElements.playAgainBtn.addEventListener('click', async () => {
                 if (!gameId) return;
                 const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                if(gameDoc.exists()){
-                    const gameData = gameDoc.data();
-                    
-                    if (userId === gameData.hostId) {
-                         await updateDoc(gameRef, { status: 'lobby' });
-                    } else {
-                        const myPlayerObject = gameData.players.find(p => p.id === userId);
-                        if(myPlayerObject) {
-                            await updateDoc(gameRef, {
-                                players: arrayRemove(myPlayerObject)
-                            });
-                        }
-                    }
-                }
-                
-                if (gameUnsubscribe) gameUnsubscribe();
-                localStorage.removeItem('moleGameId');
-                allDomElements.persistentGameIdContainer.style.display = 'none';
-                showScreen('home-screen');
+                await updateDoc(gameRef, { status: 'lobby' });
             });
             
             allDomElements.returnToLobbyBtn.addEventListener('click', async () => {
                  if (!gameId) return;
                 const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                if(gameDoc.exists()){
-                    const gameData = gameDoc.data();
-                    const myPlayerObject = gameData.players.find(p => p.id === userId);
-                    if(myPlayerObject) {
-                        await updateDoc(gameRef, {
-                            players: arrayRemove(myPlayerObject)
-                        });
-                    }
+                const myPlayerObject = (await getDoc(gameRef)).data().players.find(p => p.id === userId);
+                if(myPlayerObject) {
+                    await updateDoc(gameRef, {
+                        players: arrayRemove(myPlayerObject)
+                    });
                 }
+                
                 if (gameUnsubscribe) gameUnsubscribe();
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
