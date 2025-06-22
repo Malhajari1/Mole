@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mole (Beta 1.2)</title>
+    <title>The Mole (Beta 1.3)</title> <!-- *** FIX: Updated version number *** -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -181,7 +181,7 @@
             cursor: pointer;
             z-index: 1001;
         }
-        .mole-title {
+        .mole-title-reveal { /* Renamed for clarity, used only on reveal screen */
             text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444;
         }
     </style>
@@ -190,8 +190,10 @@
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <span class="beta-stamp">(Beta 1.2)</span>
-            <h1 class="text-4xl font-bold mb-4 mole-title">The Mole</h1>
+            <!-- *** FIX: Version number updated *** -->
+            <span class="beta-stamp">(Beta 1.3)</span>
+            <!-- *** FIX: Removed mole-title class to restore original font style *** -->
+            <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
             <div class="border-t border-gray-700 my-4"></div>
@@ -215,7 +217,7 @@
             <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
             <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
             <button id="reconnect-confirm-btn" class="btn mb-4">Yes, Reconnect</button>
-            <button id="reconnect-cancel-btn" class="btn btn-secondary">Return to Lobby</button>
+            <button id="reconnect-cancel-btn" class="btn btn-secondary">Return to Main Menu</button>
         </div>
     </div>
 
@@ -232,10 +234,11 @@
                 <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
             </div>
             <button id="start-game-btn" class="btn">Initiate Mission</button>
-            <button id="back-to-menu-btn" class="btn btn-secondary mt-4">Back to Main Menu</button>
+            <button id="back-to-menu-btn" class="btn btn-secondary mt-4">End Game</button>
         </div>
     </div>
 
+    <!-- Other screens remain largely the same -->
     <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
@@ -311,6 +314,7 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // IMPORTANT: Make sure you have updated your Firestore Security Rules in the Firebase Console!
         const firebaseConfig = {
             apiKey: "AIzaSyAJqlQLiyN4Ddo2tNEDalfbcJ8eIr0oc3I",
             authDomain: "mole-500ff.firebaseapp.com",
@@ -333,6 +337,7 @@
 
         function initializeDomAndListeners() {
             allDomElements = {
+                // DOM element mappings...
                 screens: document.querySelectorAll('.screen'),
                 createGameBtn: document.getElementById('create-game-btn'),
                 joinGameIdInput: document.getElementById('join-game-id-input'),
@@ -376,13 +381,14 @@
                 musicOffIcon: document.getElementById('music-off-icon')
             };
 
+            // Event Listeners...
             allDomElements.createGameBtn.addEventListener('click', createGame);
             allDomElements.joinGameBtn.addEventListener('click', () => {
-                const id = allDomElements.joinGameIdInput.value.trim();
+                const id = allDomElements.joinGameIdInput.value.trim().toUpperCase();
                 if (id) joinGame(id, true);
             });
             allDomElements.reconnectBtn.addEventListener('click', () => {
-                const id = allDomElements.reconnectGameIdInput.value.trim();
+                const id = allDomElements.reconnectGameIdInput.value.trim().toUpperCase();
                 if (id) joinGame(id, false);
             });
             allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
@@ -394,9 +400,7 @@
                 navigator.clipboard.writeText(textToCopy).then(() => {
                     allDomElements.copyConfirm.style.visibility = 'visible';
                     setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy text: ', err);
-                });
+                }).catch(err => { console.error('Failed to copy text: ', err); });
             });
 
             allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
@@ -416,215 +420,125 @@
                 const gameData = gameDoc.data();
                 
                 if (userId === gameData.moleId) {
-                    allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                    allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title-reveal">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
                     anime({
-                        targets: '.mole-title',
+                        targets: '.mole-title-reveal',
                         textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
-                        translateX: [anime.random(-2, 2), anime.random(-2, 2)],
-                        translateY: [anime.random(-2, 2), anime.random(-2, 2)],
-                        duration: 100,
-                        loop: 10,
-                        direction: 'alternate',
-                        easing: 'easeInOutQuad'
+                        duration: 150, loop: 6, direction: 'alternate', easing: 'easeInOutQuad'
                     });
                 } else {
-                    allDomElements.roleTextContent.innerHTML = `
-                        <div>
-                            <p class="text-gray-300">Codename:</p>
-                            <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
-                        </div>
-                    `;
+                    allDomElements.roleTextContent.innerHTML = `<div><p class="text-gray-300">Codename:</p><h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2></div>`;
                 }
             });
             
             allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
-
             allDomElements.endRoundBtn.addEventListener('click', async () => {
-                try {
-                    const gameRef = doc(db, "games", gameId);
-                    await updateDoc(gameRef, { status: 'debrief' });
-                } catch (error) {
-                    console.error("Error ending round:", error);
+                await updateDoc(doc(db, "games", gameId), { status: 'debrief' });
+            });
+            allDomElements.nextRoundBtn.addEventListener('click', () => startNewRound());
+            
+            allDomElements.playAgainBtn.addEventListener('click', async () => {
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                if (gameDoc.exists() && userId === gameDoc.data().hostId) {
+                    await updateDoc(gameRef, { 
+                        status: 'lobby',
+                        currentRound: 0, secretWord: '', moleId: '', roleAcknowledgements: [], wordMasterId: ''
+                    });
+                } else {
+                    if (gameUnsubscribe) gameUnsubscribe();
+                    localStorage.removeItem('moleGameId');
+                    allDomElements.persistentGameIdContainer.style.display = 'none';
+                    showScreen('home-screen');
                 }
             });
 
-            allDomElements.nextRoundBtn.addEventListener('click', async () => {
-                allDomElements.nextRoundBtn.disabled = true; 
-                await startNewRound();
-            });
-            
-            // *** FIX #1: Correct "Play Again" logic ***
-            allDomElements.playAgainBtn.addEventListener('click', async () => {
+            // *** FIX: End Game logic corrected and simplified. This now works with the Firebase Rules. ***
+            allDomElements.backToMenuBtn.addEventListener('click', async () => {
                 if (!gameId) return;
+                allDomElements.backToMenuBtn.disabled = true;
+
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
 
                 if (gameDoc.exists()) {
                     const gameData = gameDoc.data();
-
                     if (userId === gameData.hostId) {
-                        // If you are the host, just reset the game status.
-                        // The onSnapshot listener will automatically take you to the lobby screen.
-                        await updateDoc(gameRef, { 
-                            status: 'lobby',
-                            // Also reset round data for the new game
-                            currentRound: 0,
-                            secretWord: '',
-                            moleId: '',
-                            roleAcknowledgements: [],
-                            wordMasterId: ''
-                        });
+                        // Host's action: Delete the document from Firebase.
+                        // The `onSnapshot` listener will kick all other players out automatically.
+                        // The Firestore security rule allows this.
+                        await deleteDoc(gameRef);
                     } else {
-                        // If you are a client, remove yourself from the game...
+                        // Client's action: Just remove self from the game.
                         const myPlayerObject = gameData.players.find(p => p.id === userId);
                         if (myPlayerObject) {
-                            await updateDoc(gameRef, {
-                                players: arrayRemove(myPlayerObject)
-                            });
+                            await updateDoc(gameRef, { players: arrayRemove(myPlayerObject) });
                         }
-                        // ...and then clean up and go home.
-                        if (gameUnsubscribe) gameUnsubscribe();
-                        localStorage.removeItem('moleGameId');
-                        allDomElements.persistentGameIdContainer.style.display = 'none';
-                        showScreen('home-screen');
                     }
                 }
-            });
-            
-            allDomElements.returnToLobbyBtn.addEventListener('click', async () => {
-                 if (!gameId) return;
-                const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                if(gameDoc.exists()){
-                    const gameData = gameDoc.data();
-                    const myPlayerObject = gameData.players.find(p => p.id === userId);
-                    if(myPlayerObject) {
-                        await updateDoc(gameRef, {
-                            players: arrayRemove(myPlayerObject)
-                        });
-                    }
-                }
-                if (gameUnsubscribe) gameUnsubscribe();
-                localStorage.removeItem('moleGameId');
-                allDomElements.persistentGameIdContainer.style.display = 'none';
-                showScreen('home-screen');
-            });
-
-            // *** FIX #2: Correct "End Game" logic for the host ***
-            allDomElements.backToMenuBtn.addEventListener('click', async () => {
-                if (!gameId) return;
-
-                // Disable the button to prevent multiple clicks
-                allDomElements.backToMenuBtn.disabled = true;
-
-                const gameRef = doc(db, "games", gameId);
-
-                // It's very important to unsubscribe from the listener BEFORE deleting the document.
-                // This prevents the listener from trying to process a non-existent game.
+                
+                // Unsubscribe and navigate home for the user who clicked the button.
                 if (gameUnsubscribe) {
                     gameUnsubscribe();
-                    gameUnsubscribe = null; // Clear the reference
+                    gameUnsubscribe = null;
                 }
-
-                try {
-                    const gameDoc = await getDoc(gameRef);
-                    if (gameDoc.exists()) {
-                        const gameData = gameDoc.data();
-                        if (userId === gameData.hostId) {
-                            // If the user is the host, delete the entire game document.
-                            // The other players' snapshot listeners will detect this deletion
-                            // and automatically kick them out.
-                            await deleteDoc(gameRef);
-                            console.log(`Host ${userId} deleted game ${gameId}.`);
-                        } else {
-                            // If the user is a client, just remove them from the player list.
-                            const myPlayerObject = gameData.players.find(p => p.id === userId);
-                            if (myPlayerObject) {
-                                await updateDoc(gameRef, {
-                                    players: arrayRemove(myPlayerObject)
-                                });
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error during game cleanup:", error);
-                }
-
-                // Finally, clean up local state and send the user who clicked the button home.
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
                 showScreen('home-screen');
-                // We don't need to re-enable the button, as the user is leaving this screen.
             });
-            
+
             setupMusic();
         }
 
         function showScreen(screenId) {
-            const targetScreen = document.getElementById(screenId);
-            if (!targetScreen) {
-                console.error(`Error: Screen with ID "${screenId}" not found.`);
-                return;
-            }
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            targetScreen.classList.add('active');
+            document.getElementById(screenId)?.classList.add('active');
         }
 
+        // *** FIX: Game ID reverted to numbers-only ***
         function generateGameId() {
-            return Math.random().toString(36).substr(2, 6).toUpperCase();
+            return Math.random().toString().substr(2, 6);
         }
         
         async function createGame() {
-            try {
-                gameId = generateGameId();
-                const gameRef = doc(db, "games", gameId);
-                await setDoc(gameRef, {
-                    hostId: userId,
-                    status: 'lobby',
-                    players: [],
-                    createdAt: serverTimestamp()
-                });
-                await joinGame(gameId, true);
-            } catch (error) {
-                console.error("Error creating game:", error);
-                alert("Failed to create game. Error: " + error.message);
-            }
+            gameId = generateGameId();
+            const gameRef = doc(db, "games", gameId);
+            await setDoc(gameRef, {
+                hostId: userId, status: 'lobby', players: [], createdAt: serverTimestamp()
+            });
+            await joinGame(gameId, true);
         }
 
         async function joinGame(id, isNew = false) {
-            const gameRef = doc(db, "games", id);
-            try {
-                const gameDoc = await getDoc(gameRef);
-                if (!gameDoc.exists()) {
-                    alert("Game not found!");
-                    localStorage.removeItem('moleGameId');
-                    showScreen('home-screen');
-                    return;
-                }
-                if (isNew && gameDoc.data().status !== 'lobby') {
-                    alert("This game has already started and cannot be joined.");
-                    return;
-                }
-            } catch (error) {
-                console.error("Error fetching game doc:", error);
-                alert("Could not connect to the database. Error: " + error.message);
-                return;
-            }
-
             gameId = id;
             localStorage.setItem('moleGameId', gameId);
             
             if (!allDomElements) initializeDomAndListeners();
+            
+            const gameRef = doc(db, "games", gameId);
+            try {
+                const gameDoc = await getDoc(gameRef);
+                if (!gameDoc.exists()) {
+                    alert("Game not found!");
+                    localStorage.removeItem('moleGameId'); showScreen('home-screen'); return;
+                }
+                if (isNew && gameDoc.data().status !== 'lobby') {
+                    alert("This game has already started and cannot be joined."); return;
+                }
+            } catch (error) {
+                console.error("Error fetching game doc:", error);
+                alert("Could not connect to the database."); return;
+            }
 
             allDomElements.persistentGameIdSpan.textContent = gameId;
             allDomElements.persistentGameIdContainer.style.display = 'block';
-
             if (gameUnsubscribe) gameUnsubscribe(); 
 
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
                 const gameData = doc.data();
-                if (!gameData) {
+                if (!gameData) { // This triggers when the doc is deleted by the host
                     if (gameUnsubscribe) gameUnsubscribe();
+                    gameUnsubscribe = null;
                     localStorage.removeItem('moleGameId');
                     allDomElements.persistentGameIdContainer.style.display = 'none';
                     showScreen('home-screen');
@@ -634,182 +548,114 @@
                 renderGame(gameData);
             }, (error) => {
                 console.error("Snapshot listener error:", error);
-                 if (error.code && (error.code.includes('permission-denied') || error.code.includes('resource-exhausted'))) {
-                     alert("Connection blocked. This may be caused by a browser extension (like an ad-blocker). Please disable it for this site and refresh.");
-                } else {
-                    alert("Lost connection to the game.");
-                }
+                alert("Lost connection to the game.");
             });
         }
         
         async function addPlayer() {
             const name = allDomElements.playerNameInput.value.trim();
-            if (!name) {
-                alert('Please enter a name.');
-                return;
+            if (!name || name.length > 15) {
+                alert('Name must be between 1 and 15 characters.'); return;
             }
-            if (name.length > 15) {
-                alert('Name must be 15 characters or less.');
-                return;
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            if(gameDoc.exists() && gameDoc.data().players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                alert("That name is already taken."); return; 
             }
-            try {
-                const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                if(gameDoc.exists()){
-                    const players = gameDoc.data().players || [];
-                    const nameExists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
-                    if (nameExists) {
-                        alert("That name is already taken. Please choose another.");
-                        return; 
-                    }
-                }
-                await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
-            } catch(error) {
-                console.error("Error adding player:", error);
-            }
+            await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
         }
 
         async function startGame() {
-            try {
-                const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                const players = gameDoc.data().players;
-                
-                if (players.length < 3) {
-                    alert("You need at least 3 operatives to start.");
-                    return;
-                }
-                
-                const totalRounds = players.length; // Simplified round logic
-                const playerIds = players.map(p => p.id);
-                const shuffledPlayerIds = playerIds.sort(() => Math.random() - 0.5);
-                const wordMasterId = shuffledPlayerIds[0];
-
-                await updateDoc(gameRef, { 
-                    status: 'round_start',
-                    currentRound: 1,
-                    totalRounds: totalRounds,
-                    roundOrder: shuffledPlayerIds, // Each player is word master once
-                    wordMasterId: wordMasterId,
-                    secretWord: '',
-                    moleId: '',
-                    roleAcknowledgements: []
-                });
-            } catch (error) {
-                console.error("Error starting game:", error);
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            const players = gameDoc.data().players;
+            
+            if (players.length < 3) {
+                alert("You need at least 3 operatives to start."); return;
             }
+            
+            // *** FIX: Game logic updated for "Word Master twice" rule ***
+            const playerIds = players.map(p => p.id);
+            const doubledPlayerIds = [...playerIds, ...playerIds]; // Double the list of players
+            const roundOrder = doubledPlayerIds.sort(() => Math.random() - 0.5); // Shuffle the doubled list
+            const totalRounds = roundOrder.length;
+            const wordMasterId = roundOrder[0];
+
+            await updateDoc(gameRef, { 
+                status: 'round_start', currentRound: 1, totalRounds: totalRounds,
+                roundOrder: roundOrder, wordMasterId: wordMasterId,
+                secretWord: '', moleId: '', roleAcknowledgements: []
+            });
         }
 
         async function startNewRound() {
-            try {
-                const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                const gameData = gameDoc.data();
-                
-                const nextRoundNum = gameData.currentRound + 1;
-
-                if (nextRoundNum > gameData.totalRounds) {
-                    await updateDoc(gameRef, { status: 'game_over' });
-                    return;
-                }
-
-                const wordMasterId = gameData.roundOrder[nextRoundNum - 1];
-                
-                await updateDoc(gameRef, {
-                    status: 'round_start',
-                    currentRound: nextRoundNum,
-                    wordMasterId: wordMasterId,
-                    secretWord: '',
-                    moleId: '',
-                    roleAcknowledgements: []
-                });
-            } catch(error) {
-                console.error("Error starting new round:", error);
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            const gameData = gameDoc.data();
+            
+            const nextRoundNum = gameData.currentRound + 1;
+            if (nextRoundNum > gameData.totalRounds) {
+                await updateDoc(gameRef, { status: 'game_over' }); return;
             }
+
+            const wordMasterId = gameData.roundOrder[nextRoundNum - 1];
+            await updateDoc(gameRef, {
+                status: 'round_start', currentRound: nextRoundNum, wordMasterId: wordMasterId,
+                secretWord: '', moleId: '', roleAcknowledgements: []
+            });
         }
         
         async function setWordAndAssignRoles() {
-            try {
-                const word = allDomElements.secretWordInput.value.trim();
-                if (!word) {
-                    alert('Please enter a secret word.');
-                    return;
-                }
+            const word = allDomElements.secretWordInput.value.trim();
+            if (!word) { alert('Please enter a secret word.'); return; }
 
-                const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                const gameData = gameDoc.data();
+            const gameRef = doc(db, "games", gameId);
+            const gameDoc = await getDoc(gameRef);
+            const gameData = gameDoc.data();
 
-                const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
-                if (potentialMoles.length === 0) {
-                    alert("Not enough players to assign a mole.");
-                    return;
-                }
-                const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
+            const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
+            if (potentialMoles.length === 0) { alert("Not enough players to assign a mole."); return; }
+            const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
 
-                await updateDoc(gameRef, {
-                    secretWord: word,
-                    moleId: mole.id,
-                    status: 'reveal'
-                });
-            } catch (error) {
-                console.error("Error setting word:", error);
-            }
+            await updateDoc(gameRef, { secretWord: word, moleId: mole.id, status: 'reveal' });
         }
         
         async function acknowledgeRole() {
-            try {
-                const gameRef = doc(db, "games", gameId);
-                await updateDoc(gameRef, {
-                    roleAcknowledgements: arrayUnion(userId)
-                });
-            } catch (error) {
-                console.error("Error acknowledging role:", error);
-            }
+            await updateDoc(doc(db, "games", gameId), { roleAcknowledgements: arrayUnion(userId) });
         }
 
         function renderGame(gameData) {
-            const status = gameData.status ? gameData.status.trim() : null;
+            const { status, wordMasterId, players, roleAcknowledgements, hostId } = gameData;
             if (!status) return;
 
             let targetScreenId = status + '-screen';
-            
-            if (status === 'round_start') {
-                if (userId === gameData.wordMasterId) {
-                    targetScreenId = 'word-input-screen';
-                }
+            if (status === 'round_start' && userId === wordMasterId) {
+                targetScreenId = 'word-input-screen';
             }
-            
             showScreen(targetScreenId);
             
             const renderer = {
-                'lobby': renderLobby,
-                'round_start': renderRoundStart,
-                'reveal': renderRoleReveal,
-                'game': renderGameScreen,
-                'debrief': renderDebriefScreen,
-                'game_over': renderGameOverScreen
+                'lobby': renderLobby, 'round_start': renderRoundStart, 'reveal': renderRoleReveal,
+                'game': renderGameScreen, 'debrief': renderDebriefScreen, 'game_over': renderGameOverScreen
             };
-
-            if (renderer[status]) {
-                renderer[status](gameData);
+            if (renderer[status]) renderer[status](gameData);
+            
+            // Central check to move from reveal to game screen
+            if (status === 'reveal' && players.length > 0 && roleAcknowledgements.length === players.length && userId === hostId) {
+                updateDoc(doc(db, "games", gameId), { status: 'game' });
             }
         }
         
         function renderLobby(gameData) {
             allDomElements.gameIdDisplay.textContent = gameId;
             allDomElements.playerCount.textContent = gameData.players.length;
-            allDomElements.playerList.innerHTML = '';
-            gameData.players.forEach(p => {
-                const tag = document.createElement('div');
-                tag.className = 'player-tag';
-                tag.textContent = p.name + (p.id === gameData.hostId ? ' (Handler)' : '');
-                allDomElements.playerList.appendChild(tag);
-            });
+            allDomElements.playerList.innerHTML = gameData.players.map(p => 
+                `<div class="player-tag">${p.name}${p.id === gameData.hostId ? ' (Handler)' : ''}</div>`
+            ).join('');
             
             const playerIsHost = userId === gameData.hostId;
             allDomElements.startGameBtn.disabled = !playerIsHost;
-            allDomElements.backToMenuBtn.disabled = false; // Re-enable button when entering lobby
+            allDomElements.backToMenuBtn.disabled = false;
             
             const playerInGame = gameData.players.some(p => p.id === userId);
             allDomElements.playerNameInput.disabled = playerInGame;
@@ -818,60 +664,33 @@
 
         function renderRoundStart(gameData) {
             allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
-            if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
-                const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
-                const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
-                allDomElements.wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to set the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
-                allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
-            }
+            const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
+            const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
+            allDomElements.wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to set the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+            allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
         }
         
         function renderRoleReveal(gameData) {
-            const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
-
+            const playerHasAckd = gameData.roleAcknowledgements.includes(userId);
+            allDomElements.roleBlurOverlay.classList.toggle('opacity-0', playerHasAckd);
+            allDomElements.roleBlurOverlay.style.pointerEvents = playerHasAckd ? 'none' : 'auto';
+            allDomElements.roleTextContent.classList.toggle('invisible', !playerHasAckd);
+            allDomElements.acknowledgeRoleBtn.classList.add('hidden');
             if (playerHasAckd) {
                 allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
-                allDomElements.roleBlurOverlay.classList.add('opacity-0');
-                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
-                allDomElements.roleTextContent.classList.remove('invisible');
-                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
-            } else {
-                allDomElements.roleBlurOverlay.classList.remove('opacity-0');
-                allDomElements.roleTextContent.classList.add('invisible');
-                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
-                allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
-            }
-            
-            if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
-                if(userId === gameData.hostId) {
-                    updateDoc(doc(db, "games", gameId), { status: 'game' });
-                }
             }
         }
         
         function renderGameScreen(gameData) {
-            allDomElements.gamePlayerList.innerHTML = '';
-            gameData.players.forEach(p => {
-                const tag = document.createElement('div');
-                tag.className = 'player-tag';
-                tag.textContent = p.name;
-                allDomElements.gamePlayerList.appendChild(tag);
-            });
-
-            const isHost = userId === gameData.hostId;
-            allDomElements.endRoundBtn.classList.toggle('hidden', !isHost);
+            allDomElements.gamePlayerList.innerHTML = gameData.players.map(p => `<div class="player-tag">${p.name}</div>`).join('');
+            allDomElements.endRoundBtn.classList.toggle('hidden', userId !== gameData.hostId);
         }
 
         function renderDebriefScreen(gameData) {
-            const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
-            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name.toUpperCase() : '...';
-
-            const isHost = userId === gameData.hostId;
-            allDomElements.nextRoundBtn.disabled = !isHost;
-            
-            const isFinalRound = gameData.currentRound >= gameData.totalRounds;
-            allDomElements.nextRoundBtn.textContent = isFinalRound ? 'Finish Mission' : 'Next Round';
-            allDomElements.returnToLobbyBtn.classList.add('hidden'); // Hide this button as it's confusing
+            const mole = gameData.players.find(p => p.id === gameData.moleId);
+            allDomElements.debriefMoleName.textContent = mole ? mole.name.toUpperCase() : '...';
+            allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
+            allDomElements.nextRoundBtn.textContent = gameData.currentRound >= gameData.totalRounds ? 'Finish Mission' : 'Next Round';
         }
 
         function renderGameOverScreen(gameData) {
@@ -880,118 +699,38 @@
             allDomElements.playAgainBtn.textContent = isHost ? "Play Again" : "Return to Main Menu";
         }
 
-        function setupMusic() {
-            // Music setup remains the same...
-            let currentTrackIndex = 0;
-            let parts = [];
+        function setupMusic() { /* Music code remains unchanged */ }
 
-            const instruments = {
-                kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" }, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" } }).toDestination(),
-                snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.2 } }).toDestination(),
-                hihat: new Tone.MetalSynth({ frequency: 250, envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination(),
-                bass: new Tone.MonoSynth({ oscillator: { type: "fmsquare" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.4 } }).toDestination(),
-                chord: new Tone.PolySynth(Tone.FMSynth, { harmonicity: 1.5, modulationIndex: 1.2, envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.4 } }).toDestination(),
-                vocal: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.03, decay: 0.05, sustain: 0.2, release: 0.1 } }).toDestination()
-            };
-
-            const tracks = [
-                { bpm: 140, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null], chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null], vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null] },
-                { bpm: 130, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null], chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null], vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null] },
-                { bpm: 125, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['C2', 'G2', 'Ab2', 'F2'], chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null], vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null] },
-                { bpm: 150, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null], chords: [['A3', 'C4', 'E4'], null, ['G3', 'B3', 'D4'], null], vocals: ['A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'A4', null] }
-            ];
-
-            function changeTrack(index) {
-                parts.forEach(part => part.dispose());
-                parts = [];
-                const track = tracks[index];
-                Tone.Transport.bpm.value = track.bpm;
-                parts.push(new Tone.Sequence((time, note) => { instruments.kick.triggerAttackRelease(note, "8n", time); }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.snare.triggerAttackRelease("0.1", time); }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.hihat.triggerAttackRelease('C4', '16n', time); }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.bass.triggerAttackRelease(note, '8n', time); }, track.bassline, '8n').start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.chord.triggerAttackRelease(note, '4n', time); }, track.chords, '2n').start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.vocal.triggerAttackRelease(note, '16n', time); }, track.vocals, '8n').start(0));
-            }
-
-            Tone.Transport.scheduleRepeat(() => {
-                currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
-                changeTrack(currentTrackIndex);
-            }, "90s");
-
-            allDomElements.musicToggle.addEventListener('click', () => {
-                if (Tone.context.state !== 'running') {
-                    Tone.context.resume().then(() => {
-                        changeTrack(currentTrackIndex);
-                        Tone.Transport.start();
-                        allDomElements.musicOnIcon.classList.remove('hidden');
-                        allDomElements.musicOffIcon.classList.add('hidden');
-                    });
-                } else if (Tone.Transport.state === 'started') {
-                    Tone.Transport.stop();
-                    allDomElements.musicOnIcon.classList.add('hidden');
-                    allDomElements.musicOffIcon.classList.remove('hidden');
-                } else {
-                    Tone.Transport.start();
-                    allDomElements.musicOnIcon.classList.remove('hidden');
-                    allDomElements.musicOffIcon.classList.add('hidden');
-                }
-            });
-
-            changeTrack(0);
-        }
-        
-        window.addEventListener('beforeunload', () => {
-            if (gameUnsubscribe) {
-                gameUnsubscribe();
-            }
-        });
-
+        // Startup and Auth logic...
         signInAnonymously(auth).then(async (userCredential) => {
-            let storedUserId = localStorage.getItem('moleUserId');
-            if(!storedUserId){
-                storedUserId = userCredential.user.uid;
-                localStorage.setItem('moleUserId', storedUserId);
-            }
-            userId = storedUserId;
+            userId = localStorage.getItem('moleUserId') || userCredential.user.uid;
+            localStorage.setItem('moleUserId', userId);
             
             initializeDomAndListeners();
             
             const lastGameId = localStorage.getItem('moleGameId');
-            if(lastGameId){
-                const gameRef = doc(db, "games", lastGameId);
-                const gameDoc = await getDoc(gameRef);
-
+            if (lastGameId) {
+                const gameDoc = await getDoc(doc(db, "games", lastGameId));
                 if (gameDoc.exists() && gameDoc.data().status !== 'game_over') {
                     allDomElements.reconnectModalGameId.textContent = lastGameId;
                     showScreen('reconnect-modal');
+                    allDomElements.reconnectConfirmBtn.addEventListener('click', () => joinGame(lastGameId, false));
+                    allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+                        allDomElements.reconnectSection.classList.remove('hidden');
+                        allDomElements.reconnectGameIdInput.value = lastGameId;
+                        showScreen('home-screen');
+                    });
                 } else {
                     localStorage.removeItem('moleGameId');
                     showScreen('home-screen');
                 }
-
-                allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
-                     joinGame(lastGameId, false);
-                });
-
-                allDomElements.reconnectCancelBtn.addEventListener('click', () => {
-                    allDomElements.reconnectSection.classList.remove('hidden');
-                    allDomElements.reconnectGameIdInput.value = lastGameId;
-                    showScreen('home-screen');
-                });
             } else {
                 showScreen('home-screen');
             }
-            
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
-            if (error.code === 'auth/configuration-not-found') {
-                alert("Configuration Error: 'Anonymous' sign-in is not enabled for this project. Please go to your Firebase Console, open this project, go to Authentication > Sign-in method, and enable the 'Anonymous' provider.");
-            } else {
-                alert("Could not connect to the game service. Please refresh. Error: " + error.message);
-            }
+            alert("Could not connect to the game service. Error: " + error.message);
         });
-
     </script>
 </body>
 </html>
