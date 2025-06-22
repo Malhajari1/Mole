@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mole (Beta 1.1)</title>
+    <title>The Mole (Beta 1.2)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -190,8 +190,8 @@
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <span class="beta-stamp">(Beta 1.1)</span>
-            <h1 class="text-4xl font-bold mb-4">The Mole</h1>
+            <span class="beta-stamp">(Beta 1.2)</span>
+            <h1 class="text-4xl font-bold mb-4 mole-title">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
             <div class="border-t border-gray-700 my-4"></div>
@@ -391,18 +391,12 @@
             
             allDomElements.gameIdDisplay.addEventListener('click', () => {
                 const textToCopy = allDomElements.gameIdDisplay.textContent;
-                const textArea = document.createElement('textarea');
-                textArea.value = textToCopy;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
+                navigator.clipboard.writeText(textToCopy).then(() => {
                     allDomElements.copyConfirm.style.visibility = 'visible';
                     setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
-                } catch (err) {
+                }).catch(err => {
                     console.error('Failed to copy text: ', err);
-                }
-                document.body.removeChild(textArea);
+                });
             });
 
             allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
@@ -459,29 +453,42 @@
                 await startNewRound();
             });
             
+            // *** FIX #1: Correct "Play Again" logic ***
             allDomElements.playAgainBtn.addEventListener('click', async () => {
                 if (!gameId) return;
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
-                if(gameDoc.exists()){
+
+                if (gameDoc.exists()) {
                     const gameData = gameDoc.data();
-                    
+
                     if (userId === gameData.hostId) {
-                         await updateDoc(gameRef, { status: 'lobby' });
+                        // If you are the host, just reset the game status.
+                        // The onSnapshot listener will automatically take you to the lobby screen.
+                        await updateDoc(gameRef, { 
+                            status: 'lobby',
+                            // Also reset round data for the new game
+                            currentRound: 0,
+                            secretWord: '',
+                            moleId: '',
+                            roleAcknowledgements: [],
+                            wordMasterId: ''
+                        });
                     } else {
+                        // If you are a client, remove yourself from the game...
                         const myPlayerObject = gameData.players.find(p => p.id === userId);
-                        if(myPlayerObject) {
+                        if (myPlayerObject) {
                             await updateDoc(gameRef, {
                                 players: arrayRemove(myPlayerObject)
                             });
                         }
+                        // ...and then clean up and go home.
+                        if (gameUnsubscribe) gameUnsubscribe();
+                        localStorage.removeItem('moleGameId');
+                        allDomElements.persistentGameIdContainer.style.display = 'none';
+                        showScreen('home-screen');
                     }
                 }
-                
-                if (gameUnsubscribe) gameUnsubscribe();
-                localStorage.removeItem('moleGameId');
-                allDomElements.persistentGameIdContainer.style.display = 'none';
-                showScreen('home-screen');
             });
             
             allDomElements.returnToLobbyBtn.addEventListener('click', async () => {
@@ -503,28 +510,53 @@
                 showScreen('home-screen');
             });
 
+            // *** FIX #2: Correct "End Game" logic for the host ***
             allDomElements.backToMenuBtn.addEventListener('click', async () => {
                 if (!gameId) return;
-                const gameRef = doc(db, "games", gameId);
-                const gameDoc = await getDoc(gameRef);
-                const gameData = gameDoc.data();
 
-                if (userId === gameData.hostId) {
-                    await deleteDoc(gameRef);
-                } else {
-                    const myPlayerObject = gameData.players.find(p => p.id === userId);
-                    if (myPlayerObject) {
-                        await updateDoc(gameRef, {
-                            players: arrayRemove(myPlayerObject)
-                        });
-                    }
+                // Disable the button to prevent multiple clicks
+                allDomElements.backToMenuBtn.disabled = true;
+
+                const gameRef = doc(db, "games", gameId);
+
+                // It's very important to unsubscribe from the listener BEFORE deleting the document.
+                // This prevents the listener from trying to process a non-existent game.
+                if (gameUnsubscribe) {
+                    gameUnsubscribe();
+                    gameUnsubscribe = null; // Clear the reference
                 }
 
-                if (gameUnsubscribe) gameUnsubscribe();
+                try {
+                    const gameDoc = await getDoc(gameRef);
+                    if (gameDoc.exists()) {
+                        const gameData = gameDoc.data();
+                        if (userId === gameData.hostId) {
+                            // If the user is the host, delete the entire game document.
+                            // The other players' snapshot listeners will detect this deletion
+                            // and automatically kick them out.
+                            await deleteDoc(gameRef);
+                            console.log(`Host ${userId} deleted game ${gameId}.`);
+                        } else {
+                            // If the user is a client, just remove them from the player list.
+                            const myPlayerObject = gameData.players.find(p => p.id === userId);
+                            if (myPlayerObject) {
+                                await updateDoc(gameRef, {
+                                    players: arrayRemove(myPlayerObject)
+                                });
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error during game cleanup:", error);
+                }
+
+                // Finally, clean up local state and send the user who clicked the button home.
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
                 showScreen('home-screen');
+                // We don't need to re-enable the button, as the user is leaving this screen.
             });
+            
             setupMusic();
         }
 
@@ -539,7 +571,7 @@
         }
 
         function generateGameId() {
-            return Math.random().toString().substr(2, 6);
+            return Math.random().toString(36).substr(2, 6).toUpperCase();
         }
         
         async function createGame() {
@@ -576,6 +608,7 @@
             } catch (error) {
                 console.error("Error fetching game doc:", error);
                 alert("Could not connect to the database. Error: " + error.message);
+                return;
             }
 
             gameId = id;
@@ -647,17 +680,16 @@
                     return;
                 }
                 
-                const totalRounds = players.length * 2;
+                const totalRounds = players.length; // Simplified round logic
                 const playerIds = players.map(p => p.id);
                 const shuffledPlayerIds = playerIds.sort(() => Math.random() - 0.5);
-                const roundOrder = [...shuffledPlayerIds, ...shuffledPlayerIds];
-                const wordMasterId = roundOrder[0];
+                const wordMasterId = shuffledPlayerIds[0];
 
                 await updateDoc(gameRef, { 
                     status: 'round_start',
                     currentRound: 1,
                     totalRounds: totalRounds,
-                    roundOrder: roundOrder,
+                    roundOrder: shuffledPlayerIds, // Each player is word master once
                     wordMasterId: wordMasterId,
                     secretWord: '',
                     moleId: '',
@@ -777,6 +809,7 @@
             
             const playerIsHost = userId === gameData.hostId;
             allDomElements.startGameBtn.disabled = !playerIsHost;
+            allDomElements.backToMenuBtn.disabled = false; // Re-enable button when entering lobby
             
             const playerInGame = gameData.players.some(p => p.id === userId);
             allDomElements.playerNameInput.disabled = playerInGame;
@@ -788,7 +821,7 @@
             if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
                 const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
-                allDomElements.wordMasterWaitText.innerHTML = `Wait Ya Managa Until Word Master Is Done Typing...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                allDomElements.wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to set the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                 allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
             }
         }
@@ -831,19 +864,24 @@
 
         function renderDebriefScreen(gameData) {
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
-            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
+            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name.toUpperCase() : '...';
 
+            const isHost = userId === gameData.hostId;
+            allDomElements.nextRoundBtn.disabled = !isHost;
+            
             const isFinalRound = gameData.currentRound >= gameData.totalRounds;
-            allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
             allDomElements.nextRoundBtn.textContent = isFinalRound ? 'Finish Mission' : 'Next Round';
-            allDomElements.returnToLobbyBtn.classList.toggle('hidden', !isFinalRound);
+            allDomElements.returnToLobbyBtn.classList.add('hidden'); // Hide this button as it's confusing
         }
 
-        function renderGameOverScreen() {
-            allDomElements.playAgainBtn.disabled = false;
+        function renderGameOverScreen(gameData) {
+            const isHost = userId === gameData.hostId;
+            allDomElements.playAgainBtn.disabled = !isHost;
+            allDomElements.playAgainBtn.textContent = isHost ? "Play Again" : "Return to Main Menu";
         }
 
         function setupMusic() {
+            // Music setup remains the same...
             let currentTrackIndex = 0;
             let parts = [];
 
@@ -857,66 +895,23 @@
             };
 
             const tracks = [
-                { 
-                    bpm: 140,
-                    kick: 'C1', snare: 'C4', hihat: 'C4',
-                    bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null],
-                    chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null],
-                    vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null]
-                },
-                { 
-                    bpm: 130,
-                    kick: 'C1', snare: 'C4', hihat: 'C4',
-                    bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null],
-                    chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null],
-                    vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null]
-                },
-                { 
-                    bpm: 125,
-                    kick: 'C1', snare: 'C4', hihat: 'C4',
-                    bassline: ['C2', 'G2', 'Ab2', 'F2'],
-                    chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null],
-                    vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null]
-                },
-                { 
-                    bpm: 150,
-                    kick: 'C1', snare: 'C4', hihat: 'C4',
-                    bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null],
-                    chords: [['A3', 'C4', 'E4'], null, ['G3', 'B3', 'D4'], null],
-                    vocals: ['A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'A4', null]
-                }
+                { bpm: 140, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null], chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null], vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null] },
+                { bpm: 130, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null], chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null], vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null] },
+                { bpm: 125, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['C2', 'G2', 'Ab2', 'F2'], chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null], vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null] },
+                { bpm: 150, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null], chords: [['A3', 'C4', 'E4'], null, ['G3', 'B3', 'D4'], null], vocals: ['A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'A4', null] }
             ];
 
             function changeTrack(index) {
                 parts.forEach(part => part.dispose());
                 parts = [];
-
                 const track = tracks[index];
                 Tone.Transport.bpm.value = track.bpm;
-                
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.kick.triggerAttackRelease(note, "8n", time);
-                }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
-
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.snare.triggerAttackRelease("0.1", time);
-                }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
-                
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.hihat.triggerAttackRelease('C4', '16n', time);
-                }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
-                
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.bass.triggerAttackRelease(note, '8n', time);
-                }, track.bassline, '8n').start(0));
-
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.chord.triggerAttackRelease(note, '4n', time);
-                }, track.chords, '2n').start(0));
-                
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.vocal.triggerAttackRelease(note, '16n', time);
-                }, track.vocals, '8n').start(0));
+                parts.push(new Tone.Sequence((time, note) => { instruments.kick.triggerAttackRelease(note, "8n", time); }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
+                parts.push(new Tone.Sequence((time, note) => { instruments.snare.triggerAttackRelease("0.1", time); }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
+                parts.push(new Tone.Sequence((time, note) => { instruments.hihat.triggerAttackRelease('C4', '16n', time); }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
+                parts.push(new Tone.Sequence((time, note) => { instruments.bass.triggerAttackRelease(note, '8n', time); }, track.bassline, '8n').start(0));
+                parts.push(new Tone.Sequence((time, note) => { instruments.chord.triggerAttackRelease(note, '4n', time); }, track.chords, '2n').start(0));
+                parts.push(new Tone.Sequence((time, note) => { instruments.vocal.triggerAttackRelease(note, '16n', time); }, track.vocals, '8n').start(0));
             }
 
             Tone.Transport.scheduleRepeat(() => {
