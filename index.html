@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mole (Beta 1.6.1)</title>
+    <title>The Mole (Beta 1.7)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -41,13 +41,21 @@
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <span class="beta-stamp">(Beta 1.6.1)</span>
+            <span class="beta-stamp">(Beta 1.7)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
             <div class="border-t border-gray-700 my-4"></div>
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Join...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
+
+            <!-- Reconnect Section HTML restored -->
+            <div id="reconnect-section" class="hidden">
+                 <div class="border-t border-gray-700 my-8"></div>
+                <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
+                <input type="text" id="reconnect-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Reconnect...">
+                <button id="reconnect-btn" class="btn btn-secondary">Reconnect</button>
+            </div>
             <div class="disclaimer-box">
                 Disclaimer: This website is intended for personal, non-commercial use only. All trademarks and registered trademarks are the property of their respective owners. No financial gain is received from this website and we are not liable for any data entered.
             </div>
@@ -108,13 +116,17 @@
                 secretWordInput: document.getElementById('secret-word-input'), toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'), eyeOpenIcon: document.getElementById('eye-open-icon'), eyeClosedIcon: document.getElementById('eye-closed-icon'),
                 setWordBtn: document.getElementById('set-word-btn'), roleBlurOverlay: document.getElementById('role-blur-overlay'), roleTextContent: document.getElementById('role-text-content'), acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
                 endRoundBtn: document.getElementById('end-round-btn'), gamePlayerList: document.getElementById('game-player-list'), debriefMoleName: document.getElementById('debrief-mole-name'), nextRoundBtn: document.getElementById('next-round-btn'),
-                playAgainBtn: document.getElementById('play-again-btn'), gameOverText: document.getElementById('game-over-text'), musicToggle: document.getElementById('music-toggle'), musicOnIcon: document.getElementById('music-on-icon'), musicOffIcon: document.getElementById('music-off-icon')
+                playAgainBtn: document.getElementById('play-again-btn'), gameOverText: document.getElementById('game-over-text'), musicToggle: document.getElementById('music-toggle'), musicOnIcon: document.getElementById('music-on-icon'), musicOffIcon: document.getElementById('music-off-icon'),
+                reconnectSection: document.getElementById('reconnect-section'), reconnectGameIdInput: document.getElementById('reconnect-game-id-input'), reconnectBtn: document.getElementById('reconnect-btn')
             };
 
-            // Event Listeners
             allDomElements.createGameBtn.addEventListener('click', createGame);
             allDomElements.joinGameBtn.addEventListener('click', () => {
                 const id = allDomElements.joinGameIdInput.value.trim().toUpperCase();
+                if (id) joinGame(id);
+            });
+            allDomElements.reconnectBtn.addEventListener('click', () => {
+                const id = allDomElements.reconnectGameIdInput.value.trim();
                 if (id) joinGame(id);
             });
             allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
@@ -177,7 +189,7 @@
                 if (gameDoc.exists() && userId === gameDoc.data().hostId) {
                     await updateDoc(gameRef, { status: 'game_over' });
                 } else {
-                    const myPlayerObject = gameDoc.data().players.find(p => p.id === userId);
+                    const myPlayerObject = gameDoc.data()?.players.find(p => p.id === userId);
                     if (myPlayerObject) {
                         await updateDoc(gameRef, { players: arrayRemove(myPlayerObject) });
                     }
@@ -311,6 +323,8 @@
 
         function renderGame(gameData) {
             const { status, wordMasterId, players, roleAcknowledgements, hostId } = gameData;
+            if (!status) return;
+
             let targetScreenId = status + '-screen';
             if (status === 'round_start' && userId === wordMasterId) {
                 targetScreenId = 'word-input-screen';
@@ -323,7 +337,7 @@
             };
             if (renderer[status]) renderer[status](gameData);
             
-            if (status === 'reveal' && players.length > 0 && roleAcknowledgements.length === players.length && userId === hostId) {
+            if (status === 'reveal' && players?.length > 0 && roleAcknowledgements?.length === players.length && userId === hostId) {
                 updateDoc(doc(db, "games", gameId), { status: 'game' });
             }
         }
@@ -343,7 +357,7 @@
 
         function renderRoundStart(gameData) {
             allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
-            allDomElements.wordMasterWaitText.innerHTML = `Ya Manga Wait For The Word Master ...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+            allDomElements.wordMasterWaitText.innerHTML = `Please Wait Ya Manga ...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
             allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
         }
         
@@ -389,7 +403,6 @@
             }
             Tone.Transport.scheduleRepeat(() => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; changeTrack(currentTrackIndex); }, "90s");
             
-            // This is the full, correct event listener for the music toggle
             allDomElements.musicToggle.addEventListener('click', () => {
                 if (Tone.context.state !== 'running') {
                     Tone.context.resume().then(() => {
@@ -409,7 +422,7 @@
                 }
             });
 
-            changeTrack(0); // Initialize the first track
+            changeTrack(0);
         }
 
         signInAnonymously(auth).then(async (userCredential) => {
@@ -426,6 +439,8 @@
                     showScreen('reconnect-modal');
                     allDomElements.reconnectConfirmBtn.addEventListener('click', () => joinGame(lastGameId));
                     allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+                        allDomElements.reconnectSection.classList.remove('hidden');
+                        allDomElements.reconnectGameIdInput.value = lastGameId;
                         localStorage.removeItem('moleGameId');
                         showScreen('home-screen');
                     });
