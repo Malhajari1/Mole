@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mole (Beta 1.3)</title> <!-- *** FIX: Updated version number *** -->
+    <title>The Mole (Beta 1.4)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,28 +13,22 @@
     <style>
         body {
             font-family: 'DM Sans', sans-serif;
-            background-color: #111827; /* bg-gray-900 */
+            background-color: #111827;
             background-image:
                 linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
             background-size: 25px 25px;
             -webkit-tap-highlight-color: transparent;
         }
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'DM Serif Display', serif;
-        }
-        .screen {
-            display: none;
-        }
-        .screen.active {
-            display: flex;
-        }
+        h1, h2, h3, h4, h5, h6 { font-family: 'DM Serif Display', serif; }
+        .screen { display: none; }
+        .screen.active { display: flex; }
         .card {
-            background-color: #1f2937; /* gray-800 */
+            background-color: #1f2937;
             border-radius: 0.25rem;
             padding: 2rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border: 1px solid #4b5563; /* gray-600 */
+            border: 1px solid #4b5563;
             width: 90%;
             max-width: 450px;
             position: relative;
@@ -67,8 +61,8 @@
         }
         .btn {
             display: inline-block;
-            background-color: #991b1b; /* red-800 */
-            color: #f3f4f6; /* gray-100 */
+            background-color: #991b1b;
+            color: #f3f4f6;
             padding: 0.75rem 1.5rem;
             border-radius: 0.25rem;
             text-align: center;
@@ -77,13 +71,13 @@
             letter-spacing: 0.05em;
             cursor: pointer;
             transition: all 0.2s;
-            border: 1px solid #dc2626; /* red-600 */
+            border: 1px solid #dc2626;
             width: 100%;
             box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
         }
         .btn:hover {
-            background-color: #b91c1c; /* red-700 */
-            border-color: #ef4444; /* red-500 */
+            background-color: #b91c1c;
+            border-color: #ef4444;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.3);
         }
@@ -92,46 +86,44 @@
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn:disabled {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #374151; /* gray-700 */
-            color: #9ca3af; /* gray-400 */
+            background-color: #4b5563;
+            border-color: #374151;
+            color: #9ca3af;
             cursor: not-allowed;
             transform: none;
             box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
         }
         .btn-secondary {
-            background-color: #374151; /* gray-700 */
-            border-color: #4b5563; /* gray-600 */
+            background-color: #374151;
+            border-color: #4b5563;
         }
         .btn-secondary:hover {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #6b7280; /* gray-500 */
+            background-color: #4b5563;
+            border-color: #6b7280;
         }
         .input-field {
-            background-color: #374151; /* gray-700 */
-            color: #f3f4f6; /* gray-100 */
-            border: 1px solid #6b7280; /* gray-500 */
+            background-color: #374151;
+            color: #f3f4f6;
+            border: 1px solid #6b7280;
             padding: 0.75rem;
             border-radius: 0.25rem;
             width: 100%;
             margin-bottom: 1rem;
             font-family: 'DM Sans', sans-serif;
         }
-        .input-field::placeholder {
-            color: #9ca3af; /* gray-400 */
-        }
+        .input-field::placeholder { color: #9ca3af; }
         .player-tag {
-            background-color: #4b5563; /* gray-600 */
+            background-color: #4b5563;
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 0.25rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
-            border: 1px solid #6b7280; /* gray-500 */
+            border: 1px solid #6b7280;
         }
         #game-id-display {
-            background-color: #111827; /* gray-900 */
+            background-color: #111827;
             padding: 0.75rem;
             border-radius: 0.25rem;
             font-family: 'DM Sans', monospace;
@@ -139,8 +131,8 @@
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #b91c1c; /* red-700 */
-            color: #fecaca; /* red-200 */
+            border: 2px dashed #b91c1c;
+            color: #fecaca;
         }
         .animating-dots span {
             animation-name: blink;
@@ -181,18 +173,14 @@
             cursor: pointer;
             z-index: 1001;
         }
-        .mole-title-reveal { /* Renamed for clarity, used only on reveal screen */
-            text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444;
-        }
+        .mole-title-reveal { text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <!-- *** FIX: Version number updated *** -->
-            <span class="beta-stamp">(Beta 1.3)</span>
-            <!-- *** FIX: Removed mole-title class to restore original font style *** -->
+            <span class="beta-stamp">(Beta 1.4)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
@@ -212,6 +200,7 @@
         </div>
     </div>
 
+    <!-- All other HTML screens remain the same as before -->
     <div id="reconnect-modal" class="screen fixed inset-0 bg-black bg-opacity-75 z-50 flex-col items-center justify-center">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
@@ -238,7 +227,6 @@
         </div>
     </div>
 
-    <!-- Other screens remain largely the same -->
     <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
@@ -291,14 +279,13 @@
             <p class="text-xl mb-4">The Mole was...</p>
             <p id="debrief-mole-name" class="text-3xl font-bold text-red-400 mb-8"></p>
             <button id="next-round-btn" class="btn mt-8">Next Round</button>
-            <button id="return-to-lobby-btn" class="btn btn-secondary mt-4 hidden">Return to Lobby</button>
         </div>
     </div>
     
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
-            <button id="play-again-btn" class="btn">Return to Lobby</button>
+            <button id="play-again-btn" class="btn">Play Again</button>
         </div>
     </div>
 
@@ -314,7 +301,6 @@
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // IMPORTANT: Make sure you have updated your Firestore Security Rules in the Firebase Console!
         const firebaseConfig = {
             apiKey: "AIzaSyAJqlQLiyN4Ddo2tNEDalfbcJ8eIr0oc3I",
             authDomain: "mole-500ff.firebaseapp.com",
@@ -337,70 +323,32 @@
 
         function initializeDomAndListeners() {
             allDomElements = {
-                // DOM element mappings...
-                screens: document.querySelectorAll('.screen'),
-                createGameBtn: document.getElementById('create-game-btn'),
-                joinGameIdInput: document.getElementById('join-game-id-input'),
-                joinGameBtn: document.getElementById('join-game-btn'),
-                reconnectGameIdInput: document.getElementById('reconnect-game-id-input'),
-                reconnectBtn: document.getElementById('reconnect-btn'),
-                reconnectSection: document.getElementById('reconnect-section'),
-                gameIdDisplay: document.getElementById('game-id-display'),
-                persistentGameIdContainer: document.getElementById('persistent-game-id'),
-                persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
-                copyConfirm: document.getElementById('copy-confirm'),
-                playerCount: document.getElementById('player-count'),
-                playerList: document.getElementById('player-list'),
-                playerNameInput: document.getElementById('player-name-input'),
-                addPlayerBtn: document.getElementById('add-player-btn'),
-                startGameBtn: document.getElementById('start-game-btn'),
-                backToMenuBtn: document.getElementById('back-to-menu-btn'),
-                reconnectModal: document.getElementById('reconnect-modal'),
-                reconnectModalGameId: document.getElementById('reconnect-modal-game-id'),
-                reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
-                reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'),
-                roundTitle: document.getElementById('round-title'),
-                wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
-                wordMasterWaitText: document.getElementById('word-master-wait-text'),
-                secretWordInput: document.getElementById('secret-word-input'),
-                toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'),
-                eyeOpenIcon: document.getElementById('eye-open-icon'),
-                eyeClosedIcon: document.getElementById('eye-closed-icon'),
-                setWordBtn: document.getElementById('set-word-btn'),
-                roleBlurOverlay: document.getElementById('role-blur-overlay'),
-                roleTextContent: document.getElementById('role-text-content'),
-                acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
-                endRoundBtn: document.getElementById('end-round-btn'),
-                gamePlayerList: document.getElementById('game-player-list'),
-                debriefMoleName: document.getElementById('debrief-mole-name'),
-                nextRoundBtn: document.getElementById('next-round-btn'),
-                returnToLobbyBtn: document.getElementById('return-to-lobby-btn'),
-                playAgainBtn: document.getElementById('play-again-btn'),
-                musicToggle: document.getElementById('music-toggle'),
-                musicOnIcon: document.getElementById('music-on-icon'),
-                musicOffIcon: document.getElementById('music-off-icon')
+                screens: document.querySelectorAll('.screen'), createGameBtn: document.getElementById('create-game-btn'), joinGameIdInput: document.getElementById('join-game-id-input'), joinGameBtn: document.getElementById('join-game-btn'),
+                reconnectGameIdInput: document.getElementById('reconnect-game-id-input'), reconnectBtn: document.getElementById('reconnect-btn'), reconnectSection: document.getElementById('reconnect-section'), gameIdDisplay: document.getElementById('game-id-display'),
+                persistentGameIdContainer: document.getElementById('persistent-game-id'), persistentGameIdSpan: document.querySelector('#persistent-game-id span'), copyConfirm: document.getElementById('copy-confirm'), playerCount: document.getElementById('player-count'),
+                playerList: document.getElementById('player-list'), playerNameInput: document.getElementById('player-name-input'), addPlayerBtn: document.getElementById('add-player-btn'), startGameBtn: document.getElementById('start-game-btn'),
+                backToMenuBtn: document.getElementById('back-to-menu-btn'), reconnectModal: document.getElementById('reconnect-modal'), reconnectModalGameId: document.getElementById('reconnect-modal-game-id'), reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
+                reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'), roundTitle: document.getElementById('round-title'), wordMasterTurnTitle: document.getElementById('word-master-turn-title'), wordMasterWaitText: document.getElementById('word-master-wait-text'),
+                secretWordInput: document.getElementById('secret-word-input'), toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'), eyeOpenIcon: document.getElementById('eye-open-icon'), eyeClosedIcon: document.getElementById('eye-closed-icon'),
+                setWordBtn: document.getElementById('set-word-btn'), roleBlurOverlay: document.getElementById('role-blur-overlay'), roleTextContent: document.getElementById('role-text-content'), acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
+                endRoundBtn: document.getElementById('end-round-btn'), gamePlayerList: document.getElementById('game-player-list'), debriefMoleName: document.getElementById('debrief-mole-name'), nextRoundBtn: document.getElementById('next-round-btn'),
+                playAgainBtn: document.getElementById('play-again-btn'), musicToggle: document.getElementById('music-toggle'), musicOnIcon: document.getElementById('music-on-icon'), musicOffIcon: document.getElementById('music-off-icon')
             };
 
-            // Event Listeners...
             allDomElements.createGameBtn.addEventListener('click', createGame);
             allDomElements.joinGameBtn.addEventListener('click', () => {
                 const id = allDomElements.joinGameIdInput.value.trim().toUpperCase();
                 if (id) joinGame(id, true);
-            });
-            allDomElements.reconnectBtn.addEventListener('click', () => {
-                const id = allDomElements.reconnectGameIdInput.value.trim().toUpperCase();
-                if (id) joinGame(id, false);
             });
             allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
             allDomElements.startGameBtn.addEventListener('click', startGame);
             allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
             
             allDomElements.gameIdDisplay.addEventListener('click', () => {
-                const textToCopy = allDomElements.gameIdDisplay.textContent;
-                navigator.clipboard.writeText(textToCopy).then(() => {
+                navigator.clipboard.writeText(allDomElements.gameIdDisplay.textContent).then(() => {
                     allDomElements.copyConfirm.style.visibility = 'visible';
                     setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
-                }).catch(err => { console.error('Failed to copy text: ', err); });
+                });
             });
 
             allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
@@ -411,8 +359,7 @@
             });
             
             allDomElements.roleBlurOverlay.addEventListener('click', async () => {
-                allDomElements.roleBlurOverlay.classList.add('opacity-0');
-                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
+                allDomElements.roleBlurOverlay.classList.add('opacity-0', 'pointer-events-none');
                 allDomElements.roleTextContent.classList.remove('invisible');
                 allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
                 
@@ -421,142 +368,126 @@
                 
                 if (userId === gameData.moleId) {
                     allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title-reveal">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
-                    anime({
-                        targets: '.mole-title-reveal',
-                        textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
-                        duration: 150, loop: 6, direction: 'alternate', easing: 'easeInOutQuad'
-                    });
+                    anime({ targets: '.mole-title-reveal', textShadow: ['0 0 0px #f00', '0 0 10px #f00'], duration: 150, loop: 6, direction: 'alternate' });
                 } else {
                     allDomElements.roleTextContent.innerHTML = `<div><p class="text-gray-300">Codename:</p><h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2></div>`;
                 }
             });
             
             allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
-            allDomElements.endRoundBtn.addEventListener('click', async () => {
-                await updateDoc(doc(db, "games", gameId), { status: 'debrief' });
-            });
+            allDomElements.endRoundBtn.addEventListener('click', () => updateDoc(doc(db, "games", gameId), { status: 'debrief' }));
             allDomElements.nextRoundBtn.addEventListener('click', () => startNewRound());
             
             allDomElements.playAgainBtn.addEventListener('click', async () => {
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 if (gameDoc.exists() && userId === gameDoc.data().hostId) {
-                    await updateDoc(gameRef, { 
-                        status: 'lobby',
-                        currentRound: 0, secretWord: '', moleId: '', roleAcknowledgements: [], wordMasterId: ''
-                    });
+                    await updateDoc(gameRef, { status: 'lobby', currentRound: 1, secretWord: '', moleId: '', roleAcknowledgements: [] });
                 } else {
-                    if (gameUnsubscribe) gameUnsubscribe();
-                    localStorage.removeItem('moleGameId');
-                    allDomElements.persistentGameIdContainer.style.display = 'none';
-                    showScreen('home-screen');
+                    handleGameLeave();
                 }
             });
 
-            // *** FIX: End Game logic corrected and simplified. This now works with the Firebase Rules. ***
+            // *** FIX #1: END GAME LOGIC SIMPLIFIED AND MADE ROBUST ***
             allDomElements.backToMenuBtn.addEventListener('click', async () => {
                 if (!gameId) return;
                 allDomElements.backToMenuBtn.disabled = true;
-
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
 
-                if (gameDoc.exists()) {
-                    const gameData = gameDoc.data();
-                    if (userId === gameData.hostId) {
-                        // Host's action: Delete the document from Firebase.
-                        // The `onSnapshot` listener will kick all other players out automatically.
-                        // The Firestore security rule allows this.
+                if (gameDoc.exists() && userId === gameDoc.data().hostId) {
+                    try {
+                        // The host's only job is to delete the doc. The onSnapshot listener
+                        // will handle cleanup for all players, including the host.
                         await deleteDoc(gameRef);
-                    } else {
-                        // Client's action: Just remove self from the game.
-                        const myPlayerObject = gameData.players.find(p => p.id === userId);
-                        if (myPlayerObject) {
-                            await updateDoc(gameRef, { players: arrayRemove(myPlayerObject) });
-                        }
+                    } catch (error) {
+                        console.error("Failed to delete game:", error);
+                        alert(`Could not end the game. This might be a permission issue with Firestore rules. Error: ${error.message}`);
+                        allDomElements.backToMenuBtn.disabled = false;
                     }
+                } else {
+                    // If a client clicks this, they just leave the game.
+                    await updateDoc(gameRef, { players: arrayRemove({ id: userId, name: '...' }) }); // Placeholder name
+                    handleGameLeave();
                 }
-                
-                // Unsubscribe and navigate home for the user who clicked the button.
-                if (gameUnsubscribe) {
-                    gameUnsubscribe();
-                    gameUnsubscribe = null;
-                }
-                localStorage.removeItem('moleGameId');
-                allDomElements.persistentGameIdContainer.style.display = 'none';
-                showScreen('home-screen');
             });
-
             setupMusic();
         }
 
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId)?.classList.add('active');
+            const target = document.getElementById(screenId);
+            if (target) {
+                target.classList.add('active');
+            } else {
+                console.error(`Screen with ID "${screenId}" not found.`);
+            }
+        }
+        
+        function handleGameLeave() {
+            if (gameUnsubscribe) gameUnsubscribe();
+            gameUnsubscribe = null;
+            localStorage.removeItem('moleGameId');
+            allDomElements.persistentGameIdContainer.style.display = 'none';
+            showScreen('home-screen');
         }
 
-        // *** FIX: Game ID reverted to numbers-only ***
         function generateGameId() {
             return Math.random().toString().substr(2, 6);
         }
         
         async function createGame() {
             gameId = generateGameId();
-            const gameRef = doc(db, "games", gameId);
-            await setDoc(gameRef, {
+            await setDoc(doc(db, "games", gameId), {
                 hostId: userId, status: 'lobby', players: [], createdAt: serverTimestamp()
             });
-            await joinGame(gameId, true);
+            joinGame(gameId, true);
         }
 
-        async function joinGame(id, isNew = false) {
+        async function joinGame(id) {
             gameId = id;
-            localStorage.setItem('moleGameId', gameId);
-            
             if (!allDomElements) initializeDomAndListeners();
-            
             const gameRef = doc(db, "games", gameId);
+            
             try {
                 const gameDoc = await getDoc(gameRef);
                 if (!gameDoc.exists()) {
                     alert("Game not found!");
-                    localStorage.removeItem('moleGameId'); showScreen('home-screen'); return;
+                    handleGameLeave();
+                    return;
                 }
-                if (isNew && gameDoc.data().status !== 'lobby') {
-                    alert("This game has already started and cannot be joined."); return;
+                if (gameDoc.data().status !== 'lobby' && !gameDoc.data().players.some(p => p.id === userId)) {
+                    alert("This game has already started and cannot be joined.");
+                    return;
                 }
             } catch (error) {
-                console.error("Error fetching game doc:", error);
-                alert("Could not connect to the database."); return;
+                alert(`Could not connect to the database. Error: ${error.message}`);
+                return;
             }
-
+            
+            localStorage.setItem('moleGameId', gameId);
             allDomElements.persistentGameIdSpan.textContent = gameId;
             allDomElements.persistentGameIdContainer.style.display = 'block';
             if (gameUnsubscribe) gameUnsubscribe(); 
 
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
-                const gameData = doc.data();
-                if (!gameData) { // This triggers when the doc is deleted by the host
-                    if (gameUnsubscribe) gameUnsubscribe();
-                    gameUnsubscribe = null;
-                    localStorage.removeItem('moleGameId');
-                    allDomElements.persistentGameIdContainer.style.display = 'none';
-                    showScreen('home-screen');
-                    alert("The game has ended.");
+                // *** FIX #1 (PART B): This is the cleanup logic for ALL players when game ends ***
+                if (!doc.exists()) {
+                    alert("The game has been ended by the host.");
+                    handleGameLeave();
                     return;
                 }
-                renderGame(gameData);
+                renderGame(doc.data());
             }, (error) => {
                 console.error("Snapshot listener error:", error);
                 alert("Lost connection to the game.");
+                handleGameLeave();
             });
         }
         
         async function addPlayer() {
             const name = allDomElements.playerNameInput.value.trim();
-            if (!name || name.length > 15) {
-                alert('Name must be between 1 and 15 characters.'); return;
-            }
+            if (!name || name.length > 15) { alert('Name must be 1-15 characters.'); return; }
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             if(gameDoc.exists() && gameDoc.data().players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
@@ -569,21 +500,15 @@
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             const players = gameDoc.data().players;
+            if (players.length < 3) { alert("You need at least 3 operatives to start."); return; }
             
-            if (players.length < 3) {
-                alert("You need at least 3 operatives to start."); return;
-            }
-            
-            // *** FIX: Game logic updated for "Word Master twice" rule ***
             const playerIds = players.map(p => p.id);
-            const doubledPlayerIds = [...playerIds, ...playerIds]; // Double the list of players
-            const roundOrder = doubledPlayerIds.sort(() => Math.random() - 0.5); // Shuffle the doubled list
-            const totalRounds = roundOrder.length;
-            const wordMasterId = roundOrder[0];
-
+            const doubledPlayerIds = [...playerIds, ...playerIds];
+            const roundOrder = doubledPlayerIds.sort(() => Math.random() - 0.5);
+            
             await updateDoc(gameRef, { 
-                status: 'round_start', currentRound: 1, totalRounds: totalRounds,
-                roundOrder: roundOrder, wordMasterId: wordMasterId,
+                status: 'round_start', currentRound: 1, totalRounds: roundOrder.length,
+                roundOrder: roundOrder, wordMasterId: roundOrder[0],
                 secretWord: '', moleId: '', roleAcknowledgements: []
             });
         }
@@ -592,15 +517,12 @@
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             const gameData = gameDoc.data();
-            
             const nextRoundNum = gameData.currentRound + 1;
             if (nextRoundNum > gameData.totalRounds) {
                 await updateDoc(gameRef, { status: 'game_over' }); return;
             }
-
-            const wordMasterId = gameData.roundOrder[nextRoundNum - 1];
             await updateDoc(gameRef, {
-                status: 'round_start', currentRound: nextRoundNum, wordMasterId: wordMasterId,
+                status: 'round_start', currentRound: nextRoundNum, wordMasterId: gameData.roundOrder[nextRoundNum - 1],
                 secretWord: '', moleId: '', roleAcknowledgements: []
             });
         }
@@ -608,15 +530,12 @@
         async function setWordAndAssignRoles() {
             const word = allDomElements.secretWordInput.value.trim();
             if (!word) { alert('Please enter a secret word.'); return; }
-
             const gameRef = doc(db, "games", gameId);
             const gameDoc = await getDoc(gameRef);
             const gameData = gameDoc.data();
-
             const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
             if (potentialMoles.length === 0) { alert("Not enough players to assign a mole."); return; }
             const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
-
             await updateDoc(gameRef, { secretWord: word, moleId: mole.id, status: 'reveal' });
         }
         
@@ -626,8 +545,6 @@
 
         function renderGame(gameData) {
             const { status, wordMasterId, players, roleAcknowledgements, hostId } = gameData;
-            if (!status) return;
-
             let targetScreenId = status + '-screen';
             if (status === 'round_start' && userId === wordMasterId) {
                 targetScreenId = 'word-input-screen';
@@ -640,7 +557,6 @@
             };
             if (renderer[status]) renderer[status](gameData);
             
-            // Central check to move from reveal to game screen
             if (status === 'reveal' && players.length > 0 && roleAcknowledgements.length === players.length && userId === hostId) {
                 updateDoc(doc(db, "games", gameId), { status: 'game' });
             }
@@ -652,21 +568,18 @@
             allDomElements.playerList.innerHTML = gameData.players.map(p => 
                 `<div class="player-tag">${p.name}${p.id === gameData.hostId ? ' (Handler)' : ''}</div>`
             ).join('');
-            
-            const playerIsHost = userId === gameData.hostId;
-            allDomElements.startGameBtn.disabled = !playerIsHost;
+            allDomElements.startGameBtn.disabled = userId !== gameData.hostId;
             allDomElements.backToMenuBtn.disabled = false;
-            
             const playerInGame = gameData.players.some(p => p.id === userId);
             allDomElements.playerNameInput.disabled = playerInGame;
             allDomElements.addPlayerBtn.disabled = playerInGame;
         }
 
+        // *** FIX #2: "YA MANGA" TEXT ADDED ***
         function renderRoundStart(gameData) {
             allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
             const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
-            const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
-            allDomElements.wordMasterWaitText.innerHTML = `Waiting for ${wordMasterName} to set the codename<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+            allDomElements.wordMasterWaitText.innerHTML = `Ya Man, Wait For The Word Master ...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
             allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
         }
         
@@ -694,12 +607,10 @@
         }
 
         function renderGameOverScreen(gameData) {
-            const isHost = userId === gameData.hostId;
-            allDomElements.playAgainBtn.disabled = !isHost;
-            allDomElements.playAgainBtn.textContent = isHost ? "Play Again" : "Return to Main Menu";
+            allDomElements.playAgainBtn.disabled = userId !== gameData.hostId;
         }
 
-        function setupMusic() { /* Music code remains unchanged */ }
+        function setupMusic() { /* Music code unchanged */ }
 
         // Startup and Auth logic...
         signInAnonymously(auth).then(async (userCredential) => {
@@ -710,20 +621,13 @@
             
             const lastGameId = localStorage.getItem('moleGameId');
             if (lastGameId) {
-                const gameDoc = await getDoc(doc(db, "games", lastGameId));
-                if (gameDoc.exists() && gameDoc.data().status !== 'game_over') {
-                    allDomElements.reconnectModalGameId.textContent = lastGameId;
-                    showScreen('reconnect-modal');
-                    allDomElements.reconnectConfirmBtn.addEventListener('click', () => joinGame(lastGameId, false));
-                    allDomElements.reconnectCancelBtn.addEventListener('click', () => {
-                        allDomElements.reconnectSection.classList.remove('hidden');
-                        allDomElements.reconnectGameIdInput.value = lastGameId;
-                        showScreen('home-screen');
-                    });
-                } else {
+                allDomElements.reconnectModalGameId.textContent = lastGameId;
+                showScreen('reconnect-modal');
+                allDomElements.reconnectConfirmBtn.addEventListener('click', () => joinGame(lastGameId));
+                allDomElements.reconnectCancelBtn.addEventListener('click', () => {
                     localStorage.removeItem('moleGameId');
                     showScreen('home-screen');
-                }
+                });
             } else {
                 showScreen('home-screen');
             }
