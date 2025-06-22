@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Mole (Beta 1.7)</title>
+    <title>The Mole (Beta 1.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -11,37 +11,186 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
-        body { font-family: 'DM Sans', sans-serif; background-color: #111827; background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px); background-size: 25px 25px; -webkit-tap-highlight-color: transparent; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'DM Serif Display', serif; }
-        .screen { display: none; }
-        .screen.active { display: flex; }
-        .card { background-color: #1f2937; border-radius: 0.25rem; padding: 2rem; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); border: 1px solid #4b5563; width: 90%; max-width: 450px; position: relative; overflow: visible; }
-        .beta-stamp { font-family: 'Special Elite', monospace; position: absolute; top: -10px; right: -15px; border: 3px solid #b91c1c; color: #b91c1c; padding: 0.25rem 0.75rem; transform: rotate(10deg); text-transform: uppercase; font-size: 1rem; background-color: #1f2937; }
-        .disclaimer-box { font-family: 'Special Elite', monospace; border: 3px solid #b91c1c; color: #b91c1c; padding: 1rem; text-transform: uppercase; font-size: 0.8rem; margin-top: 2rem; border-radius: 0.25rem; text-align: center; line-height: 1.5; }
-        .btn { display: inline-block; background-color: #991b1b; color: #f3f4f6; padding: 0.75rem 1.5rem; border-radius: 0.25rem; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; transition: all 0.2s; border: 1px solid #dc2626; width: 100%; box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3); }
-        .btn:hover { background-color: #b91c1c; border-color: #ef4444; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.3); }
-        .btn:active { transform: translateY(0); box-shadow: inset 0 2px 0 rgba(0,0,0,0.3); }
-        .btn:disabled { background-color: #4b5563; border-color: #374151; color: #9ca3af; cursor: not-allowed; transform: none; box-shadow: inset 0 2px 0 rgba(0,0,0,0.3); }
-        .btn-secondary { background-color: #374151; border-color: #4b5563; }
-        .btn-secondary:hover { background-color: #4b5563; border-color: #6b7280; }
-        .input-field { background-color: #374151; color: #f3f4f6; border: 1px solid #6b7280; padding: 0.75rem; border-radius: 0.25rem; width: 100%; margin-bottom: 1rem; font-family: 'DM Sans', sans-serif; }
-        .input-field::placeholder { color: #9ca3af; }
-        .player-tag { background-color: #4b5563; color: white; padding: 0.5rem 1rem; border-radius: 0.25rem; display: inline-flex; align-items: center; margin: 0.25rem; border: 1px solid #6b7280; }
-        #game-id-display { background-color: #111827; padding: 0.75rem; border-radius: 0.25rem; font-family: 'DM Sans', monospace; font-size: 1.25rem; font-weight: 700; text-align: center; cursor: pointer; border: 2px dashed #b91c1c; color: #fecaca; }
-        .animating-dots span { animation-name: blink; animation-duration: 1.4s; animation-iteration-count: infinite; animation-fill-mode: both; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background-color: #111827; /* bg-gray-900 */
+            background-image:
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 25px 25px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'DM Serif Display', serif;
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: flex;
+        }
+        .card {
+            background-color: #1f2937; /* gray-800 */
+            border-radius: 0.25rem;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #4b5563; /* gray-600 */
+            width: 90%;
+            max-width: 450px;
+            position: relative;
+            overflow: visible;
+        }
+        .beta-stamp {
+            font-family: 'Special Elite', monospace;
+            position: absolute;
+            top: -10px;
+            right: -15px;
+            border: 3px solid #b91c1c;
+            color: #b91c1c;
+            padding: 0.25rem 0.75rem;
+            transform: rotate(10deg);
+            text-transform: uppercase;
+            font-size: 1rem;
+            background-color: #1f2937;
+        }
+         .disclaimer-box {
+            font-family: 'Special Elite', monospace;
+            border: 3px solid #b91c1c;
+            color: #b91c1c;
+            padding: 1rem;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            margin-top: 2rem;
+            border-radius: 0.25rem;
+            text-align: center;
+            line-height: 1.5;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #991b1b; /* red-800 */
+            color: #f3f4f6; /* gray-100 */
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.25rem;
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #dc2626; /* red-600 */
+            width: 100%;
+            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
+        }
+        .btn:hover {
+            background-color: #b91c1c; /* red-700 */
+            border-color: #ef4444; /* red-500 */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.3);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
+        }
+        .btn:disabled {
+            background-color: #4b5563; /* gray-600 */
+            border-color: #374151; /* gray-700 */
+            color: #9ca3af; /* gray-400 */
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
+        }
+        .btn-secondary {
+            background-color: #374151; /* gray-700 */
+            border-color: #4b5563; /* gray-600 */
+        }
+        .btn-secondary:hover {
+            background-color: #4b5563; /* gray-600 */
+            border-color: #6b7280; /* gray-500 */
+        }
+        .input-field {
+            background-color: #374151; /* gray-700 */
+            color: #f3f4f6; /* gray-100 */
+            border: 1px solid #6b7280; /* gray-500 */
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            width: 100%;
+            margin-bottom: 1rem;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .input-field::placeholder {
+            color: #9ca3af; /* gray-400 */
+        }
+        .player-tag {
+            background-color: #4b5563; /* gray-600 */
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            display: inline-flex;
+            align-items: center;
+            margin: 0.25rem;
+            border: 1px solid #6b7280; /* gray-500 */
+        }
+        #game-id-display {
+            background-color: #111827; /* gray-900 */
+            padding: 0.75rem;
+            border-radius: 0.25rem;
+            font-family: 'DM Sans', monospace;
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-align: center;
+            cursor: pointer;
+            border: 2px dashed #b91c1c; /* red-700 */
+            color: #fecaca; /* red-200 */
+        }
+        .animating-dots span {
+            animation-name: blink;
+            animation-duration: 1.4s;
+            animation-iteration-count: infinite;
+            animation-fill-mode: both;
+        }
         .animating-dots span:nth-child(2) { animation-delay: .2s; }
         .animating-dots span:nth-child(3) { animation-delay: .4s; }
         @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
-        #persistent-game-id { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background-color: rgba(0,0,0,0.7); color: #e5e7eb; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 0.875rem; font-family: 'DM Sans', monospace; z-index: 1000; display: none; }
-        #music-toggle { position: fixed; bottom: 10px; right: 10px; background-color: rgba(0,0,0,0.5); border: 1px solid #4b5563; color: #d1d5db; border-radius: 9999px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 1001; }
-        .mole-title { text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444; }
+        #persistent-game-id {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0,0,0,0.7);
+            color: #e5e7eb;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-family: 'DM Sans', monospace;
+            z-index: 1000;
+            display: none;
+        }
+        #music-toggle {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background-color: rgba(0,0,0,0.5);
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+            border-radius: 9999px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .mole-title {
+            text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
-            <span class="beta-stamp">(Beta 1.7)</span>
+            <span class="beta-stamp">(Beta 1.1)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
@@ -49,7 +198,6 @@
             <input type="text" id="join-game-id-input" class="input-field text-center" placeholder="Enter Game ID to Join...">
             <button id="join-game-btn" class="btn btn-secondary">Join Game</button>
 
-            <!-- Reconnect Section HTML restored -->
             <div id="reconnect-section" class="hidden">
                  <div class="border-t border-gray-700 my-8"></div>
                 <p class="text-gray-400 mb-6">Disconnected? Reconnect to your game.</p>
@@ -67,25 +215,101 @@
             <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
             <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
             <button id="reconnect-confirm-btn" class="btn mb-4">Yes, Reconnect</button>
-            <button id="reconnect-cancel-btn" class="btn btn-secondary">Return to Main Menu</button>
+            <button id="reconnect-cancel-btn" class="btn btn-secondary">Return to Lobby</button>
         </div>
     </div>
 
-    <!-- All other screen HTML layouts are unchanged -->
-    <div id="lobby-screen" class="screen flex-col items-center justify-center w-full"> <div class="card"> <h1 class="text-3xl font-bold text-center mb-2">Game Lobby</h1> <p class="text-gray-400 text-center mb-4">Share the Game ID with your friends!</p> <div id="game-id-display" class="mb-6" title="Click to copy"></div> <p id="copy-confirm" class="text-amber-300 text-center text-sm mb-4" style="visibility: hidden;">Copied to clipboard!</p> <p class="text-gray-400 text-center mb-4">OPERATIVES (<span id="player-count">0</span>/10):</p> <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div> <div class="flex mb-4"> <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your callsign..."> <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button> </div> <button id="start-game-btn" class="btn">Initiate Mission</button> <button id="back-to-menu-btn" class="btn btn-secondary mt-4">End Game</button> </div> </div>
-    <div id="round-start-screen" class="screen flex-col items-center justify-center w-full"> <div class="card text-center"> <h1 id="round-title" class="text-3xl font-bold mb-4"></h1> <p id="word-master-wait-text" class="text-gray-300 text-lg"></p> </div> </div>
-    <div id="word-input-screen" class="screen flex-col items-center justify-center w-full"> <div class="card"> <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4"></h1> <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p> <div class="relative w-full mb-4"> <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret Codename..."><button id="toggle-word-visibility-btn" type="button" class="absolute top-0 right-0 h-full px-4 flex items-center text-gray-400 hover:text-gray-200 focus:outline-none"><svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg><svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg></button> </div> <button id="set-word-btn" class="btn">Set Codename & Assign Roles</button> </div> </div>
-    <div id="reveal-screen" class="screen flex-col items-center justify-center w-full"> <div class="card text-center"> <h1 class="text-3xl font-bold mb-6">Your Role is Ready</h1> <p class="text-gray-400 mb-6">Ensure your screen is not being observed, then click the eye to reveal your role.</p> <div id="role-box" class="relative p-8 bg-gray-900 border-2 border-dashed border-gray-600 rounded-md"> <div id="role-blur-overlay" class="absolute inset-0 bg-gray-800/50 backdrop-blur-md flex items-center justify-center cursor-pointer transition-opacity duration-300"><svg id="reveal-eye-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 w-12 h-12"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg></div> <div id="role-text-content" class="invisible"></div> </div> <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button> </div> </div>
-    <div id="game-screen" class="screen flex-col items-center justify-center w-full"><div class="card text-center"><h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1><p class="text-gray-400 mb-6">Discuss to identify the mole.</p><button id="end-round-btn" class="btn my-8 hidden">End Round</button><p class="text-gray-400 mb-4 mt-4">Operatives in play:</p><div id="game-player-list" class="flex flex-wrap justify-center"></div></div></div>
-    <div id="debrief-screen" class="screen flex-col items-center justify-center w-full"><div class="card text-center"><h1 class="text-3xl font-bold mb-4">Round Debrief</h1><p class="text-xl mb-4">The Mole was...</p><p id="debrief-mole-name" class="text-3xl font-bold text-red-400 mb-8"></p><button id="next-round-btn" class="btn mt-8">Next Round</button></div></div>
-    <div id="game-over-screen" class="screen flex-col items-center justify-center w-full"><div class="card text-center"><h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1><p id="game-over-text" class="text-gray-400 mb-6"></p><button id="play-again-btn" class="btn">Play Again</button></div></div>
+    <div id="lobby-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card">
+            <h1 class="text-3xl font-bold text-center mb-2">Game Lobby</h1>
+            <p class="text-gray-400 text-center mb-4">Share the Game ID with your friends!</p>
+            <div id="game-id-display" class="mb-6" title="Click to copy"></div>
+            <p id="copy-confirm" class="text-amber-300 text-center text-sm mb-4" style="visibility: hidden;">Copied to clipboard!</p>
+            <p class="text-gray-400 text-center mb-4">OPERATIVES (<span id="player-count">0</span>/10):</p>
+            <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div>
+            <div class="flex mb-4">
+                <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your callsign...">
+                <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
+            </div>
+            <button id="start-game-btn" class="btn">Initiate Mission</button>
+            <button id="back-to-menu-btn" class="btn btn-secondary mt-4">Back to Main Menu</button>
+        </div>
+    </div>
+
+    <div id="round-start-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
+            <p id="word-master-wait-text" class="text-gray-300 text-lg"></p>
+        </div>
+    </div>
+
+    <div id="word-input-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card">
+            <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4"></h1>
+            <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
+            <div class="relative w-full mb-4">
+                <input type="password" id="secret-word-input" class="input-field !mb-0 text-center pr-12" placeholder="Secret Codename...">
+                <button id="toggle-word-visibility-btn" type="button" class="absolute top-0 right-0 h-full px-4 flex items-center text-gray-400 hover:text-gray-200 focus:outline-none">
+                    <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"></path><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"></path><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"></path><line x1="2" x2="22" y1="2" y2="22"></line></svg>
+                </button>
+            </div>
+            <button id="set-word-btn" class="btn">Set Codename & Assign Roles</button>
+        </div>
+    </div>
+
+    <div id="reveal-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-3xl font-bold mb-6">Your Role is Ready</h1>
+            <p class="text-gray-400 mb-6">Ensure your screen is not being observed, then click the eye to reveal your role.</p>
+            <div id="role-box" class="relative p-8 bg-gray-900 border-2 border-dashed border-gray-600 rounded-md">
+                <div id="role-blur-overlay" class="absolute inset-0 bg-gray-800/50 backdrop-blur-md flex items-center justify-center cursor-pointer transition-opacity duration-300">
+                    <svg id="reveal-eye-icon" xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-300 w-12 h-12"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </div>
+                <div id="role-text-content" class="invisible"></div>
+            </div>
+            <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
+        </div>
+    </div>
+    
+    <div id="game-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
+            <p class="text-gray-400 mb-6">Discuss to identify the mole.</p>
+            <button id="end-round-btn" class="btn my-8 hidden">End Round</button>
+            <p class="text-gray-400 mb-4 mt-4">Operatives in play:</p>
+            <div id="game-player-list" class="flex flex-wrap justify-center"></div>
+        </div>
+    </div>
+
+    <div id="debrief-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
+            <p class="text-xl mb-4">The Mole was...</p>
+            <p id="debrief-mole-name" class="text-3xl font-bold text-red-400 mb-8"></p>
+            <button id="next-round-btn" class="btn mt-8">Next Round</button>
+            <button id="return-to-lobby-btn" class="btn btn-secondary mt-4 hidden">Return to Lobby</button>
+        </div>
+    </div>
+    
+    <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
+        <div class="card text-center">
+            <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
+            <button id="play-again-btn" class="btn">Return to Lobby</button>
+        </div>
+    </div>
+
     <div id="persistent-game-id">Game ID: <span></span></div>
-    <button id="music-toggle"><svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg><svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" x2="17" y1="9" y2="15"></line><line x1="17" x2="23" y1="9" y2="15"></line></svg></button>
+
+    <button id="music-toggle">
+        <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+        <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" x2="17" y1="9" y2="15"></line><line x1="17" x2="23" y1="9" y2="15"></line></svg>
+    </button>
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAJqlQLiyN4Ddo2tNEDalfbcJ8eIr0oc3I",
@@ -104,40 +328,81 @@
         let userId;
         let gameId;
         let gameUnsubscribe;
+
         let allDomElements;
 
         function initializeDomAndListeners() {
             allDomElements = {
-                screens: document.querySelectorAll('.screen'), createGameBtn: document.getElementById('create-game-btn'), joinGameIdInput: document.getElementById('join-game-id-input'), joinGameBtn: document.getElementById('join-game-btn'), gameIdDisplay: document.getElementById('game-id-display'),
-                persistentGameIdContainer: document.getElementById('persistent-game-id'), persistentGameIdSpan: document.querySelector('#persistent-game-id span'), copyConfirm: document.getElementById('copy-confirm'), playerCount: document.getElementById('player-count'),
-                playerList: document.getElementById('player-list'), playerNameInput: document.getElementById('player-name-input'), addPlayerBtn: document.getElementById('add-player-btn'), startGameBtn: document.getElementById('start-game-btn'),
-                backToMenuBtn: document.getElementById('back-to-menu-btn'), reconnectModal: document.getElementById('reconnect-modal'), reconnectModalGameId: document.getElementById('reconnect-modal-game-id'), reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
-                reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'), roundTitle: document.getElementById('round-title'), wordMasterTurnTitle: document.getElementById('word-master-turn-title'), wordMasterWaitText: document.getElementById('word-master-wait-text'),
-                secretWordInput: document.getElementById('secret-word-input'), toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'), eyeOpenIcon: document.getElementById('eye-open-icon'), eyeClosedIcon: document.getElementById('eye-closed-icon'),
-                setWordBtn: document.getElementById('set-word-btn'), roleBlurOverlay: document.getElementById('role-blur-overlay'), roleTextContent: document.getElementById('role-text-content'), acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
-                endRoundBtn: document.getElementById('end-round-btn'), gamePlayerList: document.getElementById('game-player-list'), debriefMoleName: document.getElementById('debrief-mole-name'), nextRoundBtn: document.getElementById('next-round-btn'),
-                playAgainBtn: document.getElementById('play-again-btn'), gameOverText: document.getElementById('game-over-text'), musicToggle: document.getElementById('music-toggle'), musicOnIcon: document.getElementById('music-on-icon'), musicOffIcon: document.getElementById('music-off-icon'),
-                reconnectSection: document.getElementById('reconnect-section'), reconnectGameIdInput: document.getElementById('reconnect-game-id-input'), reconnectBtn: document.getElementById('reconnect-btn')
+                screens: document.querySelectorAll('.screen'),
+                createGameBtn: document.getElementById('create-game-btn'),
+                joinGameIdInput: document.getElementById('join-game-id-input'),
+                joinGameBtn: document.getElementById('join-game-btn'),
+                reconnectGameIdInput: document.getElementById('reconnect-game-id-input'),
+                reconnectBtn: document.getElementById('reconnect-btn'),
+                reconnectSection: document.getElementById('reconnect-section'),
+                gameIdDisplay: document.getElementById('game-id-display'),
+                persistentGameIdContainer: document.getElementById('persistent-game-id'),
+                persistentGameIdSpan: document.querySelector('#persistent-game-id span'),
+                copyConfirm: document.getElementById('copy-confirm'),
+                playerCount: document.getElementById('player-count'),
+                playerList: document.getElementById('player-list'),
+                playerNameInput: document.getElementById('player-name-input'),
+                addPlayerBtn: document.getElementById('add-player-btn'),
+                startGameBtn: document.getElementById('start-game-btn'),
+                backToMenuBtn: document.getElementById('back-to-menu-btn'),
+                reconnectModal: document.getElementById('reconnect-modal'),
+                reconnectModalGameId: document.getElementById('reconnect-modal-game-id'),
+                reconnectConfirmBtn: document.getElementById('reconnect-confirm-btn'),
+                reconnectCancelBtn: document.getElementById('reconnect-cancel-btn'),
+                roundTitle: document.getElementById('round-title'),
+                wordMasterTurnTitle: document.getElementById('word-master-turn-title'),
+                wordMasterWaitText: document.getElementById('word-master-wait-text'),
+                secretWordInput: document.getElementById('secret-word-input'),
+                toggleWordVisibilityBtn: document.getElementById('toggle-word-visibility-btn'),
+                eyeOpenIcon: document.getElementById('eye-open-icon'),
+                eyeClosedIcon: document.getElementById('eye-closed-icon'),
+                setWordBtn: document.getElementById('set-word-btn'),
+                roleBlurOverlay: document.getElementById('role-blur-overlay'),
+                roleTextContent: document.getElementById('role-text-content'),
+                acknowledgeRoleBtn: document.getElementById('acknowledge-role-btn'),
+                endRoundBtn: document.getElementById('end-round-btn'),
+                gamePlayerList: document.getElementById('game-player-list'),
+                debriefMoleName: document.getElementById('debrief-mole-name'),
+                nextRoundBtn: document.getElementById('next-round-btn'),
+                returnToLobbyBtn: document.getElementById('return-to-lobby-btn'),
+                playAgainBtn: document.getElementById('play-again-btn'),
+                musicToggle: document.getElementById('music-toggle'),
+                musicOnIcon: document.getElementById('music-on-icon'),
+                musicOffIcon: document.getElementById('music-off-icon')
             };
 
             allDomElements.createGameBtn.addEventListener('click', createGame);
             allDomElements.joinGameBtn.addEventListener('click', () => {
-                const id = allDomElements.joinGameIdInput.value.trim().toUpperCase();
-                if (id) joinGame(id);
+                const id = allDomElements.joinGameIdInput.value.trim();
+                if (id) joinGame(id, true);
             });
             allDomElements.reconnectBtn.addEventListener('click', () => {
                 const id = allDomElements.reconnectGameIdInput.value.trim();
-                if (id) joinGame(id);
+                if (id) joinGame(id, false);
             });
             allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
             allDomElements.startGameBtn.addEventListener('click', startGame);
             allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
             
             allDomElements.gameIdDisplay.addEventListener('click', () => {
-                navigator.clipboard.writeText(allDomElements.gameIdDisplay.textContent).then(() => {
+                const textToCopy = allDomElements.gameIdDisplay.textContent;
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
                     allDomElements.copyConfirm.style.visibility = 'visible';
                     setTimeout(() => { allDomElements.copyConfirm.style.visibility = 'hidden' }, 2000);
-                });
+                } catch (err) {
+                    console.error('Failed to copy text: ', err);
+                }
+                document.body.removeChild(textArea);
             });
 
             allDomElements.toggleWordVisibilityBtn.addEventListener('click', () => {
@@ -148,7 +413,8 @@
             });
             
             allDomElements.roleBlurOverlay.addEventListener('click', async () => {
-                allDomElements.roleBlurOverlay.classList.add('opacity-0', 'pointer-events-none');
+                allDomElements.roleBlurOverlay.classList.add('opacity-0');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
                 allDomElements.roleTextContent.classList.remove('invisible');
                 allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
                 
@@ -157,61 +423,119 @@
                 
                 if (userId === gameData.moleId) {
                     allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
-                    anime({ targets: '.mole-title', textShadow: ['0 0 0px #f00', '0 0 10px #f00'], translateX: [anime.random(-2, 2), anime.random(-2, 2)], translateY: [anime.random(-2, 2), anime.random(-2, 2)], duration: 100, loop: 10, direction: 'alternate', easing: 'easeInOutQuad' });
+                    anime({
+                        targets: '.mole-title',
+                        textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
+                        translateX: [anime.random(-2, 2), anime.random(-2, 2)],
+                        translateY: [anime.random(-2, 2), anime.random(-2, 2)],
+                        duration: 100,
+                        loop: 10,
+                        direction: 'alternate',
+                        easing: 'easeInOutQuad'
+                    });
                 } else {
-                    allDomElements.roleTextContent.innerHTML = `<div><p class="text-gray-300">Codename:</p><h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2></div>`;
+                    allDomElements.roleTextContent.innerHTML = `
+                        <div>
+                            <p class="text-gray-300">Codename:</p>
+                            <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
+                        </div>
+                    `;
                 }
             });
             
             allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
-            allDomElements.endRoundBtn.addEventListener('click', () => updateDoc(doc(db, "games", gameId), { status: 'debrief' }));
-            allDomElements.nextRoundBtn.addEventListener('click', () => startNewRound());
+
+            allDomElements.endRoundBtn.addEventListener('click', async () => {
+                try {
+                    const gameRef = doc(db, "games", gameId);
+                    await updateDoc(gameRef, { status: 'debrief' });
+                } catch (error) {
+                    console.error("Error ending round:", error);
+                }
+            });
+
+            allDomElements.nextRoundBtn.addEventListener('click', async () => {
+                allDomElements.nextRoundBtn.disabled = true; 
+                await startNewRound();
+            });
             
             allDomElements.playAgainBtn.addEventListener('click', async () => {
                 if (!gameId) return;
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
-                if (gameDoc.exists() && userId === gameDoc.data().hostId) {
-                    await updateDoc(gameRef, { 
-                        status: 'lobby', currentRound: 1, secretWord: '', moleId: '', roleAcknowledgements: [], roundOrder: [], totalRounds: 0, wordMasterId: ''
-                    });
-                } else {
-                    handleGameLeave();
+                if(gameDoc.exists()){
+                    const gameData = gameDoc.data();
+                    
+                    if (userId === gameData.hostId) {
+                         await updateDoc(gameRef, { status: 'lobby' });
+                    } else {
+                        const myPlayerObject = gameData.players.find(p => p.id === userId);
+                        if(myPlayerObject) {
+                            await updateDoc(gameRef, {
+                                players: arrayRemove(myPlayerObject)
+                            });
+                        }
+                    }
                 }
+                
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
+            });
+            
+            allDomElements.returnToLobbyBtn.addEventListener('click', async () => {
+                 if (!gameId) return;
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                if(gameDoc.exists()){
+                    const gameData = gameDoc.data();
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
+                    if(myPlayerObject) {
+                        await updateDoc(gameRef, {
+                            players: arrayRemove(myPlayerObject)
+                        });
+                    }
+                }
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
             });
 
             allDomElements.backToMenuBtn.addEventListener('click', async () => {
                 if (!gameId) return;
-                allDomElements.backToMenuBtn.disabled = true;
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
 
-                if (gameDoc.exists() && userId === gameDoc.data().hostId) {
-                    await updateDoc(gameRef, { status: 'game_over' });
+                if (userId === gameData.hostId) {
+                    await deleteDoc(gameRef);
                 } else {
-                    const myPlayerObject = gameDoc.data()?.players.find(p => p.id === userId);
+                    const myPlayerObject = gameData.players.find(p => p.id === userId);
                     if (myPlayerObject) {
-                        await updateDoc(gameRef, { players: arrayRemove(myPlayerObject) });
+                        await updateDoc(gameRef, {
+                            players: arrayRemove(myPlayerObject)
+                        });
                     }
-                    handleGameLeave();
                 }
+
+                if (gameUnsubscribe) gameUnsubscribe();
+                localStorage.removeItem('moleGameId');
+                allDomElements.persistentGameIdContainer.style.display = 'none';
+                showScreen('home-screen');
             });
-            
             setupMusic();
         }
 
         function showScreen(screenId) {
+            const targetScreen = document.getElementById(screenId);
+            if (!targetScreen) {
+                console.error(`Error: Screen with ID "${screenId}" not found.`);
+                return;
+            }
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(screenId);
-            if (target) target.classList.add('active');
-        }
-        
-        function handleGameLeave() {
-            if (gameUnsubscribe) gameUnsubscribe();
-            gameUnsubscribe = null;
-            localStorage.removeItem('moleGameId');
-            allDomElements.persistentGameIdContainer.style.display = 'none';
-            showScreen('home-screen');
+            targetScreen.classList.add('active');
         }
 
         function generateGameId() {
@@ -219,137 +543,241 @@
         }
         
         async function createGame() {
-            gameId = generateGameId();
-            await setDoc(doc(db, "games", gameId), {
-                hostId: userId, status: 'lobby', players: [], createdAt: serverTimestamp()
-            });
-            joinGame(gameId);
+            try {
+                gameId = generateGameId();
+                const gameRef = doc(db, "games", gameId);
+                await setDoc(gameRef, {
+                    hostId: userId,
+                    status: 'lobby',
+                    players: [],
+                    createdAt: serverTimestamp()
+                });
+                await joinGame(gameId, true);
+            } catch (error) {
+                console.error("Error creating game:", error);
+                alert("Failed to create game. Error: " + error.message);
+            }
         }
 
-        async function joinGame(id) {
-            gameId = id;
-            if (!allDomElements) initializeDomAndListeners();
-            const gameRef = doc(db, "games", gameId);
-            
+        async function joinGame(id, isNew = false) {
+            const gameRef = doc(db, "games", id);
             try {
                 const gameDoc = await getDoc(gameRef);
                 if (!gameDoc.exists()) {
-                    alert("Game not found!"); handleGameLeave(); return;
+                    alert("Game not found!");
+                    localStorage.removeItem('moleGameId');
+                    showScreen('home-screen');
+                    return;
                 }
-                const gameData = gameDoc.data();
-                if (gameData.status !== 'lobby' && !gameData.players.some(p => p.id === userId)) {
-                    alert("This game has already started and cannot be joined."); return;
+                if (isNew && gameDoc.data().status !== 'lobby') {
+                    alert("This game has already started and cannot be joined.");
+                    return;
                 }
             } catch (error) {
-                alert(`Could not connect to the database. Error: ${error.message}`); return;
+                console.error("Error fetching game doc:", error);
+                alert("Could not connect to the database. Error: " + error.message);
             }
-            
+
+            gameId = id;
             localStorage.setItem('moleGameId', gameId);
+            
+            if (!allDomElements) initializeDomAndListeners();
+
             allDomElements.persistentGameIdSpan.textContent = gameId;
             allDomElements.persistentGameIdContainer.style.display = 'block';
+
             if (gameUnsubscribe) gameUnsubscribe(); 
 
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
-                if (!doc.exists()) {
-                    alert("The game no longer exists.");
-                    handleGameLeave();
+                const gameData = doc.data();
+                if (!gameData) {
+                    if (gameUnsubscribe) gameUnsubscribe();
+                    localStorage.removeItem('moleGameId');
+                    allDomElements.persistentGameIdContainer.style.display = 'none';
+                    showScreen('home-screen');
+                    alert("The game has ended.");
                     return;
                 }
-                renderGame(doc.data());
+                renderGame(gameData);
             }, (error) => {
                 console.error("Snapshot listener error:", error);
-                alert("Lost connection to the game.");
-                handleGameLeave();
+                 if (error.code && (error.code.includes('permission-denied') || error.code.includes('resource-exhausted'))) {
+                     alert("Connection blocked. This may be caused by a browser extension (like an ad-blocker). Please disable it for this site and refresh.");
+                } else {
+                    alert("Lost connection to the game.");
+                }
             });
         }
         
         async function addPlayer() {
             const name = allDomElements.playerNameInput.value.trim();
-            if (!name || name.length > 15) { alert('Name must be 1-15 characters.'); return; }
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            if(gameDoc.exists() && gameDoc.data().players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                alert("That name is already taken."); return; 
+            if (!name) {
+                alert('Please enter a name.');
+                return;
             }
-            await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
+            if (name.length > 15) {
+                alert('Name must be 15 characters or less.');
+                return;
+            }
+            try {
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                if(gameDoc.exists()){
+                    const players = gameDoc.data().players || [];
+                    const nameExists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
+                    if (nameExists) {
+                        alert("That name is already taken. Please choose another.");
+                        return; 
+                    }
+                }
+                await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
+            } catch(error) {
+                console.error("Error adding player:", error);
+            }
         }
 
         async function startGame() {
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const players = gameDoc.data().players;
-            if (players.length < 3) { alert("You need at least 3 operatives to start."); return; }
-            
-            const playerIds = players.map(p => p.id);
-            const doubledPlayerIds = [...playerIds, ...playerIds];
-            const roundOrder = doubledPlayerIds.sort(() => Math.random() - 0.5);
-            
-            await updateDoc(gameRef, { 
-                status: 'round_start', currentRound: 1, totalRounds: roundOrder.length,
-                roundOrder: roundOrder, wordMasterId: roundOrder[0],
-                secretWord: '', moleId: '', roleAcknowledgements: []
-            });
+            try {
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const players = gameDoc.data().players;
+                
+                if (players.length < 3) {
+                    alert("You need at least 3 operatives to start.");
+                    return;
+                }
+                
+                const totalRounds = players.length * 2;
+                const playerIds = players.map(p => p.id);
+                const shuffledPlayerIds = playerIds.sort(() => Math.random() - 0.5);
+                const roundOrder = [...shuffledPlayerIds, ...shuffledPlayerIds];
+                const wordMasterId = roundOrder[0];
+
+                await updateDoc(gameRef, { 
+                    status: 'round_start',
+                    currentRound: 1,
+                    totalRounds: totalRounds,
+                    roundOrder: roundOrder,
+                    wordMasterId: wordMasterId,
+                    secretWord: '',
+                    moleId: '',
+                    roleAcknowledgements: []
+                });
+            } catch (error) {
+                console.error("Error starting game:", error);
+            }
         }
 
         async function startNewRound() {
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const gameData = gameDoc.data();
-            const nextRoundNum = gameData.currentRound + 1;
-            if (nextRoundNum > gameData.totalRounds) {
-                await updateDoc(gameRef, { status: 'game_over' }); return;
+            try {
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+                
+                const nextRoundNum = gameData.currentRound + 1;
+
+                if (nextRoundNum > gameData.totalRounds) {
+                    await updateDoc(gameRef, { status: 'game_over' });
+                    return;
+                }
+
+                const wordMasterId = gameData.roundOrder[nextRoundNum - 1];
+                
+                await updateDoc(gameRef, {
+                    status: 'round_start',
+                    currentRound: nextRoundNum,
+                    wordMasterId: wordMasterId,
+                    secretWord: '',
+                    moleId: '',
+                    roleAcknowledgements: []
+                });
+            } catch(error) {
+                console.error("Error starting new round:", error);
             }
-            await updateDoc(gameRef, {
-                status: 'round_start', currentRound: nextRoundNum, wordMasterId: gameData.roundOrder[nextRoundNum - 1],
-                secretWord: '', moleId: '', roleAcknowledgements: []
-            });
         }
         
         async function setWordAndAssignRoles() {
-            const word = allDomElements.secretWordInput.value.trim();
-            if (!word) { alert('Please enter a secret word.'); return; }
-            const gameRef = doc(db, "games", gameId);
-            const gameDoc = await getDoc(gameRef);
-            const gameData = gameDoc.data();
-            const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
-            if (potentialMoles.length === 0) { alert("Not enough players to assign a mole."); return; }
-            const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
-            await updateDoc(gameRef, { secretWord: word, moleId: mole.id, status: 'reveal' });
+            try {
+                const word = allDomElements.secretWordInput.value.trim();
+                if (!word) {
+                    alert('Please enter a secret word.');
+                    return;
+                }
+
+                const gameRef = doc(db, "games", gameId);
+                const gameDoc = await getDoc(gameRef);
+                const gameData = gameDoc.data();
+
+                const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
+                if (potentialMoles.length === 0) {
+                    alert("Not enough players to assign a mole.");
+                    return;
+                }
+                const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
+
+                await updateDoc(gameRef, {
+                    secretWord: word,
+                    moleId: mole.id,
+                    status: 'reveal'
+                });
+            } catch (error) {
+                console.error("Error setting word:", error);
+            }
         }
         
         async function acknowledgeRole() {
-            await updateDoc(doc(db, "games", gameId), { roleAcknowledgements: arrayUnion(userId) });
+            try {
+                const gameRef = doc(db, "games", gameId);
+                await updateDoc(gameRef, {
+                    roleAcknowledgements: arrayUnion(userId)
+                });
+            } catch (error) {
+                console.error("Error acknowledging role:", error);
+            }
         }
 
         function renderGame(gameData) {
-            const { status, wordMasterId, players, roleAcknowledgements, hostId } = gameData;
+            const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
 
             let targetScreenId = status + '-screen';
-            if (status === 'round_start' && userId === wordMasterId) {
-                targetScreenId = 'word-input-screen';
+            
+            if (status === 'round_start') {
+                if (userId === gameData.wordMasterId) {
+                    targetScreenId = 'word-input-screen';
+                }
             }
+            
             showScreen(targetScreenId);
             
             const renderer = {
-                'lobby': renderLobby, 'round_start': renderRoundStart, 'reveal': renderRoleReveal,
-                'game': renderGameScreen, 'debrief': renderDebriefScreen, 'game_over': renderGameOverScreen
+                'lobby': renderLobby,
+                'round_start': renderRoundStart,
+                'reveal': renderRoleReveal,
+                'game': renderGameScreen,
+                'debrief': renderDebriefScreen,
+                'game_over': renderGameOverScreen
             };
-            if (renderer[status]) renderer[status](gameData);
-            
-            if (status === 'reveal' && players?.length > 0 && roleAcknowledgements?.length === players.length && userId === hostId) {
-                updateDoc(doc(db, "games", gameId), { status: 'game' });
+
+            if (renderer[status]) {
+                renderer[status](gameData);
             }
         }
         
         function renderLobby(gameData) {
             allDomElements.gameIdDisplay.textContent = gameId;
             allDomElements.playerCount.textContent = gameData.players.length;
-            allDomElements.playerList.innerHTML = gameData.players.map(p => 
-                `<div class="player-tag">${p.name}${p.id === gameData.hostId ? ' (Handler)' : ''}</div>`
-            ).join('');
-            allDomElements.startGameBtn.disabled = userId !== gameData.hostId;
-            allDomElements.backToMenuBtn.disabled = false;
+            allDomElements.playerList.innerHTML = '';
+            gameData.players.forEach(p => {
+                const tag = document.createElement('div');
+                tag.className = 'player-tag';
+                tag.textContent = p.name + (p.id === gameData.hostId ? ' (Handler)' : '');
+                allDomElements.playerList.appendChild(tag);
+            });
+            
+            const playerIsHost = userId === gameData.hostId;
+            allDomElements.startGameBtn.disabled = !playerIsHost;
+            
             const playerInGame = gameData.players.some(p => p.id === userId);
             allDomElements.playerNameInput.disabled = playerInGame;
             allDomElements.addPlayerBtn.disabled = playerInGame;
@@ -357,29 +785,68 @@
 
         function renderRoundStart(gameData) {
             allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
-            allDomElements.wordMasterWaitText.innerHTML = `Please Wait Ya Manga ...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
-            allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
+            if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
+                const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
+                const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
+                allDomElements.wordMasterWaitText.innerHTML = `Wait Ya Managa Until Word Master Is Done Typing...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
+            }
         }
         
-        function renderRoleReveal(gameData) { /* Unchanged */ }
-        function renderGameScreen(gameData) { /* Unchanged */ }
-        function renderDebriefScreen(gameData) {
-            const mole = gameData.players.find(p => p.id === gameData.moleId);
-            allDomElements.debriefMoleName.textContent = mole ? mole.name.toUpperCase() : '...';
-            allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
-            allDomElements.nextRoundBtn.textContent = gameData.currentRound >= gameData.totalRounds ? 'Finish Mission' : 'Next Round';
+        function renderRoleReveal(gameData) {
+            const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
+
+            if (playerHasAckd) {
+                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
+                allDomElements.roleBlurOverlay.classList.add('opacity-0');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
+                allDomElements.roleTextContent.classList.remove('invisible');
+                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+            } else {
+                allDomElements.roleBlurOverlay.classList.remove('opacity-0');
+                allDomElements.roleTextContent.classList.add('invisible');
+                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
+            }
+            
+            if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
+                if(userId === gameData.hostId) {
+                    updateDoc(doc(db, "games", gameId), { status: 'game' });
+                }
+            }
+        }
+        
+        function renderGameScreen(gameData) {
+            allDomElements.gamePlayerList.innerHTML = '';
+            gameData.players.forEach(p => {
+                const tag = document.createElement('div');
+                tag.className = 'player-tag';
+                tag.textContent = p.name;
+                allDomElements.gamePlayerList.appendChild(tag);
+            });
+
+            const isHost = userId === gameData.hostId;
+            allDomElements.endRoundBtn.classList.toggle('hidden', !isHost);
         }
 
-        function renderGameOverScreen(gameData) {
-            const isHost = userId === gameData.hostId;
-            allDomElements.gameOverText.textContent = isHost ? "The mission is over. You can start a new game with the same operatives." : "The mission is over. Waiting for the host to start a new game.";
-            allDomElements.playAgainBtn.textContent = isHost ? "Play Again" : "Return to Main Menu";
+        function renderDebriefScreen(gameData) {
+            const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
+            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
+
+            const isFinalRound = gameData.currentRound >= gameData.totalRounds;
+            allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
+            allDomElements.nextRoundBtn.textContent = isFinalRound ? 'Finish Mission' : 'Next Round';
+            allDomElements.returnToLobbyBtn.classList.toggle('hidden', !isFinalRound);
+        }
+
+        function renderGameOverScreen() {
             allDomElements.playAgainBtn.disabled = false;
         }
 
         function setupMusic() {
             let currentTrackIndex = 0;
             let parts = [];
+
             const instruments = {
                 kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" }, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" } }).toDestination(),
                 snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.2 } }).toDestination(),
@@ -388,21 +855,75 @@
                 chord: new Tone.PolySynth(Tone.FMSynth, { harmonicity: 1.5, modulationIndex: 1.2, envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.4 } }).toDestination(),
                 vocal: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.03, decay: 0.05, sustain: 0.2, release: 0.1 } }).toDestination()
             };
-            const tracks = [ { bpm: 140, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null], chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null], vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null] }, { bpm: 130, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null], chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null], vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null] }, { bpm: 125, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['C2', 'G2', 'Ab2', 'F2'], chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null], vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null] }, { bpm: 150, kick: 'C1', snare: 'C4', hihat: 'C4', bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null], chords: [['A3', 'C4', 'E4'], null, ['G3', 'B3', 'D4'], null], vocals: ['A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'A4', null] } ];
+
+            const tracks = [
+                { 
+                    bpm: 140,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null],
+                    chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null],
+                    vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null]
+                },
+                { 
+                    bpm: 130,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null],
+                    chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null],
+                    vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null]
+                },
+                { 
+                    bpm: 125,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['C2', 'G2', 'Ab2', 'F2'],
+                    chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null],
+                    vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null]
+                },
+                { 
+                    bpm: 150,
+                    kick: 'C1', snare: 'C4', hihat: 'C4',
+                    bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null],
+                    chords: [['A3', 'C4', 'E4'], null, ['G3', 'B3', 'D4'], null],
+                    vocals: ['A4', 'B4', 'C5', 'B4', 'A4', 'G4', 'A4', null]
+                }
+            ];
+
             function changeTrack(index) {
                 parts.forEach(part => part.dispose());
                 parts = [];
+
                 const track = tracks[index];
                 Tone.Transport.bpm.value = track.bpm;
-                parts.push(new Tone.Sequence((time, note) => { instruments.kick.triggerAttackRelease(note, "8n", time); }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.snare.triggerAttackRelease("0.1", time); }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.hihat.triggerAttackRelease('C4', '16n', time); }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.bass.triggerAttackRelease(note, '8n', time); }, track.bassline, '8n').start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.chord.triggerAttackRelease(note, '4n', time); }, track.chords, '2n').start(0));
-                parts.push(new Tone.Sequence((time, note) => { instruments.vocal.triggerAttackRelease(note, '16n', time); }, track.vocals, '8n').start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.kick.triggerAttackRelease(note, "8n", time);
+                }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
+
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.snare.triggerAttackRelease("0.1", time);
+                }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.hihat.triggerAttackRelease('C4', '16n', time);
+                }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.bass.triggerAttackRelease(note, '8n', time);
+                }, track.bassline, '8n').start(0));
+
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.chord.triggerAttackRelease(note, '4n', time);
+                }, track.chords, '2n').start(0));
+                
+                parts.push(new Tone.Sequence((time, note) => {
+                    instruments.vocal.triggerAttackRelease(note, '16n', time);
+                }, track.vocals, '8n').start(0));
             }
-            Tone.Transport.scheduleRepeat(() => { currentTrackIndex = (currentTrackIndex + 1) % tracks.length; changeTrack(currentTrackIndex); }, "90s");
-            
+
+            Tone.Transport.scheduleRepeat(() => {
+                currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+                changeTrack(currentTrackIndex);
+            }, "90s");
+
             allDomElements.musicToggle.addEventListener('click', () => {
                 if (Tone.context.state !== 'running') {
                     Tone.context.resume().then(() => {
@@ -424,36 +945,58 @@
 
             changeTrack(0);
         }
+        
+        window.addEventListener('beforeunload', () => {
+            if (gameUnsubscribe) {
+                gameUnsubscribe();
+            }
+        });
 
         signInAnonymously(auth).then(async (userCredential) => {
-            userId = localStorage.getItem('moleUserId') || userCredential.user.uid;
-            localStorage.setItem('moleUserId', userId);
+            let storedUserId = localStorage.getItem('moleUserId');
+            if(!storedUserId){
+                storedUserId = userCredential.user.uid;
+                localStorage.setItem('moleUserId', storedUserId);
+            }
+            userId = storedUserId;
             
             initializeDomAndListeners();
             
             const lastGameId = localStorage.getItem('moleGameId');
-            if (lastGameId) {
-                const gameDoc = await getDoc(doc(db, "games", lastGameId));
-                if (gameDoc.exists()) {
+            if(lastGameId){
+                const gameRef = doc(db, "games", lastGameId);
+                const gameDoc = await getDoc(gameRef);
+
+                if (gameDoc.exists() && gameDoc.data().status !== 'game_over') {
                     allDomElements.reconnectModalGameId.textContent = lastGameId;
                     showScreen('reconnect-modal');
-                    allDomElements.reconnectConfirmBtn.addEventListener('click', () => joinGame(lastGameId));
-                    allDomElements.reconnectCancelBtn.addEventListener('click', () => {
-                        allDomElements.reconnectSection.classList.remove('hidden');
-                        allDomElements.reconnectGameIdInput.value = lastGameId;
-                        localStorage.removeItem('moleGameId');
-                        showScreen('home-screen');
-                    });
                 } else {
-                    handleGameLeave();
+                    localStorage.removeItem('moleGameId');
+                    showScreen('home-screen');
                 }
+
+                allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
+                     joinGame(lastGameId, false);
+                });
+
+                allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+                    allDomElements.reconnectSection.classList.remove('hidden');
+                    allDomElements.reconnectGameIdInput.value = lastGameId;
+                    showScreen('home-screen');
+                });
             } else {
                 showScreen('home-screen');
             }
+            
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
-            alert("Could not connect to the game service. Error: " + error.message);
+            if (error.code === 'auth/configuration-not-found') {
+                alert("Configuration Error: 'Anonymous' sign-in is not enabled for this project. Please go to your Firebase Console, open this project, go to Authentication > Sign-in method, and enable the 'Anonymous' provider.");
+            } else {
+                alert("Could not connect to the game service. Please refresh. Error: " + error.message);
+            }
         });
+
     </script>
 </body>
 </html>
