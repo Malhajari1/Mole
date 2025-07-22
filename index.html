@@ -187,7 +187,7 @@
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
-    
+
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <span class="beta-stamp">(Beta 1.1)</span>
@@ -271,7 +271,7 @@
             <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
         </div>
     </div>
-    
+
     <div id="game-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
@@ -291,7 +291,7 @@
             <button id="return-to-lobby-btn" class="btn btn-secondary mt-4 hidden">Return to Lobby</button>
         </div>
     </div>
-    
+
     <div id="game-over-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
@@ -305,7 +305,7 @@
         <svg id="music-on-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
         <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" x2="17" y1="9" y2="15"></line><line x1="17" x2="23" y1="9" y2="15"></line></svg>
     </button>
-    
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -320,11 +320,11 @@
             appId: "1:854216033669:web:e33439d56feb15005a70ec",
             measurementId: "G-XNHP89LS4Z"
         };
-        
+
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
-        
+
         let userId;
         let gameId;
         let gameUnsubscribe;
@@ -388,7 +388,7 @@
             allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
             allDomElements.startGameBtn.addEventListener('click', startGame);
             allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
-            
+
             allDomElements.gameIdDisplay.addEventListener('click', () => {
                 const textToCopy = allDomElements.gameIdDisplay.textContent;
                 const textArea = document.createElement('textarea');
@@ -411,16 +411,16 @@
                 allDomElements.eyeOpenIcon.classList.toggle('hidden', isPassword);
                 allDomElements.eyeClosedIcon.classList.toggle('hidden', !isPassword);
             });
-            
+
             allDomElements.roleBlurOverlay.addEventListener('click', async () => {
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
                 allDomElements.roleTextContent.classList.remove('invisible');
                 allDomElements.acknowledgeRoleBtn.classList.remove('hidden');
-                
+
                 const gameDoc = await getDoc(doc(db, "games", gameId));
                 const gameData = gameDoc.data();
-                
+
                 if (userId === gameData.moleId) {
                     allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
                     anime({
@@ -442,7 +442,7 @@
                     `;
                 }
             });
-            
+
             allDomElements.acknowledgeRoleBtn.addEventListener('click', acknowledgeRole);
 
             allDomElements.endRoundBtn.addEventListener('click', async () => {
@@ -455,19 +455,19 @@
             });
 
             allDomElements.nextRoundBtn.addEventListener('click', async () => {
-                allDomElements.nextRoundBtn.disabled = true; 
+                allDomElements.nextRoundBtn.disabled = true;
                 await startNewRound();
             });
-            
+
             allDomElements.playAgainBtn.addEventListener('click', async () => {
                 if (!gameId) return;
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 if(gameDoc.exists()){
                     const gameData = gameDoc.data();
-                    
+
                     if (userId === gameData.hostId) {
-                         await updateDoc(gameRef, { status: 'lobby' });
+                         await deleteDoc(gameRef);
                     } else {
                         const myPlayerObject = gameData.players.find(p => p.id === userId);
                         if(myPlayerObject) {
@@ -477,24 +477,29 @@
                         }
                     }
                 }
-                
+
                 if (gameUnsubscribe) gameUnsubscribe();
                 localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
                 showScreen('home-screen');
             });
-            
+
             allDomElements.returnToLobbyBtn.addEventListener('click', async () => {
                  if (!gameId) return;
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 if(gameDoc.exists()){
                     const gameData = gameDoc.data();
-                    const myPlayerObject = gameData.players.find(p => p.id === userId);
-                    if(myPlayerObject) {
-                        await updateDoc(gameRef, {
-                            players: arrayRemove(myPlayerObject)
-                        });
+                    if(userId === gameData.hostId){
+                        await deleteDoc(gameRef);
+                    }
+                    else{
+                        const myPlayerObject = gameData.players.find(p => p.id === userId);
+                        if(myPlayerObject) {
+                            await updateDoc(gameRef, {
+                                players: arrayRemove(myPlayerObject)
+                            });
+                        }
                     }
                 }
                 if (gameUnsubscribe) gameUnsubscribe();
@@ -541,7 +546,7 @@
         function generateGameId() {
             return Math.random().toString().substr(2, 6);
         }
-        
+
         async function createGame() {
             try {
                 gameId = generateGameId();
@@ -580,13 +585,13 @@
 
             gameId = id;
             localStorage.setItem('moleGameId', gameId);
-            
+
             if (!allDomElements) initializeDomAndListeners();
 
             allDomElements.persistentGameIdSpan.textContent = gameId;
             allDomElements.persistentGameIdContainer.style.display = 'block';
 
-            if (gameUnsubscribe) gameUnsubscribe(); 
+            if (gameUnsubscribe) gameUnsubscribe();
 
             gameUnsubscribe = onSnapshot(gameRef, (doc) => {
                 const gameData = doc.data();
@@ -608,7 +613,7 @@
                 }
             });
         }
-        
+
         async function addPlayer() {
             const name = allDomElements.playerNameInput.value.trim();
             if (!name) {
@@ -627,7 +632,7 @@
                     const nameExists = players.some(p => p.name.toLowerCase() === name.toLowerCase());
                     if (nameExists) {
                         alert("That name is already taken. Please choose another.");
-                        return; 
+                        return;
                     }
                 }
                 await updateDoc(gameRef, { players: arrayUnion({ id: userId, name: name }) });
@@ -641,19 +646,19 @@
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 const players = gameDoc.data().players;
-                
+
                 if (players.length < 3) {
                     alert("You need at least 3 operatives to start.");
                     return;
                 }
-                
+
                 const totalRounds = players.length * 2;
                 const playerIds = players.map(p => p.id);
                 const shuffledPlayerIds = playerIds.sort(() => Math.random() - 0.5);
                 const roundOrder = [...shuffledPlayerIds, ...shuffledPlayerIds];
                 const wordMasterId = roundOrder[0];
 
-                await updateDoc(gameRef, { 
+                await updateDoc(gameRef, {
                     status: 'round_start',
                     currentRound: 1,
                     totalRounds: totalRounds,
@@ -673,7 +678,7 @@
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 const gameData = gameDoc.data();
-                
+
                 const nextRoundNum = gameData.currentRound + 1;
 
                 if (nextRoundNum > gameData.totalRounds) {
@@ -682,7 +687,7 @@
                 }
 
                 const wordMasterId = gameData.roundOrder[nextRoundNum - 1];
-                
+
                 await updateDoc(gameRef, {
                     status: 'round_start',
                     currentRound: nextRoundNum,
@@ -695,7 +700,7 @@
                 console.error("Error starting new round:", error);
             }
         }
-        
+
         async function setWordAndAssignRoles() {
             try {
                 const word = allDomElements.secretWordInput.value.trim();
@@ -724,7 +729,7 @@
                 console.error("Error setting word:", error);
             }
         }
-        
+
         async function acknowledgeRole() {
             try {
                 const gameRef = doc(db, "games", gameId);
@@ -741,15 +746,15 @@
             if (!status) return;
 
             let targetScreenId = status + '-screen';
-            
+
             if (status === 'round_start') {
                 if (userId === gameData.wordMasterId) {
                     targetScreenId = 'word-input-screen';
                 }
             }
-            
+
             showScreen(targetScreenId);
-            
+
             const renderer = {
                 'lobby': renderLobby,
                 'round_start': renderRoundStart,
@@ -763,7 +768,7 @@
                 renderer[status](gameData);
             }
         }
-        
+
         function renderLobby(gameData) {
             allDomElements.gameIdDisplay.textContent = gameId;
             allDomElements.playerCount.textContent = gameData.players.length;
@@ -774,10 +779,10 @@
                 tag.textContent = p.name + (p.id === gameData.hostId ? ' (Handler)' : '');
                 allDomElements.playerList.appendChild(tag);
             });
-            
+
             const playerIsHost = userId === gameData.hostId;
             allDomElements.startGameBtn.disabled = !playerIsHost;
-            
+
             const playerInGame = gameData.players.some(p => p.id === userId);
             allDomElements.playerNameInput.disabled = playerInGame;
             allDomElements.addPlayerBtn.disabled = playerInGame;
@@ -792,7 +797,7 @@
                 allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
             }
         }
-        
+
         function renderRoleReveal(gameData) {
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
 
@@ -808,14 +813,14 @@
                 allDomElements.acknowledgeRoleBtn.classList.add('hidden');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
             }
-            
+
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
                 if(userId === gameData.hostId) {
                     updateDoc(doc(db, "games", gameId), { status: 'game' });
                 }
             }
         }
-        
+
         function renderGameScreen(gameData) {
             allDomElements.gamePlayerList.innerHTML = '';
             gameData.players.forEach(p => {
@@ -857,28 +862,28 @@
             };
 
             const tracks = [
-                { 
+                {
                     bpm: 140,
                     kick: 'C1', snare: 'C4', hihat: 'C4',
                     bassline: ['F#2', null, 'F#2', 'E2', 'F#2', null, 'C#2', null],
                     chords: [['F#3', 'A3', 'C#4'], null, ['D3', 'F#3', 'A3'], null],
                     vocals: ['F#5', null, null, null, 'E5', null, 'C#5', null]
                 },
-                { 
+                {
                     bpm: 130,
                     kick: 'C1', snare: 'C4', hihat: 'C4',
                     bassline: ['B1', 'B1', 'E2', null, 'G2', 'G2', 'F#2', null],
                     chords: [['B2', 'D3', 'F#3'], null, ['E3', 'G3', 'B3'], null],
                     vocals: [null, 'D5', 'B4', null, 'A4', null, 'G4', null]
                 },
-                { 
+                {
                     bpm: 125,
                     kick: 'C1', snare: 'C4', hihat: 'C4',
                     bassline: ['C2', 'G2', 'Ab2', 'F2'],
                     chords: [['C3', 'Eb3', 'G3'], null, ['Ab2', 'C3', 'Eb3'], null],
                     vocals: ['C5', null, 'G4', 'Bb4', null, 'F4', null, null]
                 },
-                { 
+                {
                     bpm: 150,
                     kick: 'C1', snare: 'C4', hihat: 'C4',
                     bassline: ['A1', null, 'A1', null, 'A1', null, 'A1', null],
@@ -893,7 +898,7 @@
 
                 const track = tracks[index];
                 Tone.Transport.bpm.value = track.bpm;
-                
+
                 parts.push(new Tone.Sequence((time, note) => {
                     instruments.kick.triggerAttackRelease(note, "8n", time);
                 }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
@@ -901,11 +906,11 @@
                 parts.push(new Tone.Sequence((time, note) => {
                     instruments.snare.triggerAttackRelease("0.1", time);
                 }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
-                
+
                 parts.push(new Tone.Sequence((time, note) => {
                     instruments.hihat.triggerAttackRelease('C4', '16n', time);
                 }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
-                
+
                 parts.push(new Tone.Sequence((time, note) => {
                     instruments.bass.triggerAttackRelease(note, '8n', time);
                 }, track.bassline, '8n').start(0));
@@ -913,7 +918,7 @@
                 parts.push(new Tone.Sequence((time, note) => {
                     instruments.chord.triggerAttackRelease(note, '4n', time);
                 }, track.chords, '2n').start(0));
-                
+
                 parts.push(new Tone.Sequence((time, note) => {
                     instruments.vocal.triggerAttackRelease(note, '16n', time);
                 }, track.vocals, '8n').start(0));
@@ -945,7 +950,7 @@
 
             changeTrack(0);
         }
-        
+
         window.addEventListener('beforeunload', () => {
             if (gameUnsubscribe) {
                 gameUnsubscribe();
@@ -959,9 +964,9 @@
                 localStorage.setItem('moleUserId', storedUserId);
             }
             userId = storedUserId;
-            
+
             initializeDomAndListeners();
-            
+
             const lastGameId = localStorage.getItem('moleGameId');
             if(lastGameId){
                 const gameRef = doc(db, "games", lastGameId);
@@ -987,7 +992,7 @@
             } else {
                 showScreen('home-screen');
             }
-            
+
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
             if (error.code === 'auth/configuration-not-found') {
