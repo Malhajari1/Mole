@@ -9,19 +9,19 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=Oswald:wght@400;600;700&family=Special+Elite&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
-        html, body {
+        html {
             height: 100%;
             width: 100%;
-            position: fixed;
-            overflow: hidden;
         }
         
         body {
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Archivo', sans-serif;
+            min-height: 100%;
+            width: 100%;
             background-color: #111827; /* bg-gray-900 */
             background-image:
                 linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
@@ -30,7 +30,7 @@
             -webkit-tap-highlight-color: transparent;
         }
         h1, h2, h3, h4, h5, h6 {
-            font-family: 'DM Serif Display', serif;
+            font-family: 'Oswald', sans-serif;
         }
         .screen {
             display: none;
@@ -112,11 +112,15 @@
             border-radius: 0.25rem;
             width: 100%;
             margin-bottom: 1rem;
-            font-family: 'DM Sans', sans-serif;
+            font-family: 'Archivo', sans-serif;
+            position: relative;
+            z-index: 10;
+            touch-action: manipulation;
         }
         .input-field:focus {
             outline: none;
             border-color: #dc2626; /* red-600 */
+            z-index: 20;
         }
         .input-field::placeholder {
             color: #9ca3af;
@@ -134,7 +138,7 @@
             background-color: #1f2937; /* gray-800 */
             padding: 1rem;
             border-radius: 0.25rem;
-            font-family: 'DM Sans', monospace;
+            font-family: 'Archivo', monospace;
             font-size: 1.5rem;
             font-weight: 700;
             text-align: center;
@@ -224,7 +228,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200 flex items-center justify-center p-4" style="height: 100vh; width: 100vw; overflow-y: auto; -webkit-overflow-scrolling: touch;">
+<body class="bg-gray-900 text-gray-200 flex items-center justify-center p-4" style="min-height: 100vh; width: 100vw;">
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
@@ -287,7 +291,7 @@
         <div class="card">
             <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4"></h1>
             <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
-            <input type="text" id="secret-word-input" class="input-field text-center" placeholder="Secret Codename...">
+            <input type="text" id="secret-word-input" class="input-field text-center" placeholder="Secret Codename..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <button id="set-word-btn" class="btn">Set Codename & Assign Roles</button>
         </div>
     </div>
