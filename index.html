@@ -35,7 +35,6 @@
         .screen {
             display: none;
             width: 100%;
-            min-height: 100vh;
         }
         .screen.active {
             display: flex;
@@ -43,14 +42,14 @@
         .card {
             background-color: #1f2937; /* gray-800 */
             border-radius: 0.25rem;
-            padding: 2rem;
+            padding: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid #4b5563; /* gray-600 */
-            width: 90%;
-            max-width: 450px;
+            width: 100%;
+            max-width: 400px;
             position: relative;
             overflow: visible;
-            margin: auto;
+            margin: 0;
         }
         .beta-stamp {
             font-family: 'Special Elite', monospace;
@@ -231,9 +230,9 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200" style="min-height: 100vh; width: 100vw;">
+<body class="bg-gray-900 text-gray-200" style="min-height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;">
     
-    <div id="home-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="home-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <span class="beta-stamp">(Beta 2.1)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
@@ -255,7 +254,7 @@
         </div>
     </div>
 
-    <div id="reconnect-modal" class="screen fixed inset-0 z-50 flex-col items-center justify-center" style="background-color: rgba(17, 24, 39, 0.95);">
+    <div id="reconnect-modal" class="screen fixed inset-0 z-50 flex flex-col items-center justify-center" style="background-color: rgba(17, 24, 39, 0.95);">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
             <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
@@ -264,7 +263,7 @@
         </div>
     </div>
 
-    <div id="lobby-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="lobby-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card">
             <h1 class="text-3xl font-bold text-center mb-2">Game Lobby</h1>
             <p class="text-gray-400 text-center mb-3">Share the Game ID with your friends!</p>
@@ -281,7 +280,7 @@
         </div>
     </div>
 
-    <div id="round-start-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="round-start-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <h1 id="round-title" class="text-3xl font-bold mb-4"></h1>
             <p id="word-master-wait-text" class="text-gray-300 text-lg"></p>
@@ -290,7 +289,7 @@
         </div>
     </div>
 
-    <div id="word-input-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="word-input-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card">
             <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4"></h1>
             <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
@@ -299,7 +298,7 @@
         </div>
     </div>
 
-    <div id="reveal-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="reveal-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-6">Your Role is Ready</h1>
             <p class="text-gray-400 mb-6">Ensure your screen is not being observed, then click the eye to reveal your role.</p>
@@ -313,7 +312,7 @@
         </div>
     </div>
     
-    <div id="game-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="game-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-2">Interrogation Phase</h1>
             <p class="text-gray-400 mb-6">Discuss to identify the mole.</p>
@@ -323,7 +322,7 @@
         </div>
     </div>
 
-    <div id="debrief-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="debrief-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
             <p class="text-xl mb-4">The Mole was...</p>
@@ -333,7 +332,7 @@
         </div>
     </div>
     
-    <div id="game-over-screen" class="screen flex-col items-center justify-center w-full p-4">
+    <div id="game-over-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <h1 class="text-3xl font-bold text-center mb-4">Mission Complete</h1>
             <button id="play-again-btn" class="btn">Return to Lobby</button>
