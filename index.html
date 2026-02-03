@@ -33,11 +33,11 @@
             font-family: 'Oswald', sans-serif;
         }
         .screen {
-            display: none;
+            display: none !important;
             width: 100%;
         }
         .screen.active {
-            display: flex;
+            display: flex !important;
         }
         .card {
             background-color: #1f2937; /* gray-800 */
@@ -631,7 +631,7 @@
         }
 
         function generateGameId() {
-            return Math.random().toString().substr(2, 4);
+            return Math.random().toString().substring(2, 6);
         }
         
         async function createGame() {
@@ -1179,6 +1179,8 @@
             allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
                 const gameIdToJoin = allDomElements.reconnectModalGameId.textContent;
                 if (gameIdToJoin) {
+                    // Explicitly hide the modal
+                    document.getElementById('reconnect-modal').classList.remove('active');
                     joinGame(gameIdToJoin, false);
                 }
             });
@@ -1189,6 +1191,8 @@
                 allDomElements.reconnectSection.classList.remove('hidden');
                 // Don't auto-fill the input - keep it empty
                 allDomElements.reconnectGameIdInput.value = '';
+                // Explicitly hide the modal
+                document.getElementById('reconnect-modal').classList.remove('active');
                 showScreen('home-screen');
             });
             
