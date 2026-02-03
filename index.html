@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>The Mole (Beta 2.1)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,6 +13,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            overflow: hidden;
+        }
+        
         body {
             font-family: 'DM Sans', sans-serif;
             background-color: #111827; /* bg-gray-900 */
@@ -215,7 +224,7 @@
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-200 flex items-center justify-center min-h-screen p-4">
+<body class="bg-gray-900 text-gray-200 flex items-center justify-center p-4" style="height: 100vh; width: 100vw; overflow-y: auto; -webkit-overflow-scrolling: touch;">
     
     <div id="home-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card text-center">
@@ -239,7 +248,7 @@
         </div>
     </div>
 
-    <div id="reconnect-modal" class="screen fixed inset-0 bg-black bg-opacity-75 z-50 flex-col items-center justify-center">
+    <div id="reconnect-modal" class="screen fixed inset-0 z-50 flex-col items-center justify-center" style="background-color: rgba(17, 24, 39, 0.95);">
         <div class="card text-center">
             <h1 class="text-2xl font-bold mb-4">Disconnected?</h1>
             <p class="text-gray-400 mb-6">It looks like you were in game <span id="reconnect-modal-game-id" class="font-bold text-amber-300"></span>. Would you like to reconnect?</p>
@@ -357,6 +366,7 @@
         let userId;
         let gameId;
         let gameUnsubscribe;
+        let roleAcknowledgeTimer; // Timer for 45-second auto-transition
 
         let allDomElements;
 
@@ -908,7 +918,7 @@
             gameData.players.forEach(p => {
                 const tag = document.createElement('div');
                 tag.className = 'player-tag';
-                tag.textContent = p.name + (p.id === gameData.hostId ? ' (Handler)' : '');
+                tag.textContent = (p.name + (p.id === gameData.hostId ? ' (Handler)' : '')).toUpperCase();
                 allDomElements.playerList.appendChild(tag);
             });
             
@@ -940,6 +950,12 @@
         }
         
         function renderRoleReveal(gameData) {
+            // Clear any existing timer
+            if (roleAcknowledgeTimer) {
+                clearTimeout(roleAcknowledgeTimer);
+                roleAcknowledgeTimer = null;
+            }
+            
             // Check if player is still in the game
             const isPlayerInGame = gameData.players && gameData.players.some(p => p.id === userId);
             
@@ -966,6 +982,21 @@
                 allDomElements.roleTextContent.classList.add('invisible');
                 allDomElements.acknowledgeRoleBtn.classList.add('hidden');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
+                
+                // Start 45-second timer for auto-transition
+                roleAcknowledgeTimer = setTimeout(async () => {
+                    // Auto-acknowledge if player hasn't done so
+                    if (!gameData.roleAcknowledgements || !gameData.roleAcknowledgements.includes(userId)) {
+                        try {
+                            const gameRef = doc(db, "games", gameId);
+                            await updateDoc(gameRef, {
+                                roleAcknowledgements: arrayUnion(userId)
+                            });
+                        } catch (error) {
+                            console.error("Error auto-acknowledging role:", error);
+                        }
+                    }
+                }, 45000); // 45 seconds
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
@@ -980,17 +1011,17 @@
             gameData.players.forEach(p => {
                 const tag = document.createElement('div');
                 tag.className = 'player-tag';
-                tag.textContent = p.name;
+                tag.textContent = p.name.toUpperCase();
                 allDomElements.gamePlayerList.appendChild(tag);
             });
 
-            const isHost = userId === gameData.hostId;
-            allDomElements.endRoundBtn.classList.toggle('hidden', !isHost);
+            const isWordMaster = userId === gameData.wordMasterId;
+            allDomElements.endRoundBtn.classList.toggle('hidden', !isWordMaster);
         }
 
         function renderDebriefScreen(gameData) {
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
-            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
+            allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name.toUpperCase() : '...';
 
             const isFinalRound = gameData.currentRound >= gameData.totalRounds;
             allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
@@ -1156,6 +1187,8 @@
                 });
 
                 allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+                    // Clear the stored game ID so modal doesn't show up again
+                    localStorage.removeItem('moleGameId');
                     allDomElements.reconnectSection.classList.remove('hidden');
                     // Don't auto-fill the input - keep it empty
                     allDomElements.reconnectGameIdInput.value = '';
