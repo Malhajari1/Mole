@@ -11,15 +11,41 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
         body {
             font-family: 'DM Sans', sans-serif;
-            background-color: #111827; /* bg-gray-900 */
-            background-image:
-                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-            background-size: 25px 25px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #111827 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 20s ease infinite;
+            position: relative;
             -webkit-tap-highlight-color: transparent;
         }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 25px 25px;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        body > * {
+            position: relative;
+            z-index: 1;
+        }
+        
         h1, h2, h3, h4, h5, h6 {
             font-family: 'DM Serif Display', serif;
         }
@@ -28,17 +54,28 @@
         }
         .screen.active {
             display: flex;
+            animation: fadeIn 0.3s ease-in;
         }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
         .card {
-            background-color: #1f2937; /* gray-800 */
-            border-radius: 0.25rem;
+            background: linear-gradient(145deg, #1f2937 0%, #1a2332 100%);
+            border-radius: 0.5rem;
             padding: 2rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border: 1px solid #4b5563; /* gray-600 */
+            box-shadow: 
+                0 20px 25px -5px rgba(0, 0, 0, 0.3), 
+                0 10px 10px -5px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(75, 85, 99, 0.5);
             width: 90%;
             max-width: 450px;
             position: relative;
             overflow: visible;
+            backdrop-filter: blur(10px);
         }
         .beta-stamp {
             font-family: 'Special Elite', monospace;
@@ -67,80 +104,147 @@
         }
         .btn {
             display: inline-block;
-            background-color: #991b1b; /* red-800 */
-            color: #f3f4f6; /* gray-100 */
+            background: linear-gradient(135deg, #991b1b 0%, #7f1d1d 100%);
+            color: #f3f4f6;
             padding: 0.75rem 1.5rem;
-            border-radius: 0.25rem;
+            border-radius: 0.5rem;
             text-align: center;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.05em;
             cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid #dc2626; /* red-600 */
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid #dc2626;
             width: 100%;
-            box-shadow: inset 0 -2px 0 rgba(0,0,0,0.3);
+            box-shadow: 
+                0 4px 6px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn:hover::before {
+            left: 100%;
+        }
+        
         .btn:hover {
-            background-color: #b91c1c; /* red-700 */
-            border-color: #ef4444; /* red-500 */
+            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+            border-color: #ef4444;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 -2px 0 rgba(0,0,0,0.3);
+            box-shadow: 
+                0 6px 12px rgba(220, 38, 38, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.3);
         }
+        
         .btn:active {
             transform: translateY(0);
-            box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
+            box-shadow: 
+                0 2px 4px rgba(0, 0, 0, 0.3),
+                inset 0 2px 0 rgba(0, 0, 0, 0.3);
         }
+        
         .btn:disabled {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #374151; /* gray-700 */
-            color: #9ca3af; /* gray-400 */
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            border-color: #374151;
+            color: #9ca3af;
             cursor: not-allowed;
             transform: none;
-            box-shadow: inset 0 2px 0 rgba(0,0,0,0.3);
+            box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.3);
         }
+        
+        .btn:disabled::before {
+            display: none;
+        }
+        
         .btn-secondary {
-            background-color: #374151; /* gray-700 */
-            border-color: #4b5563; /* gray-600 */
+            background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+            border-color: #4b5563;
         }
+        
         .btn-secondary:hover {
-            background-color: #4b5563; /* gray-600 */
-            border-color: #6b7280; /* gray-500 */
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+            border-color: #6b7280;
         }
         .input-field {
-            background-color: #374151; /* gray-700 */
-            color: #f3f4f6; /* gray-100 */
-            border: 1px solid #6b7280; /* gray-500 */
+            background: linear-gradient(145deg, #374151 0%, #1f2937 100%);
+            color: #f3f4f6;
+            border: 1px solid #4b5563;
             padding: 0.75rem;
-            border-radius: 0.25rem;
+            border-radius: 0.5rem;
             width: 100%;
             margin-bottom: 1rem;
             font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
         }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #dc2626;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.2),
+                0 0 0 3px rgba(220, 38, 38, 0.1);
+        }
+        
         .input-field::placeholder {
-            color: #9ca3af; /* gray-400 */
+            color: #9ca3af;
         }
         .player-tag {
-            background-color: #4b5563; /* gray-600 */
+            background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
             color: white;
             padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
+            border-radius: 0.5rem;
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
-            border: 1px solid #6b7280; /* gray-500 */
+            border: 1px solid #6b7280;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
         }
+        
+        .player-tag:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
         #game-id-display {
-            background-color: #111827; /* gray-900 */
-            padding: 0.75rem;
-            border-radius: 0.25rem;
+            background: linear-gradient(135deg, #111827 0%, #1e1b4b 100%);
+            padding: 1rem;
+            border-radius: 0.5rem;
             font-family: 'DM Sans', monospace;
-            font-size: 1.25rem;
+            font-size: 2rem;
             font-weight: 700;
             text-align: center;
             cursor: pointer;
-            border: 2px dashed #b91c1c; /* red-700 */
-            color: #fecaca; /* red-200 */
+            border: 2px dashed #dc2626;
+            color: #fecaca;
+            letter-spacing: 0.3em;
+            transition: all 0.3s ease;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(220, 38, 38, 0.2);
+        }
+        
+        #game-id-display:hover {
+            border-color: #ef4444;
+            color: #fee2e2;
+            box-shadow: 
+                inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 0 30px rgba(220, 38, 38, 0.4);
+            transform: scale(1.02);
         }
         .animating-dots span {
             animation-name: blink;
@@ -165,6 +269,29 @@
             z-index: 1000;
             display: none;
         }
+        
+        .mole-reveal-image {
+            width: 200px;
+            height: 200px;
+            margin: 2rem auto;
+            animation: moleReveal 0.8s ease-out;
+            filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
+        }
+        
+        @keyframes moleReveal {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(-10deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(5deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+        
         #music-toggle {
             position: fixed;
             bottom: 10px;
@@ -318,6 +445,7 @@
         <div class="card text-center">
             <h1 class="text-3xl font-bold mb-4">Round Debrief</h1>
             <p class="text-xl mb-4">The Mole was...</p>
+            <img id="mole-reveal-img" class="mole-reveal-image hidden" src="" alt="The Mole">
             <p id="debrief-mole-name" class="text-3xl font-bold text-red-400 mb-8"></p>
             <button id="next-round-btn" class="btn mt-8">Next Round</button>
             <button id="return-to-lobby-btn" class="btn btn-secondary mt-4 hidden">Return to Lobby</button>
@@ -402,6 +530,7 @@
                 endRoundBtn: document.getElementById('end-round-btn'),
                 gamePlayerList: document.getElementById('game-player-list'),
                 debriefMoleName: document.getElementById('debrief-mole-name'),
+                moleRevealImg: document.getElementById('mole-reveal-img'),
                 nextRoundBtn: document.getElementById('next-round-btn'),
                 returnToLobbyBtn: document.getElementById('return-to-lobby-btn'),
                 playAgainBtn: document.getElementById('play-again-btn'),
@@ -622,7 +751,7 @@
         }
 
         function generateGameId() {
-            return Math.random().toString().substr(2, 6);
+            return Math.random().toString().substr(2, 4);
         }
         
         async function createGame() {
@@ -999,6 +1128,10 @@
             const actualMoleData = gameData.players.find(p => p.id === gameData.moleId);
             allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name : '...';
 
+            // Show mole image
+            allDomElements.moleRevealImg.src = 'mole-reveal.jpg';
+            allDomElements.moleRevealImg.classList.remove('hidden');
+
             const isFinalRound = gameData.currentRound >= gameData.totalRounds;
             allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
             allDomElements.nextRoundBtn.textContent = isFinalRound ? 'Finish Mission' : 'Next Round';
@@ -1164,7 +1297,8 @@
 
                 allDomElements.reconnectCancelBtn.addEventListener('click', () => {
                     allDomElements.reconnectSection.classList.remove('hidden');
-                    allDomElements.reconnectGameIdInput.value = lastGameId;
+                    // Don't auto-fill the input - keep it empty
+                    allDomElements.reconnectGameIdInput.value = '';
                     showScreen('home-screen');
                 });
             } else {
