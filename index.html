@@ -34,6 +34,8 @@
         }
         .screen {
             display: none;
+            min-height: 100vh;
+            padding: 2rem 0;
         }
         .screen.active {
             display: flex;
@@ -48,6 +50,7 @@
             max-width: 450px;
             position: relative;
             overflow: visible;
+            margin: auto;
         }
         .beta-stamp {
             font-family: 'Special Elite', monospace;
@@ -264,11 +267,11 @@
     <div id="lobby-screen" class="screen flex-col items-center justify-center w-full">
         <div class="card">
             <h1 class="text-3xl font-bold text-center mb-2">Game Lobby</h1>
-            <p class="text-gray-400 text-center mb-4">Share the Game ID with your friends!</p>
-            <div id="game-id-display" class="mb-6" title="Click to copy"></div>
-            <p id="copy-confirm" class="text-amber-300 text-center text-sm mb-4" style="visibility: hidden;">Copied to clipboard!</p>
-            <p class="text-gray-400 text-center mb-4">OPERATIVES (<span id="player-count">0</span>/10):</p>
-            <div id="player-list" class="flex flex-wrap justify-center mb-6 min-h-[40px]"></div>
+            <p class="text-gray-400 text-center mb-3">Share the Game ID with your friends!</p>
+            <div id="game-id-display" class="mb-4" title="Click to copy"></div>
+            <p id="copy-confirm" class="text-amber-300 text-center text-sm mb-3" style="visibility: hidden;">Copied to clipboard!</p>
+            <p class="text-gray-400 text-center mb-2">OPERATIVES (<span id="player-count">0</span>/10):</p>
+            <div id="player-list" class="flex flex-wrap justify-center mb-4"></div>
             <div class="flex mb-4">
                 <input type="text" id="player-name-input" class="input-field !mb-0" placeholder="Enter your callsign...">
                 <button id="add-player-btn" class="btn ml-2 w-auto px-4">Join</button>
@@ -1028,7 +1031,7 @@
             allDomElements.debriefMoleName.textContent = actualMoleData ? actualMoleData.name.toUpperCase() : '...';
 
             const isFinalRound = gameData.currentRound >= gameData.totalRounds;
-            allDomElements.nextRoundBtn.disabled = userId !== gameData.hostId;
+            allDomElements.nextRoundBtn.disabled = userId !== gameData.wordMasterId;
             allDomElements.nextRoundBtn.textContent = isFinalRound ? 'Finish Mission' : 'Next Round';
             allDomElements.returnToLobbyBtn.classList.toggle('hidden', !isFinalRound);
         }
