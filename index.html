@@ -555,7 +555,7 @@
 
             allDomElements.exitToLobbyBtn.addEventListener('click', async () => {
                 if (!gameId) return;
-                const confirmed = confirm('Are you sure you want to exit to the lobby? You will be removed from this game.');
+                const confirmed = confirm('Are you sure you want to exit to the lobby? You can reconnect later using the Game ID.');
                 if (!confirmed) return;
                 
                 const gameRef = doc(db, "games", gameId);
@@ -570,9 +570,11 @@
                     }
                 }
                 if (gameUnsubscribe) gameUnsubscribe();
-                localStorage.removeItem('moleGameId');
+                // Don't remove gameId - allow reconnection
+                // localStorage.removeItem('moleGameId');
                 allDomElements.persistentGameIdContainer.style.display = 'none';
                 allDomElements.exitToLobbyBtn.style.display = 'none';
+                allDomElements.connectionStatus.style.display = 'none';
                 showScreen('home-screen');
             });
 
@@ -642,6 +644,8 @@
 
         async function joinGame(id, isNew = false) {
             const gameRef = doc(db, "games", id);
+            let gameData;
+            
             try {
                 const gameDoc = await getDoc(gameRef);
                 if (!gameDoc.exists()) {
@@ -651,21 +655,31 @@
                     return;
                 }
                 
-                const gameData = gameDoc.data();
+                gameData = gameDoc.data();
                 
                 if (isNew && gameData.status !== 'lobby') {
                     alert("This game has already started and cannot be joined.");
                     return;
                 }
                 
-                // For reconnections, check if player is still in the game
+                // For reconnections, check if player was in the game but got removed
                 if (!isNew) {
                     const playerInGame = gameData.players && gameData.players.some(p => p.id === userId);
                     if (!playerInGame) {
-                        alert("You are no longer in this game. Please join a new game or create one.");
-                        localStorage.removeItem('moleGameId');
-                        showScreen('home-screen');
-                        return;
+                        // Player was removed (e.g., used Exit to Lobby) - ask if they want to rejoin
+                        const rejoin = confirm("You left this game. Would you like to rejoin?");
+                        if (!rejoin) {
+                            localStorage.removeItem('moleGameId');
+                            showScreen('home-screen');
+                            return;
+                        }
+                        
+                        // Only allow rejoining if game is still in lobby or hasn't started yet
+                        if (gameData.status !== 'lobby') {
+                            // For games in progress, just observe - don't add back to players yet
+                            // They can watch but won't participate until next game
+                            console.log("Player reconnecting to game in progress - observer mode");
+                        }
                     }
                 }
             } catch (error) {
@@ -852,11 +866,29 @@
             const status = gameData.status ? gameData.status.trim() : null;
             if (!status) return;
 
+            // Check if player is in the game
+            const isPlayerInGame = gameData.players && gameData.players.some(p => p.id === userId);
+            
             let targetScreenId = status + '-screen';
             
             if (status === 'round_start') {
-                if (userId === gameData.wordMasterId) {
+                if (userId === gameData.wordMasterId && isPlayerInGame) {
                     targetScreenId = 'word-input-screen';
+                } else {
+                    // Not word master or not in game - show waiting screen
+                    targetScreenId = 'round-start-screen';
+                }
+            }
+            
+            // If player is not in game and game is in progress, show appropriate observer screen
+            if (!isPlayerInGame && status !== 'lobby' && status !== 'game_over') {
+                // For observers, show the waiting/spectator screen based on status
+                if (status === 'reveal') {
+                    targetScreenId = 'round-start-screen'; // Show waiting screen
+                } else if (status === 'game') {
+                    targetScreenId = 'game-screen'; // Let them watch the game screen
+                } else if (status === 'debrief') {
+                    targetScreenId = 'debrief-screen'; // Let them see debrief
                 }
             }
             
@@ -897,6 +929,15 @@
 
         function renderRoundStart(gameData) {
             allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
+            
+            // Check if player is in the game
+            const isPlayerInGame = gameData.players && gameData.players.some(p => p.id === userId);
+            
+            if (!isPlayerInGame) {
+                allDomElements.wordMasterWaitText.innerHTML = `You are observing this game.<br><span class="text-sm">You can rejoin in the lobby after the current game ends.</span>`;
+                return;
+            }
+            
             if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
                 const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
@@ -906,6 +947,19 @@
         }
         
         function renderRoleReveal(gameData) {
+            // Check if player is still in the game
+            const isPlayerInGame = gameData.players && gameData.players.some(p => p.id === userId);
+            
+            if (!isPlayerInGame) {
+                // Observer mode - show waiting message
+                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Waiting for game to continue...</p>`;
+                allDomElements.roleBlurOverlay.classList.add('opacity-0');
+                allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
+                allDomElements.roleTextContent.classList.remove('invisible');
+                allDomElements.acknowledgeRoleBtn.classList.add('hidden');
+                return;
+            }
+            
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
 
             if (playerHasAckd) {
