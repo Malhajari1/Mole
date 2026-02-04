@@ -32,6 +32,165 @@
         h1, h2, h3, h4, h5, h6 {
             font-family: 'Oswald', sans-serif;
         }
+        
+        /* Mode Toggle Styles */
+        .mode-toggle-container {
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+        }
+        
+        .mode-toggle-labels {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .mode-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #9ca3af;
+            transition: color 0.3s ease;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .mode-label.active {
+            color: #f3f4f6;
+        }
+        
+        .mode-version {
+            font-size: 0.75rem;
+            font-weight: 400;
+            color: #6b7280;
+        }
+        
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #991b1b;
+            transition: 0.4s;
+            border-radius: 30px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: 0.4s;
+            border-radius: 50%;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: #3b82f6;
+        }
+        
+        .toggle-switch input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* Light Mode Styles */
+        body.light-mode {
+            background-color: #f3f4f6 !important;
+            color: #1f2937 !important;
+        }
+        
+        body.light-mode .card {
+            background-color: #ffffff !important;
+            border-color: #d1d5db !important;
+        }
+        
+        body.light-mode .beta-stamp {
+            background-color: #ffffff !important;
+            border-color: #3b82f6 !important;
+            color: #3b82f6 !important;
+        }
+        
+        body.light-mode .input-field {
+            background-color: #f9fafb !important;
+            color: #1f2937 !important;
+            border-color: #d1d5db !important;
+        }
+        
+        body.light-mode .btn {
+            background-color: #3b82f6 !important;
+            color: #ffffff !important;
+        }
+        
+        body.light-mode .btn:hover {
+            background-color: #2563eb !important;
+        }
+        
+        body.light-mode .btn-secondary {
+            background-color: #6b7280 !important;
+        }
+        
+        body.light-mode .btn-secondary:hover {
+            background-color: #4b5563 !important;
+        }
+        
+        body.light-mode h1, 
+        body.light-mode h2, 
+        body.light-mode h3,
+        body.light-mode p {
+            color: #1f2937 !important;
+        }
+        
+        body.light-mode .text-gray-400 {
+            color: #6b7280 !important;
+        }
+        
+        body.light-mode .player-tag {
+            background-color: #e5e7eb !important;
+            color: #1f2937 !important;
+        }
+        
+        body.light-mode #game-id-display {
+            background-color: #f9fafb !important;
+            border-color: #3b82f6 !important;
+            color: #3b82f6 !important;
+        }
+        
+        body.light-mode .mode-toggle-container {
+            background-color: rgba(0, 0, 0, 0.05) !important;
+        }
+        
+        body.light-mode .disclaimer-box {
+            border-color: #3b82f6 !important;
+            color: #3b82f6 !important;
+        }
+        
+        body.light-mode #exit-to-lobby-btn,
+        body.light-mode #connection-status,
+        body.light-mode #music-toggle {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            color: #1f2937 !important;
+            border-color: #d1d5db !important;
+        }
+        
         .screen {
             display: none !important;
             width: 100%;
@@ -236,6 +395,19 @@
         <div class="card text-center">
             <span class="beta-stamp">(Beta 2.1)</span>
             <h1 class="text-4xl font-bold mb-4">The Mole</h1>
+            
+            <!-- Mode Toggle Switch -->
+            <div class="mode-toggle-container mb-6">
+                <div class="mode-toggle-labels">
+                    <span id="classic-label" class="mode-label active">Classic<br><span class="mode-version">Beta 2.1</span></span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="mode-toggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span id="recruit-label" class="mode-label">Recruit Madness<br><span class="mode-version">🆕 Beta 1.0</span></span>
+                </div>
+            </div>
+            
             <p class="text-gray-400 mb-6">Create a new game or join with a Game ID.</p>
             <button id="create-game-btn" class="btn mb-4">Create New Game</button>
             <div class="border-t border-gray-700 my-4"></div>
@@ -433,6 +605,36 @@
             allDomElements.addPlayerBtn.addEventListener('click', addPlayer);
             allDomElements.startGameBtn.addEventListener('click', startGame);
             allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
+            
+            // Mode toggle handler
+            const modeToggle = document.getElementById('mode-toggle');
+            const classicLabel = document.getElementById('classic-label');
+            const recruitLabel = document.getElementById('recruit-label');
+            
+            modeToggle.addEventListener('change', function() {
+                if (this.checked) {
+                    // Switch to Recruit Madness mode
+                    document.body.classList.add('light-mode');
+                    classicLabel.classList.remove('active');
+                    recruitLabel.classList.add('active');
+                    
+                    // Show coming soon alert
+                    setTimeout(() => {
+                        alert('🚧 RECRUIT MADNESS MODE\n\nComing Soon!\n\nA new twist on The Mole where players pitch CV cards for job positions and catch the imposter applicant.\n\nStay tuned for updates!');
+                        
+                        // Switch back to classic mode
+                        this.checked = false;
+                        document.body.classList.remove('light-mode');
+                        classicLabel.classList.add('active');
+                        recruitLabel.classList.remove('active');
+                    }, 100);
+                } else {
+                    // Switch to Classic mode
+                    document.body.classList.remove('light-mode');
+                    recruitLabel.classList.remove('active');
+                    classicLabel.classList.add('active');
+                }
+            });
             
             allDomElements.checkStatusBtn.addEventListener('click', async () => {
                 if (!gameId) return;
