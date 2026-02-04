@@ -464,8 +464,25 @@
     <div id="word-input-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card">
             <h1 id="word-master-turn-title" class="text-2xl font-bold text-center mb-4"></h1>
-            <p class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
-            <input type="text" id="secret-word-input" class="input-field text-center" placeholder="Secret Codename..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <p id="word-input-description" class="text-gray-400 text-center mb-6">Enter the secret codename. No one else should see this!</p>
+            
+            <!-- Classic Mode Input -->
+            <div id="classic-word-input">
+                <input type="text" id="secret-word-input" class="input-field text-center" placeholder="Secret Codename..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            </div>
+            
+            <!-- Recruit Madness Mode Input -->
+            <div id="recruit-job-input" class="hidden">
+                <input type="text" id="job-title-input" class="input-field text-center mb-4" placeholder="Type Job Title..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <p class="text-gray-400 text-center text-sm mb-2">OR</p>
+                <input type="file" id="job-image-input" accept="image/*" capture="environment" class="hidden">
+                <button id="upload-job-image-btn" class="btn btn-secondary mb-4">📷 Upload/Take Photo of Job Card</button>
+                <div id="job-image-preview" class="hidden mb-4">
+                    <img id="job-image-preview-img" src="" alt="Job Card" style="max-width: 100%; max-height: 200px; border-radius: 0.25rem; border: 2px solid #4b5563;">
+                    <button id="remove-job-image-btn" class="btn btn-secondary mt-2 text-sm">Remove Photo</button>
+                </div>
+            </div>
+            
             <button id="set-word-btn" class="btn">Set Codename & Assign Roles</button>
         </div>
     </div>
@@ -576,6 +593,15 @@
                 wordMasterWaitText: document.getElementById('word-master-wait-text'),
                 checkStatusBtn: document.getElementById('check-status-btn'),
                 secretWordInput: document.getElementById('secret-word-input'),
+                jobTitleInput: document.getElementById('job-title-input'),
+                jobImageInput: document.getElementById('job-image-input'),
+                uploadJobImageBtn: document.getElementById('upload-job-image-btn'),
+                jobImagePreview: document.getElementById('job-image-preview'),
+                jobImagePreviewImg: document.getElementById('job-image-preview-img'),
+                removeJobImageBtn: document.getElementById('remove-job-image-btn'),
+                classicWordInput: document.getElementById('classic-word-input'),
+                recruitJobInput: document.getElementById('recruit-job-input'),
+                wordInputDescription: document.getElementById('word-input-description'),
                 setWordBtn: document.getElementById('set-word-btn'),
                 roleBlurOverlay: document.getElementById('role-blur-overlay'),
                 roleTextContent: document.getElementById('role-text-content'),
@@ -606,30 +632,57 @@
             allDomElements.startGameBtn.addEventListener('click', startGame);
             allDomElements.setWordBtn.addEventListener('click', setWordAndAssignRoles);
             
+            // Image upload handlers for Recruit Madness
+            allDomElements.uploadJobImageBtn.addEventListener('click', () => {
+                allDomElements.jobImageInput.click();
+            });
+            
+            allDomElements.jobImageInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        allDomElements.jobImagePreviewImg.src = event.target.result;
+                        allDomElements.jobImagePreview.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            allDomElements.removeJobImageBtn.addEventListener('click', () => {
+                allDomElements.jobImageInput.value = '';
+                allDomElements.jobImagePreviewImg.src = '';
+                allDomElements.jobImagePreview.classList.add('hidden');
+            });
+            
             // Mode toggle handler
             const modeToggle = document.getElementById('mode-toggle');
             const classicLabel = document.getElementById('classic-label');
             const recruitLabel = document.getElementById('recruit-label');
+            let gameMode = 'classic'; // Track current mode
             
             modeToggle.addEventListener('change', function() {
                 if (this.checked) {
-                    // Switch to Recruit Madness mode
-                    document.body.classList.add('light-mode');
-                    classicLabel.classList.remove('active');
-                    recruitLabel.classList.add('active');
+                    // Try to switch to Recruit Madness mode
+                    const password = prompt('🚧 RECRUIT MADNESS MODE\n\nComing Soon!\n\nA new twist on The Mole where players pitch CV cards for job positions and catch the imposter applicant.\n\n━━━━━━━━━━━━━━━━━━━\nDEV ACCESS ONLY\nEnter password to test:');
                     
-                    // Show coming soon alert
-                    setTimeout(() => {
-                        alert('🚧 RECRUIT MADNESS MODE\n\nComing Soon!\n\nA new twist on The Mole where players pitch CV cards for job positions and catch the imposter applicant.\n\nStay tuned for updates!');
-                        
-                        // Switch back to classic mode
+                    if (password === '1122') {
+                        // Correct password - grant access
+                        gameMode = 'recruit';
+                        document.body.classList.add('light-mode');
+                        classicLabel.classList.remove('active');
+                        recruitLabel.classList.add('active');
+                    } else {
+                        // Wrong password or cancelled - revert
                         this.checked = false;
-                        document.body.classList.remove('light-mode');
-                        classicLabel.classList.add('active');
-                        recruitLabel.classList.remove('active');
-                    }, 100);
+                        gameMode = 'classic';
+                        if (password !== null) {
+                            alert('❌ Invalid password. Recruit Madness is currently in development.');
+                        }
+                    }
                 } else {
                     // Switch to Classic mode
+                    gameMode = 'classic';
                     document.body.classList.remove('light-mode');
                     recruitLabel.classList.remove('active');
                     classicLabel.classList.add('active');
@@ -681,9 +734,13 @@
                 
                 const gameDoc = await getDoc(doc(db, "games", gameId));
                 const gameData = gameDoc.data();
+                const isRecruitMode = gameData.gameMode === 'recruit';
+                const isImage = gameData.secretWordType === 'image';
                 
                 if (userId === gameData.moleId) {
-                    allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">YOU ARE THE MOLE!</h2><p class="text-gray-300 mt-2">Blend in. Do not get caught.</p>`;
+                    const moleText = isRecruitMode ? 'YOU ARE THE MOLE!' : 'YOU ARE THE MOLE!';
+                    const moleSubtext = isRecruitMode ? 'You don\'t know the job. Blend in with your CV card!' : 'Blend in. Do not get caught.';
+                    allDomElements.roleTextContent.innerHTML = `<h2 class="text-2xl font-bold text-red-500 mole-title">${moleText}</h2><p class="text-gray-300 mt-2">${moleSubtext}</p>`;
                     anime({
                         targets: '.mole-title',
                         textShadow: ['0 0 0px rgba(255,0,0,1)', '0 0 10px rgba(255,0,0,1)'],
@@ -695,12 +752,24 @@
                         easing: 'easeInOutQuad'
                     });
                 } else {
-                    allDomElements.roleTextContent.innerHTML = `
-                        <div>
-                            <p class="text-gray-300">Codename:</p>
-                            <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
-                        </div>
-                    `;
+                    // Not the mole - show the secret word/job
+                    if (isImage) {
+                        // Show image
+                        allDomElements.roleTextContent.innerHTML = `
+                            <div>
+                                <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Codename:'}</p>
+                                <img src="${gameData.secretWord}" alt="Job Card" style="max-width: 100%; max-height: 300px; margin-top: 1rem; border-radius: 0.5rem; border: 2px solid #dc2626;">
+                            </div>
+                        `;
+                    } else {
+                        // Show text
+                        allDomElements.roleTextContent.innerHTML = `
+                            <div>
+                                <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Codename:'}</p>
+                                <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
+                            </div>
+                        `;
+                    }
                 }
             });
             
@@ -844,6 +913,7 @@
                     hostId: userId,
                     status: 'lobby',
                     players: [],
+                    gameMode: gameMode, // 'classic' or 'recruit'
                     createdAt: serverTimestamp()
                 });
                 await joinGame(gameId, true);
@@ -997,6 +1067,7 @@
                     roundOrder: roundOrder,
                     wordMasterId: wordMasterId,
                     secretWord: '',
+                    secretWordType: 'text',
                     moleId: '',
                     roleAcknowledgements: []
                 });
@@ -1025,6 +1096,7 @@
                     currentRound: nextRoundNum,
                     wordMasterId: wordMasterId,
                     secretWord: '',
+                    secretWordType: 'text',
                     moleId: '',
                     roleAcknowledgements: []
                 });
@@ -1035,15 +1107,43 @@
         
         async function setWordAndAssignRoles() {
             try {
-                const word = allDomElements.secretWordInput.value.trim();
-                if (!word) {
-                    alert('Please enter a secret word.');
-                    return;
-                }
-
                 const gameRef = doc(db, "games", gameId);
                 const gameDoc = await getDoc(gameRef);
                 const gameData = gameDoc.data();
+                const isRecruitMode = gameData.gameMode === 'recruit';
+                
+                let contentToStore = '';
+                let contentType = 'text'; // 'text' or 'image'
+                
+                if (isRecruitMode) {
+                    // Check for job title text
+                    const jobTitle = allDomElements.jobTitleInput.value.trim();
+                    
+                    // Check for uploaded image
+                    const imageData = allDomElements.jobImagePreviewImg.src;
+                    
+                    if (imageData && imageData.startsWith('data:image')) {
+                        // Image was uploaded
+                        contentToStore = imageData;
+                        contentType = 'image';
+                    } else if (jobTitle) {
+                        // Text was entered
+                        contentToStore = jobTitle;
+                        contentType = 'text';
+                    } else {
+                        alert('Please enter a job title or upload a job card image.');
+                        return;
+                    }
+                } else {
+                    // Classic mode
+                    const word = allDomElements.secretWordInput.value.trim();
+                    if (!word) {
+                        alert('Please enter a secret word.');
+                        return;
+                    }
+                    contentToStore = word;
+                    contentType = 'text';
+                }
 
                 const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
                 if (potentialMoles.length === 0) {
@@ -1053,10 +1153,21 @@
                 const mole = potentialMoles[Math.floor(Math.random() * potentialMoles.length)];
 
                 await updateDoc(gameRef, {
-                    secretWord: word,
+                    secretWord: contentToStore,
+                    secretWordType: contentType,
                     moleId: mole.id,
                     status: 'reveal'
                 });
+                
+                // Clear inputs
+                if (isRecruitMode) {
+                    allDomElements.jobTitleInput.value = '';
+                    allDomElements.jobImageInput.value = '';
+                    allDomElements.jobImagePreviewImg.src = '';
+                    allDomElements.jobImagePreview.classList.add('hidden');
+                } else {
+                    allDomElements.secretWordInput.value = '';
+                }
             } catch (error) {
                 console.error("Error setting word:", error);
             }
@@ -1141,6 +1252,8 @@
         function renderRoundStart(gameData) {
             allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
             
+            const isRecruitMode = gameData.gameMode === 'recruit';
+            
             // Check if player is in the game
             const isPlayerInGame = gameData.players && gameData.players.some(p => p.id === userId);
             
@@ -1152,8 +1265,22 @@
             if (gameData.players && gameData.players.length > 0 && gameData.wordMasterId) {
                 const wordMaster = gameData.players.find(p => p.id === gameData.wordMasterId);
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
-                allDomElements.wordMasterWaitText.innerHTML = `Wait Ya Managa Until Word Master Is Done Typing...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
-                allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
+                
+                if (isRecruitMode) {
+                    allDomElements.wordMasterWaitText.innerHTML = `Wait for Hiring Manager to set the job position...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Hiring Manager! (Round ${gameData.currentRound})`;
+                    allDomElements.wordInputDescription.textContent = 'Enter the job title or upload a photo of the job card. Operatives will see this!';
+                    allDomElements.classicWordInput.classList.add('hidden');
+                    allDomElements.recruitJobInput.classList.remove('hidden');
+                    allDomElements.setWordBtn.textContent = 'Set Job & Assign Roles';
+                } else {
+                    allDomElements.wordMasterWaitText.innerHTML = `Wait Ya Managa Until Word Master Is Done Typing...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
+                    allDomElements.wordInputDescription.textContent = 'Enter the secret codename. No one else should see this!';
+                    allDomElements.classicWordInput.classList.remove('hidden');
+                    allDomElements.recruitJobInput.classList.add('hidden');
+                    allDomElements.setWordBtn.textContent = 'Set Codename & Assign Roles';
+                }
             }
         }
         
