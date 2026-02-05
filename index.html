@@ -185,7 +185,8 @@
         
         body.light-mode #exit-to-lobby-btn,
         body.light-mode #connection-status,
-        body.light-mode #music-toggle {
+        body.light-mode #music-toggle,
+        body.light-mode #music-skip {
             background-color: rgba(255, 255, 255, 0.9) !important;
             color: #1f2937 !important;
             border-color: #d1d5db !important;
@@ -410,6 +411,28 @@
             cursor: pointer;
             z-index: 1001;
         }
+        #music-skip {
+            position: fixed;
+            bottom: 10px;
+            right: 60px;
+            background-color: rgba(0,0,0,0.5);
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+            border-radius: 9999px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.2s;
+        }
+        #music-skip:hover {
+            background-color: rgba(0,0,0,0.7);
+            border-color: #6b7280;
+            color: #f3f4f6;
+        }
         #exit-to-lobby-btn {
             position: fixed;
             top: 10px;
@@ -475,7 +498,18 @@
             border-right: 2px solid #dc2626;
             white-space: nowrap;
             overflow: hidden;
-            animation: typingBlink 0.7s step-end infinite;
+            animation: 
+                typing 2s steps(40) 1s both,
+                typingBlink 0.7s step-end infinite;
+        }
+        
+        @keyframes typing {
+            from { 
+                width: 0;
+            }
+            to { 
+                width: 100%;
+            }
         }
         
         @keyframes typingBlink {
@@ -657,6 +691,10 @@
         <svg id="music-off-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 hidden"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" x2="17" y1="9" y2="15"></line><line x1="17" x2="23" y1="9" y2="15"></line></svg>
     </button>
 
+    <button id="music-skip" style="display: none;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" x2="19" y1="5" y2="19"></line></svg>
+    </button>
+
     <button id="exit-to-lobby-btn" style="display: none;">← Exit to Lobby</button>
     
     <div id="connection-status">● Connected</div>
@@ -664,7 +702,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, serverTimestamp, arrayUnion, arrayRemove, deleteDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAJqlQLiyN4Ddo2tNEDalfbcJ8eIr0oc3I",
@@ -736,6 +774,7 @@
                 returnToLobbyBtn: document.getElementById('return-to-lobby-btn'),
                 playAgainBtn: document.getElementById('play-again-btn'),
                 musicToggle: document.getElementById('music-toggle'),
+                musicSkip: document.getElementById('music-skip'),
                 musicOnIcon: document.getElementById('music-on-icon'),
                 musicOffIcon: document.getElementById('music-off-icon'),
                 exitToLobbyBtn: document.getElementById('exit-to-lobby-btn'),
@@ -1276,7 +1315,18 @@
                 const nextRoundNum = gameData.currentRound + 1;
 
                 if (nextRoundNum > gameData.totalRounds) {
+                    // Game is over - set status first so all clients see the game over screen
                     await updateDoc(gameRef, { status: 'game_over' });
+                    
+                    // Then delete the game after a short delay (5 seconds) so players can see final screen
+                    setTimeout(async () => {
+                        try {
+                            await deleteDoc(gameRef);
+                            console.log('Game document deleted after completion');
+                        } catch (error) {
+                            console.error('Error deleting game:', error);
+                        }
+                    }, 5000);
                     return;
                 }
 
@@ -1503,7 +1553,7 @@
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
 
             if (playerHasAckd) {
-                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300 typing-animation">Awaiting other operatives...</p>`;
+                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300"><span class="typing-animation">Awaiting other operatives</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
                 allDomElements.roleTextContent.classList.remove('invisible');
@@ -1564,20 +1614,99 @@
             allDomElements.playAgainBtn.disabled = false;
         }
 
+        // Cleanup function to delete games older than 24 hours
+        async function cleanupOldGames() {
+            try {
+                const now = new Date();
+                const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                
+                // Note: Firestore doesn't support direct timestamp comparison in queries from web
+                // So we'll get all games and filter client-side
+                const gamesRef = collection(db, "games");
+                const gamesSnapshot = await getDocs(gamesRef);
+                
+                let deletedCount = 0;
+                const deletePromises = [];
+                
+                gamesSnapshot.forEach((gameDoc) => {
+                    const gameData = gameDoc.data();
+                    
+                    // Check if game has createdAt timestamp
+                    if (gameData.createdAt && gameData.createdAt.toDate) {
+                        const createdAt = gameData.createdAt.toDate();
+                        
+                        // Delete if older than 24 hours
+                        if (createdAt < twentyFourHoursAgo) {
+                            console.log(`Deleting old game: ${gameDoc.id} (created: ${createdAt})`);
+                            deletePromises.push(deleteDoc(doc(db, "games", gameDoc.id)));
+                            deletedCount++;
+                        }
+                    }
+                });
+                
+                await Promise.all(deletePromises);
+                
+                if (deletedCount > 0) {
+                    console.log(`Cleaned up ${deletedCount} old game(s)`);
+                }
+            } catch (error) {
+                console.error("Error cleaning up old games:", error);
+            }
+        }
+
+        // Run cleanup on page load and then every hour
+        cleanupOldGames();
+        setInterval(cleanupOldGames, 60 * 60 * 1000); // Run every hour
+
         function setupMusic() {
             let currentTrackIndex = 0;
             let parts = [];
 
             const instruments = {
-                kick: new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 10, oscillator: { type: "sine" }, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4, attackCurve: "exponential" } }).toDestination(),
-                snare: new Tone.NoiseSynth({ noise: { type: 'white' }, envelope: { attack: 0.001, decay: 0.15, sustain: 0, release: 0.2 } }).toDestination(),
-                hihat: new Tone.MetalSynth({ frequency: 250, envelope: { attack: 0.001, decay: 0.05, release: 0.01 }, harmonicity: 5.1, modulationIndex: 32, resonance: 4000, octaves: 1.5 }).toDestination(),
-                bass: new Tone.MonoSynth({ oscillator: { type: "fmsquare" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.4 } }).toDestination(),
-                chord: new Tone.PolySynth(Tone.FMSynth, { harmonicity: 1.5, modulationIndex: 1.2, envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.4 } }).toDestination(),
-                vocal: new Tone.Synth({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.03, decay: 0.05, sustain: 0.2, release: 0.1 } }).toDestination()
+                kick: new Tone.MembraneSynth({ 
+                    pitchDecay: 0.05, 
+                    octaves: 10, 
+                    oscillator: { type: "sine" }, 
+                    envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 } 
+                }).toDestination(),
+                snare: new Tone.NoiseSynth({ 
+                    noise: { type: 'white' }, 
+                    envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.3 } 
+                }).toDestination(),
+                hihat: new Tone.MetalSynth({ 
+                    frequency: 300, 
+                    envelope: { attack: 0.001, decay: 0.04, release: 0.01 }, 
+                    harmonicity: 6, 
+                    modulationIndex: 40, 
+                    resonance: 5000, 
+                    octaves: 1.5 
+                }).toDestination(),
+                bass: new Tone.MonoSynth({ 
+                    oscillator: { type: "sawtooth" }, 
+                    envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.6 },
+                    filterEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.5, release: 0.4, baseFrequency: 200, octaves: 2.6 }
+                }).toDestination(),
+                chord: new Tone.PolySynth(Tone.FMSynth, { 
+                    harmonicity: 1.5, 
+                    modulationIndex: 1.2, 
+                    envelope: { attack: 0.02, decay: 0.3, sustain: 0.1, release: 0.4 } 
+                }).toDestination(),
+                pad: new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.8, decay: 0.5, sustain: 0.7, release: 2 }
+                }).toDestination(),
+                lead: new Tone.Synth({
+                    oscillator: { type: "square" },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.5 }
+                }).toDestination(),
+                arp: new Tone.MonoSynth({
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.3 }
+                }).toDestination()
             };
 
-            const tracks = [
+            // Classic Mode Tracks (original 4 tracks)
+            const classicTracks = [
                 { 
                     bpm: 140,
                     kick: 'C1', snare: 'C4', hihat: 'C4',
@@ -1608,6 +1737,41 @@
                 }
             ];
 
+            // Recruit Madness Tracks (Track 2, 5, 6 from showcase)
+            const recruitTracks = [
+                // Track 2: Suspenseful Chase (145 BPM, A Minor)
+                {
+                    bpm: 145,
+                    kick: ['A1', null, 'A1', 'A1', 'A1', null, 'A1', null],
+                    snare: [null, null, 'A3', null, null, null, 'A3', null],
+                    hihat: ['C4', null, 'C4', null, 'C4', null, 'C4', 'C4'],
+                    bass: ['A1', 'A1', 'C2', 'D2', 'E2', 'E2', 'D2', 'C2'],
+                    lead: ['A4', null, 'C5', null, 'E5', null, 'D5', 'C5']
+                },
+                // Track 5: Digital Espionage (128 BPM, F# Minor)
+                {
+                    bpm: 128,
+                    kick: ['F#1', null, 'F#1', null, 'F#1', null, 'F#1', null],
+                    snare: [null, null, 'F#3', null, null, null, 'F#3', null],
+                    hihat: ['C4', 'C4', 'C4', 'C4', 'C4', 'C4', 'C4', 'C4'],
+                    bass: ['F#2', 'A2', 'C#3', 'E3', 'D3', 'C#3', 'A2', 'F#2'],
+                    arp: ['F#4', 'A4', 'C#5', 'E5', 'F#5', 'C#5', 'A4', 'F#4']
+                },
+                // Track 6: Final Confrontation (130 BPM, G Minor)
+                {
+                    bpm: 130,
+                    kick: ['G1', 'G1', null, 'G1', 'G1', null, 'G1', null],
+                    snare: [null, null, 'G3', null, null, null, 'G3', 'G3'],
+                    hihat: ['C4', 'C4', 'C4', 'C4', 'C4', 'C4', 'C4', 'C4'],
+                    bass: ['G1', 'G1', 'Bb1', 'D2', 'D2', 'C2', 'Bb1', 'G1'],
+                    pad: [['G3', 'Bb3', 'D4'], null, null, null, ['F3', 'A3', 'C4'], null, null, null],
+                    lead: ['G5', null, 'F5', 'D5', null, 'Bb4', null, 'G4']
+                }
+            ];
+
+            // Select tracks based on game mode
+            const tracks = gameMode === 'recruit' ? recruitTracks : classicTracks;
+
             function changeTrack(index) {
                 parts.forEach(part => part.dispose());
                 parts = [];
@@ -1615,29 +1779,72 @@
                 const track = tracks[index];
                 Tone.Transport.bpm.value = track.bpm;
                 
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.kick.triggerAttackRelease(note, "8n", time);
-                }, [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null], "8n").start(0));
+                // Kick
+                if (track.kick) {
+                    const kickPattern = Array.isArray(track.kick) ? track.kick : [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null];
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.kick.triggerAttackRelease(note, "8n", time);
+                    }, kickPattern, "8n").start(0));
+                }
 
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.snare.triggerAttackRelease("0.1", time);
-                }, [null, track.snare, null, track.snare, null, track.snare, null, track.snare], "8n").start(0));
+                // Snare
+                if (track.snare) {
+                    const snarePattern = Array.isArray(track.snare) ? track.snare : [null, track.snare, null, track.snare, null, track.snare, null, track.snare];
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.snare.triggerAttack(time);
+                    }, snarePattern, "8n").start(0));
+                }
                 
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.hihat.triggerAttackRelease('C4', '16n', time);
-                }, [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat], "8n").start(0));
+                // Hi-hat
+                if (track.hihat) {
+                    const hihatPattern = Array.isArray(track.hihat) ? track.hihat : [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat];
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.hihat.triggerAttackRelease('16n', time);
+                    }, hihatPattern, "8n").start(0));
+                }
                 
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.bass.triggerAttackRelease(note, '8n', time);
-                }, track.bassline, '8n').start(0));
+                // Bass (Classic mode uses 'bassline', Recruit mode uses 'bass')
+                const bassline = track.bassline || track.bass;
+                if (bassline) {
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.bass.triggerAttackRelease(note, '8n', time);
+                    }, bassline, '8n').start(0));
+                }
 
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.chord.triggerAttackRelease(note, '4n', time);
-                }, track.chords, '2n').start(0));
+                // Chords (Classic mode)
+                if (track.chords) {
+                    parts.push(new Tone.Sequence((time, chord) => {
+                        if (chord) instruments.chord.triggerAttackRelease(chord, '4n', time);
+                    }, track.chords, '2n').start(0));
+                }
                 
-                parts.push(new Tone.Sequence((time, note) => {
-                    instruments.vocal.triggerAttackRelease(note, '16n', time);
-                }, track.vocals, '8n').start(0));
+                // Vocals (Classic mode)
+                if (track.vocals) {
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.lead.triggerAttackRelease(note, '16n', time);
+                    }, track.vocals, '8n').start(0));
+                }
+
+                // Lead (Recruit mode)
+                if (track.lead) {
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.lead.triggerAttackRelease(note, '8n', time);
+                    }, track.lead, '8n').start(0));
+                }
+
+                // Pad (Recruit mode)
+                if (track.pad) {
+                    parts.push(new Tone.Sequence((time, chord) => {
+                        if (chord) instruments.pad.triggerAttackRelease(chord, '2n', time);
+                    }, track.pad, '2n').start(0));
+                }
+
+                // Arp (Recruit mode - Track 5)
+                if (track.arp) {
+                    parts.push(new Tone.Sequence((time, note) => {
+                        if (note) instruments.arp.triggerAttackRelease(note, '16n', time);
+                    }, track.arp, '16n').start(0));
+                }
             }
 
             Tone.Transport.scheduleRepeat(() => {
@@ -1663,6 +1870,19 @@
                     allDomElements.musicOffIcon.classList.add('hidden');
                 }
             });
+
+            // Skip button functionality
+            allDomElements.musicSkip.addEventListener('click', () => {
+                if (Tone.Transport.state === 'started') {
+                    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+                    changeTrack(currentTrackIndex);
+                }
+            });
+
+            // Show/hide skip button based on game mode
+            if (gameMode === 'recruit') {
+                allDomElements.musicSkip.style.display = 'flex';
+            }
 
             changeTrack(0);
         }
