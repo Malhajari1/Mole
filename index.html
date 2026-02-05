@@ -193,6 +193,28 @@
         border-color: #d1d5db !important;
     }
     
+    body.light-mode #role-box {
+        background-color: #f9fafb !important;
+        border-color: #3b82f6 !important;
+    }
+    
+    body.light-mode #role-blur-overlay {
+        background-color: rgba(243, 244, 246, 0.5) !important;
+    }
+    
+    body.light-mode #role-text-content {
+        color: #1f2937 !important;
+    }
+    
+    body.light-mode .text-gray-300 {
+        color: #4b5563 !important;
+    }
+    
+    body.light-mode .text-red-400,
+    body.light-mode .text-red-500 {
+        color: #dc2626 !important;
+    }
+    
     .screen {
         display: none !important;
         width: 100%;
@@ -480,7 +502,7 @@
         <div id="recruit-job-input" class="hidden">
             <input type="text" id="job-title-input" class="input-field text-center mb-4" placeholder="Type Job Title..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
             <p class="text-gray-400 text-center text-sm mb-2">OR</p>
-            <input type="file" id="job-image-input" accept="image/*" capture="environment" class="hidden">
+            <input type="file" id="job-image-input" accept="image/*" class="hidden">
             <button id="upload-job-image-btn" class="btn btn-secondary mb-4">📷 Upload/Take Photo of Job Card</button>
             <div id="job-image-preview" class="hidden mb-4">
                 <img id="job-image-preview-img" src="" alt="Job Card" style="max-width: 100%; max-height: 200px; border-radius: 0.25rem; border: 2px solid #4b5563;">
