@@ -320,6 +320,42 @@
             display: inline-flex;
             align-items: center;
             margin: 0.25rem;
+            /* Player Join Animation */
+            opacity: 0;
+            transform: translateX(-100px);
+            animation: slideInPlayer 0.6s ease forwards;
+        }
+        
+        @keyframes slideInPlayer {
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        /* Stagger player join animations */
+        .player-tag:nth-child(1) { animation-delay: 0.1s; }
+        .player-tag:nth-child(2) { animation-delay: 0.2s; }
+        .player-tag:nth-child(3) { animation-delay: 0.3s; }
+        .player-tag:nth-child(4) { animation-delay: 0.4s; }
+        .player-tag:nth-child(5) { animation-delay: 0.5s; }
+        .player-tag:nth-child(6) { animation-delay: 0.6s; }
+        .player-tag:nth-child(7) { animation-delay: 0.7s; }
+        .player-tag:nth-child(8) { animation-delay: 0.8s; }
+        .player-tag:nth-child(9) { animation-delay: 0.9s; }
+        .player-tag:nth-child(10) { animation-delay: 1.0s; }
+        
+        /* Pulsing green status dot on player tags */
+        .player-tag::before {
+            content: "●";
+            color: #10b981;
+            margin-right: 0.5rem;
+            animation: statusPulse 2s ease infinite;
+        }
+        
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
         #game-id-display {
             background-color: #1f2937; /* gray-800 */
@@ -413,6 +449,66 @@
         .mole-title {
             text-shadow: 0 0 5px #ff4444, 0 0 10px #ff4444;
         }
+        
+        /* Eye Blink Animation */
+        #reveal-eye-icon {
+            animation: eyeBlink 5s ease infinite;
+            transition: transform 0.3s ease;
+        }
+        
+        #reveal-eye-icon:hover {
+            transform: scale(1.15);
+        }
+        
+        @keyframes eyeBlink {
+            0%, 45%, 55%, 100% {
+                transform: scaleY(1);
+            }
+            50% {
+                transform: scaleY(0.1);
+            }
+        }
+        
+        /* Typing Animation for Waiting Messages */
+        .typing-animation {
+            display: inline-block;
+            border-right: 2px solid #dc2626;
+            white-space: nowrap;
+            overflow: hidden;
+            animation: typingBlink 0.7s step-end infinite;
+        }
+        
+        @keyframes typingBlink {
+            50% { border-color: transparent; }
+        }
+        
+        /* Player Join Slide-in Animation */
+        @keyframes slideInPlayer {
+            from {
+                opacity: 0;
+                transform: translateX(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .player-tag {
+            animation: slideInPlayer 0.5s ease forwards;
+        }
+        
+        /* Stagger animations for multiple players */
+        .player-tag:nth-child(1) { animation-delay: 0.1s; opacity: 0; }
+        .player-tag:nth-child(2) { animation-delay: 0.2s; opacity: 0; }
+        .player-tag:nth-child(3) { animation-delay: 0.3s; opacity: 0; }
+        .player-tag:nth-child(4) { animation-delay: 0.4s; opacity: 0; }
+        .player-tag:nth-child(5) { animation-delay: 0.5s; opacity: 0; }
+        .player-tag:nth-child(6) { animation-delay: 0.6s; opacity: 0; }
+        .player-tag:nth-child(7) { animation-delay: 0.7s; opacity: 0; }
+        .player-tag:nth-child(8) { animation-delay: 0.8s; opacity: 0; }
+        .player-tag:nth-child(9) { animation-delay: 0.9s; opacity: 0; }
+        .player-tag:nth-child(10) { animation-delay: 1.0s; opacity: 0; }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200" style="min-height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;">
@@ -1367,14 +1463,14 @@
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
                 
                 if (isRecruitMode) {
-                    allDomElements.wordMasterWaitText.innerHTML = `Wait for Hiring Manager to set the job position...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for Hiring Manager to set the job position</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                     allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Hiring Manager! (Round ${gameData.currentRound})`;
                     allDomElements.wordInputDescription.textContent = 'Enter the job title or upload a photo of the job card. Operatives will see this!';
                     allDomElements.classicWordInput.classList.add('hidden');
                     allDomElements.recruitJobInput.classList.remove('hidden');
                     allDomElements.setWordBtn.textContent = 'Set Job & Assign Roles';
                 } else {
-                    allDomElements.wordMasterWaitText.innerHTML = `Wait until Word Master is done typing...<span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait until Word Master is done typing</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                     allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
                     allDomElements.wordInputDescription.textContent = 'Enter the secret codename. No one else should see this!';
                     allDomElements.classicWordInput.classList.remove('hidden');
@@ -1407,7 +1503,7 @@
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
 
             if (playerHasAckd) {
-                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Awaiting other operatives...</p>`;
+                allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300 typing-animation">Awaiting other operatives...</p>`;
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
                 allDomElements.roleTextContent.classList.remove('invisible');
