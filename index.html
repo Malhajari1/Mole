@@ -163,6 +163,18 @@
             color: #6b7280 !important;
         }
         
+        body.light-mode .mode-label {
+            color: #4b5563 !important;
+        }
+        
+        body.light-mode .mode-label.active {
+            color: #1f2937 !important;
+        }
+        
+        body.light-mode .mode-version {
+            color: #9ca3af !important;
+        }
+        
         body.light-mode .player-tag {
             background-color: #e5e7eb !important;
             color: #1f2937 !important;
@@ -887,6 +899,8 @@
                         document.body.classList.add('light-mode');
                         classicLabel.classList.remove('active');
                         recruitLabel.classList.add('active');
+                        // Reinitialize music with Recruit tracks
+                        setupMusic();
                     } else {
                         // Wrong password or cancelled - revert
                         this.checked = false;
@@ -901,6 +915,8 @@
                     document.body.classList.remove('light-mode');
                     recruitLabel.classList.remove('active');
                     classicLabel.classList.add('active');
+                    // Reinitialize music with Classic tracks
+                    setupMusic();
                 }
             });
             
@@ -1658,11 +1674,25 @@
         cleanupOldGames();
         setInterval(cleanupOldGames, 60 * 60 * 1000); // Run every hour
 
-        function setupMusic() {
-            let currentTrackIndex = 0;
-            let parts = [];
+        // Global music variables
+        let currentTrackIndex = 0;
+        let musicParts = [];
+        let musicInstruments = null;
+        let musicTracks = null;
 
-            const instruments = {
+        function setupMusic() {
+            // Stop any existing music
+            if (musicParts.length > 0) {
+                musicParts.forEach(part => part.dispose());
+                musicParts = [];
+                Tone.Transport.stop();
+                Tone.Transport.cancel();
+            }
+
+            // Reset track index
+            currentTrackIndex = 0;
+
+            musicInstruments = {
                 kick: new Tone.MembraneSynth({ 
                     pitchDecay: 0.05, 
                     octaves: 10, 
@@ -1770,85 +1800,85 @@
             ];
 
             // Select tracks based on game mode
-            const tracks = gameMode === 'recruit' ? recruitTracks : classicTracks;
+            musicTracks = gameMode === 'recruit' ? recruitTracks : classicTracks;
 
             function changeTrack(index) {
-                parts.forEach(part => part.dispose());
-                parts = [];
+                musicParts.forEach(part => part.dispose());
+                musicParts = [];
 
-                const track = tracks[index];
+                const track = musicTracks[index];
                 Tone.Transport.bpm.value = track.bpm;
                 
                 // Kick
                 if (track.kick) {
                     const kickPattern = Array.isArray(track.kick) ? track.kick : [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null];
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.kick.triggerAttackRelease(note, "8n", time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.kick.triggerAttackRelease(note, "8n", time);
                     }, kickPattern, "8n").start(0));
                 }
 
                 // Snare
                 if (track.snare) {
                     const snarePattern = Array.isArray(track.snare) ? track.snare : [null, track.snare, null, track.snare, null, track.snare, null, track.snare];
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.snare.triggerAttack(time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.snare.triggerAttack(time);
                     }, snarePattern, "8n").start(0));
                 }
                 
                 // Hi-hat
                 if (track.hihat) {
                     const hihatPattern = Array.isArray(track.hihat) ? track.hihat : [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat];
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.hihat.triggerAttackRelease('16n', time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.hihat.triggerAttackRelease('16n', time);
                     }, hihatPattern, "8n").start(0));
                 }
                 
                 // Bass (Classic mode uses 'bassline', Recruit mode uses 'bass')
                 const bassline = track.bassline || track.bass;
                 if (bassline) {
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.bass.triggerAttackRelease(note, '8n', time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.bass.triggerAttackRelease(note, '8n', time);
                     }, bassline, '8n').start(0));
                 }
 
                 // Chords (Classic mode)
                 if (track.chords) {
-                    parts.push(new Tone.Sequence((time, chord) => {
-                        if (chord) instruments.chord.triggerAttackRelease(chord, '4n', time);
+                    musicParts.push(new Tone.Sequence((time, chord) => {
+                        if (chord) musicInstruments.chord.triggerAttackRelease(chord, '4n', time);
                     }, track.chords, '2n').start(0));
                 }
                 
                 // Vocals (Classic mode)
                 if (track.vocals) {
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.lead.triggerAttackRelease(note, '16n', time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.lead.triggerAttackRelease(note, '16n', time);
                     }, track.vocals, '8n').start(0));
                 }
 
                 // Lead (Recruit mode)
                 if (track.lead) {
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.lead.triggerAttackRelease(note, '8n', time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.lead.triggerAttackRelease(note, '8n', time);
                     }, track.lead, '8n').start(0));
                 }
 
                 // Pad (Recruit mode)
                 if (track.pad) {
-                    parts.push(new Tone.Sequence((time, chord) => {
-                        if (chord) instruments.pad.triggerAttackRelease(chord, '2n', time);
+                    musicParts.push(new Tone.Sequence((time, chord) => {
+                        if (chord) musicInstruments.pad.triggerAttackRelease(chord, '2n', time);
                     }, track.pad, '2n').start(0));
                 }
 
                 // Arp (Recruit mode - Track 5)
                 if (track.arp) {
-                    parts.push(new Tone.Sequence((time, note) => {
-                        if (note) instruments.arp.triggerAttackRelease(note, '16n', time);
+                    musicParts.push(new Tone.Sequence((time, note) => {
+                        if (note) musicInstruments.arp.triggerAttackRelease(note, '16n', time);
                     }, track.arp, '16n').start(0));
                 }
             }
 
             Tone.Transport.scheduleRepeat(() => {
-                currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+                currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
                 changeTrack(currentTrackIndex);
             }, "90s");
 
@@ -1874,15 +1904,13 @@
             // Skip button functionality
             allDomElements.musicSkip.addEventListener('click', () => {
                 if (Tone.Transport.state === 'started') {
-                    currentTrackIndex = (currentTrackIndex + 1) % tracks.length;
+                    currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
                     changeTrack(currentTrackIndex);
                 }
             });
 
-            // Show/hide skip button based on game mode
-            if (gameMode === 'recruit') {
-                allDomElements.musicSkip.style.display = 'flex';
-            }
+            // Show skip button for ALL modes (not just Recruit)
+            allDomElements.musicSkip.style.display = 'flex';
 
             changeTrack(0);
         }
