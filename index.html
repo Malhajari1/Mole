@@ -1112,6 +1112,7 @@
                 showScreen('home-screen');
             });
             setupMusic();
+            initializeMusicControls();
         }
 
         function showScreen(screenId) {
@@ -1882,6 +1883,18 @@
                 changeTrack(currentTrackIndex);
             }, "90s");
 
+            // Show/hide skip button based on game mode
+            if (gameMode === 'recruit') {
+                allDomElements.musicSkip.style.display = 'flex';
+            } else {
+                allDomElements.musicSkip.style.display = 'none';
+            }
+
+            changeTrack(0);
+        }
+        
+        // Add music control event listeners ONCE (not in setupMusic to avoid duplicates)
+        function initializeMusicControls() {
             allDomElements.musicToggle.addEventListener('click', () => {
                 if (Tone.context.state !== 'running') {
                     Tone.context.resume().then(() => {
@@ -1908,11 +1921,6 @@
                     changeTrack(currentTrackIndex);
                 }
             });
-
-            // Show skip button for ALL modes (not just Recruit)
-            allDomElements.musicSkip.style.display = 'flex';
-
-            changeTrack(0);
         }
         
         window.addEventListener('beforeunload', () => {
