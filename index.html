@@ -506,26 +506,25 @@
         
         /* Typing Animation for Waiting Messages */
         .typing-animation {
-            display: inline-block;
+            display: inline;
             border-right: 2px solid #dc2626;
             white-space: nowrap;
-            overflow: hidden;
-            animation: 
-                typing 2s steps(40) 1s both,
-                typingBlink 0.7s step-end infinite;
+            padding-right: 1px; /* Minimal space so cursor doesn't overlap text */
+            animation: typingBlink 0.7s step-end infinite;
         }
         
-        @keyframes typing {
-            from { 
-                width: 0;
-            }
-            to { 
-                width: 100%;
-            }
+        .typing-animation::after {
+            content: '';
         }
         
         @keyframes typingBlink {
-            50% { border-color: transparent; }
+            50% { border-right-color: transparent; }
+        }
+        
+        /* Animating dots should be right next to the cursor */
+        .animating-dots {
+            display: inline;
+            margin-left: 3px; /* Just one character space from cursor */
         }
         
         /* Player Join Slide-in Animation */
@@ -891,9 +890,9 @@
             modeToggle.addEventListener('change', function() {
                 if (this.checked) {
                     // Try to switch to Recruit Madness mode
-                    const password = prompt('🚧 RECRUIT MADNESS MODE\n\nComing Soon!\n\nA new twist on The Mole where players pitch CV cards for job positions and catch the imposter applicant.\n\n━━━━━━━━━━━━━━━━━━━\nDEV ACCESS ONLY\nEnter password to test:');
+                    const password = prompt('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n     🎭 RECRUIT MADNESS\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nComing Soon!\n\nA new twist from the creators of\nThe Mole. Stay tuned and catch\nthe imposter applicant!\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔐 DEV ACCESS ONLY\nEnter password to test:');
                     
-                    if (password === '1122') {
+                    if (password === '1111') {
                         // Correct password - grant access
                         gameMode = 'recruit';
                         document.body.classList.add('light-mode');
@@ -985,10 +984,12 @@
                 } else {
                     // Not the mole - show the secret word/job
                     if (isImage) {
-                        // Show image (centered)
+                        // Show image with optional text title above it
+                        const jobTitleText = gameData.jobTitle || '';
                         allDomElements.roleTextContent.innerHTML = `
                             <div style="text-align: center;">
                                 <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Codename:'}</p>
+                                ${jobTitleText ? `<h2 class="text-2xl font-bold text-red-400 mt-2 mb-2">${jobTitleText.toUpperCase()}</h2>` : ''}
                                 <img src="${gameData.secretWord}" alt="Job Card" style="max-width: 100%; max-height: 300px; margin: 1rem auto; display: block; border-radius: 0.5rem; border: 2px solid #dc2626;">
                             </div>
                         `;
@@ -1372,6 +1373,7 @@
                 
                 let contentToStore = '';
                 let contentType = 'text'; // 'text' or 'image'
+                let jobTitleText = ''; // For Recruit Madness text alongside image
                 
                 if (isRecruitMode) {
                     // Check for job title text
@@ -1383,6 +1385,7 @@
                     console.log('Recruit Mode - Image data:', imageData ? 'Image present' : 'No image');
                     console.log('Recruit Mode - Job title:', jobTitle);
                     
+                    // In Recruit Madness, we can have BOTH text and image
                     if (imageData && imageData.startsWith('data:image')) {
                         // Image was uploaded
                         contentToStore = imageData;
@@ -1397,6 +1400,9 @@
                         alert('Please enter a job title or upload a job card image.');
                         return;
                     }
+                    
+                    // Store job title separately if provided (even if image is primary)
+                    jobTitleText = jobTitle || '';
                 } else {
                     // Classic mode
                     const word = allDomElements.secretWordInput.value.trim();
@@ -1406,6 +1412,7 @@
                     }
                     contentToStore = word;
                     contentType = 'text';
+                    jobTitleText = '';
                 }
 
                 const potentialMoles = gameData.players.filter(p => p.id !== gameData.wordMasterId);
@@ -1418,6 +1425,7 @@
                 await updateDoc(gameRef, {
                     secretWord: contentToStore,
                     secretWordType: contentType,
+                    jobTitle: jobTitleText, // Store job title text separately
                     moleId: mole.id,
                     status: 'reveal'
                 });
@@ -1883,12 +1891,8 @@
                 changeTrack(currentTrackIndex);
             }, "90s");
 
-            // Show/hide skip button based on game mode
-            if (gameMode === 'recruit') {
-                allDomElements.musicSkip.style.display = 'flex';
-            } else {
-                allDomElements.musicSkip.style.display = 'none';
-            }
+            // Show skip button for both modes
+            allDomElements.musicSkip.style.display = 'flex';
 
             changeTrack(0);
         }
