@@ -508,7 +508,6 @@
         .typing-animation {
             display: inline;
             border-right: 2px solid #dc2626;
-            white-space: nowrap;
             padding-right: 1px; /* Minimal space so cursor doesn't overlap text */
             animation: typingBlink 0.7s step-end infinite;
         }
@@ -525,6 +524,12 @@
         .animating-dots {
             display: inline;
             margin-left: 3px; /* Just one character space from cursor */
+        }
+        
+        /* Ensure wait text wraps properly on mobile */
+        #word-master-wait-text {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
         
         /* Player Join Slide-in Animation */
@@ -890,7 +895,7 @@
             modeToggle.addEventListener('change', function() {
                 if (this.checked) {
                     // Try to switch to Recruit Madness mode
-                    const password = prompt('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n     🎭 RECRUIT MADNESS\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nComing Soon!\n\nA new twist from the creators of\nThe Mole. Stay tuned and catch\nthe imposter applicant!\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔐 DEV ACCESS ONLY\nEnter password to test:');
+                    const password = prompt('🎭 RECRUIT MADNESS\n\nComing Soon!\n\nA new twist from the creators of The Mole.\nStay tuned and catch the imposter applicant!\n\n🔐 DEV ACCESS ONLY\nEnter password to test:');
                     
                     if (password === '1111') {
                         // Correct password - grant access
@@ -1521,7 +1526,7 @@
         }
 
         function renderRoundStart(gameData) {
-            allDomElements.roundTitle.textContent = `Round ${gameData.currentRound} of ${gameData.totalRounds}`;
+            allDomElements.roundTitle.innerHTML = `Round ${gameData.currentRound} <span class="text-gray-400">of ${gameData.totalRounds}</span>`;
             
             const isRecruitMode = gameData.gameMode === 'recruit';
             
@@ -1539,14 +1544,14 @@
                 
                 if (isRecruitMode) {
                     allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for Hiring Manager to set the job position</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
-                    allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Hiring Manager! (Round ${gameData.currentRound})`;
+                    allDomElements.wordMasterTurnTitle.innerHTML = `Your Turn, Hiring Manager!<br><span class="text-lg text-gray-400">(Round ${gameData.currentRound})</span>`;
                     allDomElements.wordInputDescription.textContent = 'Enter the job title or upload a photo of the job card. Operatives will see this!';
                     allDomElements.classicWordInput.classList.add('hidden');
                     allDomElements.recruitJobInput.classList.remove('hidden');
                     allDomElements.setWordBtn.textContent = 'Set Job & Assign Roles';
                 } else {
                     allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait until Word Master is done typing</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
-                    allDomElements.wordMasterTurnTitle.textContent = `Your Turn, Word Master! (Round ${gameData.currentRound})`;
+                    allDomElements.wordMasterTurnTitle.innerHTML = `Your Turn, Word Master!<br><span class="text-lg text-gray-400">(Round ${gameData.currentRound})</span>`;
                     allDomElements.wordInputDescription.textContent = 'Enter the secret codename. No one else should see this!';
                     allDomElements.classicWordInput.classList.remove('hidden');
                     allDomElements.recruitJobInput.classList.add('hidden');
@@ -1919,10 +1924,21 @@
             });
 
             // Skip button functionality
-            allDomElements.musicSkip.addEventListener('click', () => {
-                if (Tone.Transport.state === 'started') {
-                    currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
-                    changeTrack(currentTrackIndex);
+            allDomElements.musicSkip.addEventListener('click', async () => {
+                // Start audio context if needed
+                if (Tone.context.state !== 'running') {
+                    await Tone.context.resume();
+                }
+                
+                // Skip to next track
+                currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
+                changeTrack(currentTrackIndex);
+                
+                // Start transport if not already started
+                if (Tone.Transport.state !== 'started') {
+                    Tone.Transport.start();
+                    allDomElements.musicOnIcon.classList.remove('hidden');
+                    allDomElements.musicOffIcon.classList.add('hidden');
                 }
             });
         }
