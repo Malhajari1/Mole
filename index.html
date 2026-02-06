@@ -968,7 +968,7 @@
                         const jobTitleText = gameData.jobTitle || '';
                         allDomElements.roleTextContent.innerHTML = `
                             <div style="text-align: center;">
-                                <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Codename:'}</p>
+                                <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Code:'}</p>
                                 ${jobTitleText ? `<h2 class="text-2xl font-bold text-red-400 mt-2 mb-2">${jobTitleText.toUpperCase()}</h2>` : ''}
                                 <img src="${gameData.secretWord}" alt="Job Card" style="max-width: 100%; max-height: 300px; margin: 1rem auto; display: block; border-radius: 0.5rem; border: 2px solid #dc2626;">
                             </div>
@@ -977,7 +977,7 @@
                         // Show text
                         allDomElements.roleTextContent.innerHTML = `
                             <div>
-                                <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Codename:'}</p>
+                                <p class="text-gray-300">${isRecruitMode ? 'Job Position:' : 'Code:'}</p>
                                 <h2 class="text-3xl font-bold text-red-400 mt-1">${(gameData.secretWord || '').toUpperCase()}</h2>
                             </div>
                         `;
@@ -1542,23 +1542,19 @@
         }
         
         function renderRoleReveal(gameData) {
-            // Clear any existing timer
-            if (roleAcknowledgeTimer) {
-                clearTimeout(roleAcknowledgeTimer);
-                roleAcknowledgeTimer = null;
-            }
-            
-            // Clear any existing countdown interval
-            if (window.roleCountdownInterval) {
-                clearInterval(window.roleCountdownInterval);
-                window.roleCountdownInterval = null;
-            }
-            
             // Check if player is still in the game
             const isPlayerInGame = gameData.players && gameData.players.some(p => p.id === userId);
             
             if (!isPlayerInGame) {
-                // Observer mode - show waiting message
+                // Observer mode - clear timers and show waiting message
+                if (roleAcknowledgeTimer) {
+                    clearTimeout(roleAcknowledgeTimer);
+                    roleAcknowledgeTimer = null;
+                }
+                if (window.roleCountdownInterval) {
+                    clearInterval(window.roleCountdownInterval);
+                    window.roleCountdownInterval = null;
+                }
                 allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300">Waiting for game to continue...</p>`;
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
@@ -1571,6 +1567,15 @@
             const playerHasAckd = gameData.roleAcknowledgements && gameData.roleAcknowledgements.includes(userId);
 
             if (playerHasAckd) {
+                // Player acknowledged - clear timers and show waiting
+                if (roleAcknowledgeTimer) {
+                    clearTimeout(roleAcknowledgeTimer);
+                    roleAcknowledgeTimer = null;
+                }
+                if (window.roleCountdownInterval) {
+                    clearInterval(window.roleCountdownInterval);
+                    window.roleCountdownInterval = null;
+                }
                 allDomElements.roleTextContent.innerHTML = `<p class="text-gray-300"><span class="typing-animation">Awaiting other operatives</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span></p>`;
                 allDomElements.roleBlurOverlay.classList.add('opacity-0');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'none';
@@ -1578,14 +1583,14 @@
                 allDomElements.acknowledgeRoleBtn.classList.add('hidden');
                 allDomElements.roleTimer.style.display = 'none';
             } else {
+                // Player hasn't acknowledged - don't clear timer if it's already running
                 allDomElements.roleBlurOverlay.classList.remove('opacity-0');
                 allDomElements.roleTextContent.classList.add('invisible');
                 allDomElements.acknowledgeRoleBtn.classList.add('hidden');
                 allDomElements.roleBlurOverlay.style.pointerEvents = 'auto';
                 allDomElements.roleTimer.style.display = 'none';
                 
-                // Start 25-second countdown timer after role is revealed
-                // This will be triggered when role is revealed (blur removed)
+                // Timer will be started when role is revealed (eye clicked)
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
@@ -1659,11 +1664,11 @@
             allDomElements.playAgainBtn.disabled = false;
         }
 
-        // Cleanup function to delete games older than 24 hours
+        // Cleanup function to delete games older than 6 hours
         async function cleanupOldGames() {
             try {
                 const now = new Date();
-                const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+                const sixHoursAgo = new Date(now.getTime() - (6 * 60 * 60 * 1000));
                 
                 // Note: Firestore doesn't support direct timestamp comparison in queries from web
                 // So we'll get all games and filter client-side
@@ -1680,8 +1685,8 @@
                     if (gameData.createdAt && gameData.createdAt.toDate) {
                         const createdAt = gameData.createdAt.toDate();
                         
-                        // Delete if older than 24 hours
-                        if (createdAt < twentyFourHoursAgo) {
+                        // Delete if older than 6 hours
+                        if (createdAt < sixHoursAgo) {
                             console.log(`Deleting old game: ${gameDoc.id} (created: ${createdAt})`);
                             deletePromises.push(deleteDoc(doc(db, "games", gameDoc.id)));
                             deletedCount++;
@@ -1708,6 +1713,7 @@
         let musicParts = [];
         let musicInstruments = null;
         let musicTracks = null;
+        let changeTrack = null; // Will be set by setupMusic
 
         function setupMusic() {
             // Stop any existing music
@@ -1831,87 +1837,89 @@
             // Select tracks based on game mode
             musicTracks = gameMode === 'recruit' ? recruitTracks : classicTracks;
 
-            function changeTrack(index) {
-                musicParts.forEach(part => part.dispose());
-                musicParts = [];
-
-                const track = musicTracks[index];
-                Tone.Transport.bpm.value = track.bpm;
-                
-                // Kick
-                if (track.kick) {
-                    const kickPattern = Array.isArray(track.kick) ? track.kick : [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null];
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.kick.triggerAttackRelease(note, "8n", time);
-                    }, kickPattern, "8n").start(0));
-                }
-
-                // Snare
-                if (track.snare) {
-                    const snarePattern = Array.isArray(track.snare) ? track.snare : [null, track.snare, null, track.snare, null, track.snare, null, track.snare];
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.snare.triggerAttack(time);
-                    }, snarePattern, "8n").start(0));
-                }
-                
-                // Hi-hat
-                if (track.hihat) {
-                    const hihatPattern = Array.isArray(track.hihat) ? track.hihat : [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat];
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.hihat.triggerAttackRelease('16n', time);
-                    }, hihatPattern, "8n").start(0));
-                }
-                
-                // Bass (Classic mode uses 'bassline', Recruit mode uses 'bass')
-                const bassline = track.bassline || track.bass;
-                if (bassline) {
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.bass.triggerAttackRelease(note, '8n', time);
-                    }, bassline, '8n').start(0));
-                }
-
-                // Chords (Classic mode)
-                if (track.chords) {
-                    musicParts.push(new Tone.Sequence((time, chord) => {
-                        if (chord) musicInstruments.chord.triggerAttackRelease(chord, '4n', time);
-                    }, track.chords, '2n').start(0));
-                }
-                
-                // Vocals (Classic mode)
-                if (track.vocals) {
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.lead.triggerAttackRelease(note, '16n', time);
-                    }, track.vocals, '8n').start(0));
-                }
-
-                // Lead (Recruit mode)
-                if (track.lead) {
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.lead.triggerAttackRelease(note, '8n', time);
-                    }, track.lead, '8n').start(0));
-                }
-
-                // Pad (Recruit mode)
-                if (track.pad) {
-                    musicParts.push(new Tone.Sequence((time, chord) => {
-                        if (chord) musicInstruments.pad.triggerAttackRelease(chord, '2n', time);
-                    }, track.pad, '2n').start(0));
-                }
-
-                // Arp (Recruit mode - Track 5)
-                if (track.arp) {
-                    musicParts.push(new Tone.Sequence((time, note) => {
-                        if (note) musicInstruments.arp.triggerAttackRelease(note, '16n', time);
-                    }, track.arp, '16n').start(0));
-                }
-            }
-
             Tone.Transport.scheduleRepeat(() => {
                 currentTrackIndex = (currentTrackIndex + 1) % musicTracks.length;
                 changeTrack(currentTrackIndex);
             }, "90s");
 
+            // Call initial track
             changeTrack(0);
+        }
+        
+        // Global changeTrack function (accessible from music controls)
+        function changeTrack(index) {
+            musicParts.forEach(part => part.dispose());
+            musicParts = [];
+
+            const track = musicTracks[index];
+            Tone.Transport.bpm.value = track.bpm;
+            
+            // Kick
+            if (track.kick) {
+                const kickPattern = Array.isArray(track.kick) ? track.kick : [track.kick, null, track.kick, track.kick, track.kick, null, track.kick, null];
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.kick.triggerAttackRelease(note, "8n", time);
+                }, kickPattern, "8n").start(0));
+            }
+
+            // Snare
+            if (track.snare) {
+                const snarePattern = Array.isArray(track.snare) ? track.snare : [null, track.snare, null, track.snare, null, track.snare, null, track.snare];
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.snare.triggerAttack(time);
+                }, snarePattern, "8n").start(0));
+            }
+            
+            // Hi-hat
+            if (track.hihat) {
+                const hihatPattern = Array.isArray(track.hihat) ? track.hihat : [track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat, track.hihat];
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.hihat.triggerAttackRelease('16n', time);
+                }, hihatPattern, "8n").start(0));
+            }
+            
+            // Bass (Classic mode uses 'bassline', Recruit mode uses 'bass')
+            const bassline = track.bassline || track.bass;
+            if (bassline) {
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.bass.triggerAttackRelease(note, '8n', time);
+                }, bassline, '8n').start(0));
+            }
+
+            // Chords (Classic mode)
+            if (track.chords) {
+                musicParts.push(new Tone.Sequence((time, chord) => {
+                    if (chord) musicInstruments.chord.triggerAttackRelease(chord, '4n', time);
+                }, track.chords, '2n').start(0));
+            }
+            
+            // Vocals (Classic mode)
+            if (track.vocals) {
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.lead.triggerAttackRelease(note, '16n', time);
+                }, track.vocals, '8n').start(0));
+            }
+
+            // Lead (Recruit mode)
+            if (track.lead) {
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.lead.triggerAttackRelease(note, '8n', time);
+                }, track.lead, '8n').start(0));
+            }
+
+            // Pad (Recruit mode)
+            if (track.pad) {
+                musicParts.push(new Tone.Sequence((time, chord) => {
+                    if (chord) musicInstruments.pad.triggerAttackRelease(chord, '2n', time);
+                }, track.pad, '2n').start(0));
+            }
+
+            // Arp (Recruit mode - Track 5)
+            if (track.arp) {
+                musicParts.push(new Tone.Sequence((time, note) => {
+                    if (note) musicInstruments.arp.triggerAttackRelease(note, '16n', time);
+                }, track.arp, '16n').start(0));
+            }
         }
         
         // Add music control event listeners ONCE (not in setupMusic to avoid duplicates)
