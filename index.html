@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=Oswald:wght@400;600;700&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=Oswald:wght@400;600;700&family=Special+Elite&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
     <style>
@@ -536,10 +536,269 @@
         .player-tag:nth-child(8) { animation-delay: 0.8s; opacity: 0; }
         .player-tag:nth-child(9) { animation-delay: 0.9s; opacity: 0; }
         .player-tag:nth-child(10) { animation-delay: 1.0s; opacity: 0; }
+        
+        /* Welcome Modal Styles */
+        .welcome-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .welcome-overlay.active {
+            display: flex;
+        }
+
+        .welcome-compact {
+            background: #1f2937;
+            border: 2px solid #dc2626;
+            border-radius: 8px;
+            padding: 1.5rem;
+            max-width: 450px;
+            width: 100%;
+            position: relative;
+        }
+
+        .language-toggle {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            display: flex;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.25rem;
+            border-radius: 6px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .lang-btn:hover {
+            color: #fff;
+        }
+
+        .lang-btn.active {
+            background: #dc2626;
+            color: #fff;
+        }
+
+        .welcome-compact h2 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 1rem;
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        .quick-rules {
+            background: rgba(220, 38, 38, 0.1);
+            border-left: 3px solid #dc2626;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .quick-rules ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .quick-rules li {
+            color: #d1d5db;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+            line-height: 1.5;
+        }
+
+        .quick-rules li::before {
+            content: '▸';
+            color: #dc2626;
+            position: absolute;
+            left: 0;
+        }
+
+        .welcome-checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+        .welcome-checkbox-container input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #dc2626;
+        }
+
+        .welcome-compact .start-btn {
+            width: 100%;
+            background: #dc2626;
+            color: #fff;
+            padding: 0.65rem;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Oswald', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: background 0.2s;
+        }
+
+        .welcome-compact .start-btn:hover {
+            background: #b91c1c;
+        }
+
+        /* RTL Arabic Styles */
+        .welcome-compact.rtl {
+            direction: rtl;
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .welcome-compact.rtl .language-toggle {
+            right: auto;
+            left: 1rem;
+        }
+
+        .welcome-compact.rtl .quick-rules {
+            border-left: none;
+            border-right: 3px solid #dc2626;
+        }
+
+        .welcome-compact.rtl .quick-rules li {
+            padding-left: 0;
+            padding-right: 1.5rem;
+        }
+
+        .welcome-compact.rtl .quick-rules li::before {
+            content: '◂';
+            left: auto;
+            right: 0;
+        }
+
+        .welcome-compact.rtl h2 {
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        .welcome-compact.rtl .start-btn {
+            font-family: 'Tajawal', sans-serif;
+        }
+
+        body.light-mode .welcome-compact {
+            background: #ffffff;
+            border-color: #3b82f6;
+        }
+
+        body.light-mode .welcome-compact h2 {
+            color: #1f2937;
+        }
+
+        body.light-mode .quick-rules {
+            background: rgba(59, 130, 246, 0.1);
+            border-left-color: #3b82f6;
+        }
+
+        body.light-mode .welcome-compact.rtl .quick-rules {
+            border-right-color: #3b82f6;
+        }
+
+        body.light-mode .quick-rules li {
+            color: #4b5563;
+        }
+
+        body.light-mode .quick-rules li::before {
+            color: #3b82f6;
+        }
+
+        body.light-mode .lang-btn.active {
+            background: #3b82f6;
+        }
+
+        body.light-mode .welcome-compact .start-btn {
+            background: #3b82f6;
+        }
+
+        body.light-mode .welcome-compact .start-btn:hover {
+            background: #2563eb;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-200" style="min-height: 100vh; width: 100vw; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem;">
     
+    <!-- Welcome Modal -->
+    <div id="welcomeModal" class="welcome-overlay">
+        <div class="welcome-compact" id="welcomeCard">
+            <!-- Language Toggle -->
+            <div class="language-toggle">
+                <button class="lang-btn" id="engBtn">🇬🇧 EN</button>
+                <button class="lang-btn active" id="arBtn">🇶🇦 AR</button>
+            </div>
+
+            <!-- English Content -->
+            <div id="englishContent" class="hidden">
+                <h2>The Rules</h2>
+                
+                <div class="quick-rules">
+                    <ul>
+                        <li>Each player gets 6 image cards</li>
+                        <li>Choose a word describing 2 of your images</li>
+                        <li>Share the word with everyone except the Mole</li>
+                        <li>Place first card in order, then second card</li>
+                        <li>Explain your word and image choices</li>
+                        <li>Everyone explains their selections</li>
+                    </ul>
+                </div>
+                
+                <div class="welcome-checkbox-container">
+                    <input type="checkbox" id="dontShowEn">
+                    <label for="dontShowEn">Don't show this again</label>
+                </div>
+                
+                <button class="start-btn" id="startBtnEn">Start Playing</button>
+            </div>
+
+            <!-- Arabic Content -->
+            <div id="arabicContent">
+                <h2>القواعد</h2>
+                
+                <div class="quick-rules">
+                    <ul>
+                        <li>كل لاعب يحصل على ٦ بطاقات صور</li>
+                        <li>اختر كلمة تصف صورتين من بطاقاتك</li>
+                        <li>شارك الكلمة مع الجميع ماعدا الجاسوس</li>
+                        <li>ضع البطاقة الأولى بالترتيب، ثم الثانية</li>
+                        <li>اشرح كلمتك واختيار الصور</li>
+                        <li>الجميع يشرح اختياراته</li>
+                    </ul>
+                </div>
+                
+                <div class="welcome-checkbox-container">
+                    <input type="checkbox" id="dontShowAr">
+                    <label for="dontShowAr">لا تظهر هذا مجدداً</label>
+                </div>
+                
+                <button class="start-btn" id="startBtnAr">ابدأ اللعب</button>
+            </div>
+        </div>
+    </div>
+
     <div id="home-screen" class="screen flex flex-col items-center justify-center w-full max-w-full">
         <div class="card text-center">
             <span class="beta-stamp">(Beta 2.1)</span>
@@ -1971,6 +2230,50 @@
             }
         });
 
+        // Welcome Modal Functions
+        let currentWelcomeLang = 'ar'; // Default to Arabic
+
+        function showWelcomeModal() {
+            switchWelcomeLang('ar');
+            document.getElementById('welcomeModal').classList.add('active');
+        }
+
+        function closeWelcomeModal() {
+            const checkbox = currentWelcomeLang === 'en' 
+                ? document.getElementById('dontShowEn')
+                : document.getElementById('dontShowAr');
+            
+            if (checkbox.checked) {
+                localStorage.setItem('hideWelcome', 'true');
+            }
+            
+            localStorage.setItem('preferredLang', currentWelcomeLang);
+            document.getElementById('welcomeModal').classList.remove('active');
+        }
+
+        function switchWelcomeLang(lang) {
+            currentWelcomeLang = lang;
+            const card = document.getElementById('welcomeCard');
+            const engBtn = document.getElementById('engBtn');
+            const arBtn = document.getElementById('arBtn');
+            const engContent = document.getElementById('englishContent');
+            const arContent = document.getElementById('arabicContent');
+
+            if (lang === 'ar') {
+                card.classList.add('rtl');
+                engBtn.classList.remove('active');
+                arBtn.classList.add('active');
+                engContent.classList.add('hidden');
+                arContent.classList.remove('hidden');
+            } else {
+                card.classList.remove('rtl');
+                arBtn.classList.remove('active');
+                engBtn.classList.add('active');
+                arContent.classList.add('hidden');
+                engContent.classList.remove('hidden');
+            }
+        }
+
         signInAnonymously(auth).then(async (userCredential) => {
             let storedUserId = localStorage.getItem('moleUserId');
             if(!storedUserId){
@@ -1980,6 +2283,12 @@
             userId = storedUserId;
             
             initializeDomAndListeners();
+            
+            // Welcome modal event listeners
+            document.getElementById('engBtn').addEventListener('click', () => switchWelcomeLang('en'));
+            document.getElementById('arBtn').addEventListener('click', () => switchWelcomeLang('ar'));
+            document.getElementById('startBtnEn').addEventListener('click', closeWelcomeModal);
+            document.getElementById('startBtnAr').addEventListener('click', closeWelcomeModal);
             
             // Set up reconnect modal button handlers (always available)
             allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
@@ -2026,6 +2335,10 @@
                 }
             } else {
                 showScreen('home-screen');
+                // Show welcome modal on first visit
+                if (!localStorage.getItem('hideWelcome')) {
+                    showWelcomeModal();
+                }
             }
             
         }).catch((error) => {
