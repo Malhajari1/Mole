@@ -1786,14 +1786,14 @@
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
                 
                 if (isRecruitMode) {
-                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for ${wordMasterName} (Hiring Manager) to set the job position</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for <span style="color: #fbbf24; font-weight: 700;">${wordMasterName}</span> (Hiring Manager) to set the job position</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                     allDomElements.wordMasterTurnTitle.innerHTML = `Your Turn, Hiring Manager!<br><span class="text-lg text-gray-400">(Round ${gameData.currentRound})</span>`;
                     allDomElements.wordInputDescription.textContent = 'Enter the job title or upload a photo of the job card. Operatives will see this!';
                     allDomElements.classicWordInput.classList.add('hidden');
                     allDomElements.recruitJobInput.classList.remove('hidden');
                     allDomElements.setWordBtn.textContent = 'Set Job & Assign Roles';
                 } else {
-                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for ${wordMasterName} (Word Master) to finish typing</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for <span style="color: #fbbf24; font-weight: 700;">${wordMasterName}</span> (Word Master) to finish typing</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                     allDomElements.wordMasterTurnTitle.innerHTML = `Your Turn, Word Master!<br><span class="text-lg text-gray-400">(Round ${gameData.currentRound})</span>`;
                     allDomElements.wordInputDescription.textContent = 'Enter the secret codename. No one else should see this!';
                     allDomElements.classicWordInput.classList.remove('hidden');
