@@ -541,12 +541,13 @@
         .welcome-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.95);
+            background: rgba(0, 0, 0, 0.85);
             display: none;
             align-items: center;
             justify-content: center;
             z-index: 2000;
             padding: 1rem;
+            backdrop-filter: blur(5px);
         }
 
         .welcome-overlay.active {
@@ -759,10 +760,11 @@
                     <ul>
                         <li>Each player gets 6 image cards</li>
                         <li>Choose a word describing 2 of your images</li>
-                        <li>Share the word with everyone except the Mole</li>
-                        <li>Place first card in order, then second card</li>
-                        <li>Explain your word and image choices</li>
+                        <li>Everyone except the Mole will receive your word</li>
+                        <li>You place your 1st image card (in clockwise order everyone follows)</li>
+                        <li>Reveal your word and explain image choices</li>
                         <li>Everyone explains their selections</li>
+                        <li>Then vote on the mole</li>
                     </ul>
                 </div>
                 
@@ -782,10 +784,11 @@
                     <ul>
                         <li>كل لاعب يحصل على ٦ بطاقات صور</li>
                         <li>اختر كلمة تصف صورتين من بطاقاتك</li>
-                        <li>شارك الكلمة مع الجميع ماعدا الجاسوس</li>
-                        <li>ضع البطاقة الأولى بالترتيب، ثم الثانية</li>
-                        <li>اشرح كلمتك واختيار الصور</li>
+                        <li>الجميع ما عدا الجاسوس سيحصل على كلمتك</li>
+                        <li>تضع بطاقة الصورة الأولى (بعكس عقارب الساعة الجميع يتبعون)</li>
+                        <li>اكشف كلمتك واشرح اختيارات الصور</li>
                         <li>الجميع يشرح اختياراته</li>
+                        <li>ثم صوتوا على الجاسوس</li>
                     </ul>
                 </div>
                 
