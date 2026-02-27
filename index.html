@@ -909,7 +909,7 @@
                 <div id="role-text-content" class="invisible"></div>
             </div>
             <button id="acknowledge-role-btn" class="btn mt-8 hidden">Understood</button>
-            <p id="role-timer" class="text-gray-500 text-sm mt-3" style="display: none;">Auto-continuing in <span id="role-timer-seconds">25</span>s...</p>
+            <p id="role-timer" class="text-gray-500 text-sm mt-3" style="display: none;">Auto-continuing in <span id="role-timer-seconds">20</span>s...</p>
         </div>
     </div>
     
@@ -1786,14 +1786,14 @@
                 const wordMasterName = wordMaster ? wordMaster.name : 'an operative';
                 
                 if (isRecruitMode) {
-                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for Hiring Manager to set the job position</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for ${wordMasterName} (Hiring Manager) to set the job position</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                     allDomElements.wordMasterTurnTitle.innerHTML = `Your Turn, Hiring Manager!<br><span class="text-lg text-gray-400">(Round ${gameData.currentRound})</span>`;
                     allDomElements.wordInputDescription.textContent = 'Enter the job title or upload a photo of the job card. Operatives will see this!';
                     allDomElements.classicWordInput.classList.add('hidden');
                     allDomElements.recruitJobInput.classList.remove('hidden');
                     allDomElements.setWordBtn.textContent = 'Set Job & Assign Roles';
                 } else {
-                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait until Word Master is done typing</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
+                    allDomElements.wordMasterWaitText.innerHTML = `<span class="typing-animation">Wait for ${wordMasterName} (Word Master) to finish typing</span><span class="animating-dots"><span>.</span><span>.</span><span>.</span></span>`;
                     allDomElements.wordMasterTurnTitle.innerHTML = `Your Turn, Word Master!<br><span class="text-lg text-gray-400">(Round ${gameData.currentRound})</span>`;
                     allDomElements.wordInputDescription.textContent = 'Enter the secret codename. No one else should see this!';
                     allDomElements.classicWordInput.classList.remove('hidden');
@@ -1845,7 +1845,7 @@
                 allDomElements.acknowledgeRoleBtn.classList.add('hidden');
                 allDomElements.roleTimer.style.display = 'none';
             } else {
-                // Player hasn't acknowledged - don't clear timer if it's already running
+                // Player hasn't acknowledged yet
                 allDomElements.roleBlurOverlay.classList.remove('opacity-0');
                 allDomElements.roleTextContent.classList.add('invisible');
                 allDomElements.acknowledgeRoleBtn.classList.add('hidden');
@@ -1853,6 +1853,7 @@
                 allDomElements.roleTimer.style.display = 'none';
                 
                 // Timer will be started when role is revealed (eye clicked)
+                // Do NOT start timer here - it gets called on every Firebase update
             }
             
             if (gameData.players.length > 0 && gameData.roleAcknowledgements.length === gameData.players.length) {
@@ -1864,21 +1865,36 @@
         
         // Start countdown timer after role reveal
         function startRoleAcknowledgeTimer() {
-            let secondsLeft = 25;
+            // Clear any existing timers first to prevent duplicates
+            if (roleAcknowledgeTimer) {
+                clearTimeout(roleAcknowledgeTimer);
+                roleAcknowledgeTimer = null;
+            }
+            if (window.roleCountdownInterval) {
+                clearInterval(window.roleCountdownInterval);
+                window.roleCountdownInterval = null;
+            }
+            
+            let secondsLeft = 20;
             allDomElements.roleTimerSeconds.textContent = secondsLeft;
             allDomElements.roleTimer.style.display = 'block';
             
             window.roleCountdownInterval = setInterval(() => {
                 secondsLeft--;
-                allDomElements.roleTimerSeconds.textContent = secondsLeft;
                 
                 if (secondsLeft <= 0) {
+                    // Stop at 0, clear interval, and hide timer
+                    allDomElements.roleTimerSeconds.textContent = 0;
                     clearInterval(window.roleCountdownInterval);
                     window.roleCountdownInterval = null;
+                    allDomElements.roleTimer.style.display = 'none';
+                } else {
+                    // Update display only if still counting
+                    allDomElements.roleTimerSeconds.textContent = secondsLeft;
                 }
             }, 1000);
             
-            // Auto-acknowledge after 25 seconds
+            // Auto-acknowledge after 20 seconds
             roleAcknowledgeTimer = setTimeout(async () => {
                 try {
                     const gameRef = doc(db, "games", gameId);
@@ -1890,13 +1906,13 @@
                             await updateDoc(gameRef, {
                                 roleAcknowledgements: arrayUnion(userId)
                             });
-                            console.log('Auto-acknowledged role after 25 seconds');
+                            console.log('Auto-acknowledged role after 20 seconds');
                         }
                     }
                 } catch (error) {
                     console.error("Error auto-acknowledging role:", error);
                 }
-            }, 25000); // 25 seconds
+            }, 20000); // 20 seconds
         }
         
         function renderGameScreen(gameData) {
