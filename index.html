@@ -4,6 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>THE MOLE — Everyone knows the word. Except one.</title>
+<!-- Recent-visitor fast-path: if they entered the game within the last 3 hours,
+     send them straight back to it. After 3h (or if they explicitly returned to
+     the landing) they see this page again. Runs before paint to avoid a flash. -->
+<script>
+(function(){
+  try{
+    if (/[?&]home\b/.test(location.search)) { localStorage.removeItem('moleLastStart'); return; }
+    var last = +(localStorage.getItem('moleLastStart') || 0);
+    if (last && (Date.now() - last) < 3 * 60 * 60 * 1000) { location.replace('game.html'); }
+    else if (last) { localStorage.removeItem('moleLastStart'); }
+  }catch(e){}
+})();
+</script>
 <meta name="description" content="The Mole is a real-time social deduction game for 3–10 players. One secret word. One imposter. Made in Qatar.">
 <meta name="theme-color" content="#0E1116">
 
@@ -417,7 +430,7 @@ section{padding:clamp(80px,11vw,150px) clamp(20px,4vw,48px);position:relative}
 }
 .final-title .no-one{color:var(--stamp);text-shadow:0 0 50px var(--stamp-glow)}
 .final-accent{
-  font-family:var(--arabic);font-size:clamp(15px,2vw,21px);color:var(--paper-dim);
+  font-family:var(--body);font-size:clamp(15px,2vw,21px);color:var(--paper-dim);
   margin-top:26px;position:relative;
 }
 .final .btn{margin-top:38px;position:relative}
@@ -637,7 +650,7 @@ footer{
 <section class="final">
   <div class="final-ghost" aria-hidden="true">؟</div>
   <h2 class="final-title" data-i18n="f_title">Trust<br><span class="no-one">no one.</span></h2>
-  <p class="final-accent" data-i18n="f_accent">الجميع يعرف الكلمة… إلا واحد</p>
+  <p class="final-accent" data-i18n="f_accent">Everyone knows the word… except one.</p>
   <a class="btn btn-primary" href="game.html" data-i18n="f_btn">Start a game — it's free</a>
   <p class="final-meta" data-i18n="f_meta">NO DOWNLOADS · NO ACCOUNTS · 3–10 PLAYERS · ONE LIAR</p>
   <div>
@@ -710,7 +723,7 @@ footer{
       k5_p:'Bilingual welcome with full right-to-left support. The whole table plays in the language it argues in.',
       k6_h:'Leave no trace', k6_p:'Rooms self-destruct after six hours or when empty. Like any good operation, nothing left behind.',
       f_title:'Trust<br><span class="no-one">no one.</span>',
-      f_accent:'الجميع يعرف الكلمة… إلا واحد',
+      f_accent:'Everyone knows the word… except one.',
       f_btn:"Start a game — it's free",
       f_meta:'NO DOWNLOADS · NO ACCOUNTS · 3–10 PLAYERS · ONE LIAR',
       qatar:'Proudly made in Qatar 🇶🇦',
@@ -760,7 +773,7 @@ footer{
       k5_p:'شاشة ترحيب ثنائية اللغة بدعم كامل للكتابة من اليمين. الطاولة كلها تلعب باللغة التي تتجادل بها.',
       k6_h:'بلا أثر', k6_p:'الغرف تدمّر نفسها بعد ست ساعات أو عند خلوّها. كأي عملية ناجحة، لا شيء يُترك خلفها.',
       f_title:'لا تثق<br><span class="no-one">بأحد.</span>',
-      f_accent:'Everyone knows the word… except one.',
+      f_accent:'الجميع يعرف الكلمة… إلا واحد',
       f_btn:'ابدأ لعبة — مجاناً',
       f_meta:'بلا تحميل · بلا حسابات · ٣–١٠ لاعبين · كاذب واحد',
       qatar:'صُنع بفخر في قطر 🇶🇦',
@@ -900,6 +913,7 @@ footer{
       try {
         localStorage.setItem('hideWelcome', 'true');
         localStorage.setItem('preferredLang', lang);
+        localStorage.setItem('moleLastStart', String(Date.now())); /* arms the 3h fast-path */
       } catch (e) {}
     });
   });
