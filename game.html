@@ -9,6 +9,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Warm up the Firebase endpoints so anonymous sign-in starts sooner -->
+    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://securetoken.googleapis.com">
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com">
+    <link rel="preconnect" href="https://firestore.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;700&family=Oswald:wght@400;600;700&family=Special+Elite&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
     <!-- Landing-page design system fonts (kept in sync with index.html) -->
     <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500&family=Noto+Kufi+Arabic:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -2542,6 +2547,39 @@
             }
         }
 
+        // ---- Render the UI immediately; don't block the screen on the auth network round-trip ----
+        initializeDomAndListeners();
+
+        // Welcome modal event listeners
+        document.getElementById('engBtn').addEventListener('click', () => switchWelcomeLang('en'));
+        document.getElementById('arBtn').addEventListener('click', () => switchWelcomeLang('ar'));
+        document.getElementById('startBtnEn').addEventListener('click', closeWelcomeModal);
+        document.getElementById('startBtnAr').addEventListener('click', closeWelcomeModal);
+
+        // Reconnect modal button handlers (always available)
+        allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
+            const gameIdToJoin = allDomElements.reconnectModalGameId.textContent;
+            if (gameIdToJoin) {
+                document.getElementById('reconnect-modal').classList.remove('active');
+                joinGame(gameIdToJoin, false);
+            }
+        });
+        allDomElements.reconnectCancelBtn.addEventListener('click', () => {
+            localStorage.removeItem('moleGameId');
+            allDomElements.reconnectSection.classList.remove('hidden');
+            allDomElements.reconnectGameIdInput.value = '';
+            document.getElementById('reconnect-modal').classList.remove('active');
+            showScreen('home-screen');
+        });
+
+        // Show the home screen right away — no more blank wait. Creating/joining needs a
+        // signed-in userId, so disable those actions until anonymous auth resolves (~1s).
+        showScreen('home-screen');
+        const authGatedButtons = [allDomElements.createGameBtn, allDomElements.joinGameBtn, allDomElements.reconnectBtn];
+        const createBtnLabel = allDomElements.createGameBtn.textContent;
+        authGatedButtons.forEach(b => { if (b) b.disabled = true; });
+        allDomElements.createGameBtn.textContent = 'Connecting…';
+
         signInAnonymously(auth).then(async (userCredential) => {
             let storedUserId = localStorage.getItem('moleUserId');
             if(!storedUserId){
@@ -2549,36 +2587,11 @@
                 localStorage.setItem('moleUserId', storedUserId);
             }
             userId = storedUserId;
-            
-            initializeDomAndListeners();
-            
-            // Welcome modal event listeners
-            document.getElementById('engBtn').addEventListener('click', () => switchWelcomeLang('en'));
-            document.getElementById('arBtn').addEventListener('click', () => switchWelcomeLang('ar'));
-            document.getElementById('startBtnEn').addEventListener('click', closeWelcomeModal);
-            document.getElementById('startBtnAr').addEventListener('click', closeWelcomeModal);
-            
-            // Set up reconnect modal button handlers (always available)
-            allDomElements.reconnectConfirmBtn.addEventListener('click', () => {
-                const gameIdToJoin = allDomElements.reconnectModalGameId.textContent;
-                if (gameIdToJoin) {
-                    // Explicitly hide the modal
-                    document.getElementById('reconnect-modal').classList.remove('active');
-                    joinGame(gameIdToJoin, false);
-                }
-            });
 
-            allDomElements.reconnectCancelBtn.addEventListener('click', () => {
-                // Clear the stored game ID so modal doesn't show up again
-                localStorage.removeItem('moleGameId');
-                allDomElements.reconnectSection.classList.remove('hidden');
-                // Don't auto-fill the input - keep it empty
-                allDomElements.reconnectGameIdInput.value = '';
-                // Explicitly hide the modal
-                document.getElementById('reconnect-modal').classList.remove('active');
-                showScreen('home-screen');
-            });
-            
+            // Auth ready — enable the actions
+            authGatedButtons.forEach(b => { if (b) b.disabled = false; });
+            allDomElements.createGameBtn.textContent = createBtnLabel;
+
             const lastGameId = localStorage.getItem('moleGameId');
             if(lastGameId){
                 const gameRef = doc(db, "games", lastGameId);
@@ -2594,7 +2607,7 @@
                         document.getElementById('classic-label').classList.remove('active');
                         document.getElementById('recruit-label').classList.add('active');
                     }
-                    
+
                     allDomElements.reconnectModalGameId.textContent = lastGameId;
                     showScreen('reconnect-modal');
                 } else {
@@ -2602,15 +2615,15 @@
                     showScreen('home-screen');
                 }
             } else {
-                showScreen('home-screen');
-                // Show welcome modal on first visit
+                // already on home-screen; just offer the brief on first visit
                 if (!localStorage.getItem('hideWelcome')) {
                     showWelcomeModal();
                 }
             }
-            
+
         }).catch((error) => {
             console.error("Anonymous auth failed:", error);
+            allDomElements.createGameBtn.textContent = createBtnLabel;
             if (error.code === 'auth/configuration-not-found') {
                 alert("Configuration Error: 'Anonymous' sign-in is not enabled for this project. Please go to your Firebase Console, open this project, go to Authentication > Sign-in method, and enable the 'Anonymous' provider.");
             } else {
