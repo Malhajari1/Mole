@@ -884,13 +884,19 @@
         #reveal-eye-icon{color:var(--paper)!important}
 
         /* Floating controls */
-        #persistent-game-id,#music-toggle,#exit-to-lobby-btn,#connection-status{
+        #persistent-game-id,#music-toggle,#exit-to-lobby-btn,#connection-status,#back-to-landing-btn{
             font-family:var(--mono)!important;
             background-color:rgba(14,17,22,.7)!important;
             border:1px solid var(--line)!important;
             color:var(--paper-dim)!important;
             border-radius:2px;
         }
+        #back-to-landing-btn{
+            position:fixed;top:10px;left:10px;z-index:1001;
+            padding:.5rem 1rem;font-size:.8rem;letter-spacing:.08em;
+            text-decoration:none;transition:border-color .2s,color .2s;
+        }
+        #back-to-landing-btn:hover{border-color:var(--paper-dim)!important;color:var(--paper)!important}
         #music-toggle{border-radius:9999px}
         #connection-status{color:#10b981!important}
         #connection-status.disconnected{color:var(--stamp)!important;border-color:var(--stamp)!important}
@@ -1184,6 +1190,9 @@
     </button>
 
     <button id="exit-to-lobby-btn" style="display: none;">← Exit to Lobby</button>
+
+    <!-- Return to the landing page (shown on the home screen) -->
+    <a id="back-to-landing-btn" href="index.html?home=1" style="display: none;">← Landing</a>
     
     <div id="connection-status">● Connected</div>
     
@@ -1624,6 +1633,10 @@
             } else {
                 allDomElements.exitToLobbyBtn.style.display = 'block';
             }
+
+            // "← Landing" only on the entry (home) screen; in-game uses Exit to Lobby
+            const backToLanding = document.getElementById('back-to-landing-btn');
+            if (backToLanding) backToLanding.style.display = (screenId === 'home-screen') ? 'block' : 'none';
         }
 
         function generateGameId() {
@@ -2610,6 +2623,9 @@
     <!-- Spotlight follows the cursor (matches the landing page) -->
     <script>
     (function(){
+        /* keep the landing's 3h fast-path fresh while the game is in use */
+        try { localStorage.setItem('moleLastStart', String(Date.now())); } catch(e){}
+
         var spot = document.getElementById('spotlight');
         if (!spot) return;
         if (matchMedia('(pointer:fine)').matches && !matchMedia('(prefers-reduced-motion:reduce)').matches){
